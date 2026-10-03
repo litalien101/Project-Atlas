@@ -2,8 +2,8 @@
 
 Run with Blender:
   blender --background --python tools/characters/calibrate_character_reference.py -- \
-    --source /srv/projects/troll.glb \
-    --output art/characters/reference_calibrations/troll_sketchfab.json
+    --source /path/to/rights-cleared-reference.glb \
+    --output art/characters/references/calibrations/reference_id.json
 
 This records measurements and provenance only. It does not copy source geometry,
 textures, skeletons, or animations into Atlas assets.

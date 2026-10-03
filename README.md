@@ -1,12 +1,12 @@
 # Project Atlas: The Reach
 
-The Reach is Atlas's first playable reference world. All player and traveler avatars now use one character model: the female base currently being developed. The project opens as a clean character sandbox on a flat, undecorated ground plane.
+The Reach is Atlas's playable reference world. The browser movement/world prototype remains, but there is currently no licensed Atlas character model registered. The project opens on a clean, undecorated ground plane while the character geometry pipeline is being rebuilt around assets with verifiable rights.
 
 ## Start here
 
 For orientation, read this file and [`MASTER_FILE.md`](MASTER_FILE.md), the current project vision, architecture, status, and roadmap. [`AGENTS.md`](AGENTS.md) is the short contributor and AI guide. Read [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the character workflow and [`specs/asset-provenance.md`](specs/asset-provenance.md) for rights and release rules. The local game entry point is `atlas_server`; browser sources are in `web/`; character tools are in `tools/characters/`; runtime assets and checksums are under `web/assets/` and `web/assets/manifest.yaml`.
 
-The character pipeline uses a compact design-profile JSON, deterministic Blender generation, human base review, landmark placement, then separate rigging/weighting and appearance stages. It does not call an AI service or create a finished rigged character. Work in `art/characters/pending_models/` and `pending_equipment/` is authoring/review data, not a runtime asset. Runtime activation requires explicit review and registration.
+The character pipeline has a design-profile contract and deterministic Blender blockout tools. It does not yet create a finished mesh, call an AI service, or generate a rig. Only assets with documented usable rights are retained. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
 
 The first character quality target is the geometry-only mesh in the approved T-pose. Textures and fine surface details are later stages; passing the mesh gate is not production or runtime approval. Optional free modeling references and their exact licenses are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
 
@@ -24,7 +24,7 @@ npm run build
 python3 -m atlas_server
 ```
 
-Open <http://127.0.0.1:8765>. The page opens as a focused character workbench with one female traveler and a pinned appearance panel. The panel adjusts skin tone, height, weight, bust, stomach, hips, glutes, thighs, optional underwear, and shoulder guards. The validated `atlas-character-profile/v1` profile is stored with the local traveler in SQLite and restored on reconnect. Proportion controls are hand-authored shape targets, not a scan-based fitting system. Other sessions and NPCs remain in world data but are hidden from this preview. The server-side world history and authoring APIs remain available.
+Open <http://127.0.0.1:8765>. The local server and world APIs run, but the prior female character model and its visually connected appearance controls were removed because their rights were undocumented. The client is awaiting a reviewed, licensed replacement model; appearance profile persistence remains a data prototype.
 
 To reset the save, stop the server and remove `data/world.sqlite3`.
 
@@ -38,27 +38,27 @@ ATLAS_ASSET_DIR=/path/to/models python3 -m atlas_server
 
 Only supported model, animation, and image resources are served under same-origin `/assets/` URLs. Paths are confined to the configured directory; scripts, archives, and source-project files are not exposed. Keep glTF sidecars such as `.bin` and texture images beside their model at the relative paths recorded in the glTF file. Asset origins, licenses, modifications, and checksums are recorded in `web/assets/manifest.yaml`.
 
-The glTF model loader accepts paths relative to the configured asset directory and returns a cloned scene plus any embedded clips:
+The glTF model loader accepts paths relative to the configured asset directory and returns a cloned scene plus any embedded clips. There is currently no registered model to load:
 
 ```js
 import { ModelAssetLoader } from './model_loader.js';
 
 const modelLoader = new ModelAssetLoader();
-const { scene, animations } = await modelLoader.load('characters/female_base_atlas_v1.glb');
+const { scene, animations } = await modelLoader.load('characters/<registered-model>.glb');
 world.add(scene);
 ```
 
-All traveler instances use the female base at `female_base_atlas_v1.glb`. Its source body, optional underwear meshes, and customization targets share the 67-bone Mixamo rig. The bundled Mixamo idle, walk, run, jump, fall, and landing clips are loaded once and retargeted to the character's matching bone names. Root travel stays server-authoritative, walk/run timing follows movement speed, and transitions blend between states. The retargeter omits the hips rotation because the Blender glTF export applies an axis correction there; Atlas keeps root orientation and movement in control. Shape controls currently change the matching hand-authored morph targets on the body and garments. See `web/assets/manifest.yaml` for asset checksums and provenance.
+No character GLB or animation clips are currently registered. The raw Mixamo files were removed because the project does not need standalone animation source files before a licensed character mesh is available. See `web/assets/manifest.yaml` and [`specs/asset-provenance.md`](specs/asset-provenance.md).
 
-For new Blender clothing assets, see [`specs/atlas-clothing-authoring.md`](specs/atlas-clothing-authoring.md) and run `tools/characters/prepare_clothing_asset.py` to transfer Atlas bone weights and body morphs and export a skinned GLB.
+Clothing authoring is paused until a licensed, reviewed base mesh and rig are available. The old female-base clothing tools depended on the removed asset and are not a usable current workflow.
 
 ### Text-to-character generation
 
-The creator workflow uses a compact, validated [`atlas-character-design-profile/v1`](specs/atlas-character-design-profile-v1.schema.json) contract. The current Blender generator makes low-detail concept blockouts; it has no high-detail text-to-3D backend. Blockout generation now requires `--allow-blockout`, and the review gate will not accept one as a rigging candidate until it has been manually sculpted and reviewed. A front-view image can adjust silhouette width, but it cannot supply hidden geometry, surface detail, or production topology. The Stone Troll's licensed calibration is measurement-only because its source model does not match the requested design. See [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the actual limits and review gates.
+The creator workflow uses a compact, validated [`atlas-character-design-profile/v1`](specs/atlas-character-design-profile-v1.schema.json) contract. The current Blender generator makes low-detail concept blockouts; it has no high-detail text-to-3D backend. Blockout generation requires `--allow-blockout`, and the review gate will not accept one as a rigging candidate until it has been manually sculpted and reviewed. A front-view image can adjust silhouette width, but it cannot supply hidden geometry, surface detail, or production topology. Reference intake requires documented reuse rights; no Stone Troll reference image is currently retained. See [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the actual limits and review gates.
 
-Run `npm run assets:check` to validate the registered runtime asset paths and SHA-256 checksums, GLB skin structure, and consistency between the female base and humanoid rig contracts. New clothing exports include a runtime checksum and remain marked for fit review and rights review until those gates are completed. `npm run assets:release-check` additionally fails unless every registered asset has `redistribution_status: cleared`; do not clear that field without documenting the applicable redistribution terms. The automated check does not replace the required visual preview through idle, walk, run, jump, fall, and land.
+Run `npm run assets:check` to validate registered asset paths and SHA-256 checksums, plus GLB skin structure when a manifest entry declares its skeleton contract. `npm run assets:release-check` also requires every registered asset to have `redistribution_status: cleared`; do not clear that field without documenting the applicable redistribution terms. Automated checks do not replace visual review.
 
-The female character's rig-weighted region map lives in `art/characters/atlas_female_base_v1/atlas_body_regions_v1.json`. Rebuild it after a base-model change with `blender --background --python tools/characters/build_body_region_schema.py`. Clothing preparation requires explicit `--region` values and writes to `art/characters/pending_equipment/`; pending exports are not runtime-visible. After inspecting every morph extreme and all six locomotion states, register clothing with `npm run assets:register-clothing -- --help`. Registration requires a completed fit checklist, a named reviewer, and explicit rights evidence. The server serves clothing only when the registry marks it approved and its checksum matches.
+The previous female-base region map, derived vest, and source workspaces were removed. The generic clothing preparation code needs a new licensed base/rig contract before it can be used safely.
 
 The character sandbox uses a level 40×14 walkable area with no static scenery colliders.
 
@@ -66,7 +66,7 @@ The character sandbox uses a level 40×14 walkable area with no static scenery c
 
 Use **1–5** while playing to switch the movement request simulator: **1** local, **2** good (50 ms), **3** average (120 ms), **4** bad (250 ms), and **5** packet-loss mode (10%). The debug strip reports RTT, jitter, simulated loss, retries, queued acknowledgements, and reconciliation correction. The simulator retries sequenced fixed-tick movement batches; duplicate retries are idempotent on the server. This is a local HTTP stress tool, not a packet-driven multiplayer transport.
 
-Run `npm run ci` for deterministic JavaScript network/property-style checks, Python movement and rewind checks, and a client build. Both runtimes consume `tests/fixtures/movement-contract.json` to verify the same 60 Hz acceleration, diagonal-run, stop, and terrain-footprint behavior. The test setup uses Node's built-in runner instead of adding Jest or property-testing packages to this small JavaScript project. Gameplay and NPC state remain server-side prototypes; the browser currently renders the female character alone for model work.
+Run `npm run ci` for deterministic JavaScript network/property-style checks, Python movement and rewind checks, asset validation, and a client build. Gameplay and NPC state remain server-side prototypes; character rendering is awaiting an approved runtime mesh.
 
 ## What this proves
 

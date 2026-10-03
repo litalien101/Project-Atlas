@@ -217,9 +217,10 @@ versioned rather than stored as undocumented free-form keys.
 `tools/characters/generate_character_base.py` creates a deterministic
 parametric blockout and can measure a front image's silhouette. The image fit
 adjusts widths; it does not generate detailed hidden geometry, materials, or a
-rig. The Stone Troll's licensed calibration is measurement-only because that
-source does not match the requested troll design and its mesh is unsuitable as
-a production seed.
+rig. The earlier Sketchfab Troll calibration and Bing Image Creator references
+were removed because reuse rights could not be verified or the source was
+unavailable. The licensed Troll Mauler and Blender human-base bundle remain
+documented authoring references; neither is accepted Atlas geometry.
 
 The generator now refuses the procedural path unless `--allow-blockout` is
 explicit. Its record labels the output `blockout_only`. The base-review tool
@@ -570,21 +571,22 @@ implemented.
 - **Texture, landmark, rig, and animation stages:** Existing marker guides and
   manual marker-placement UI are a handoff foundation. Texture recipe/build,
   assisted marker placement, a Stone Troll skeleton/weight generator, and its
-  animation authoring/approval stages are not implemented. Existing locomotion
-  clips and retargeting serve the registered browser base character only.
-- **Rig and base assets:** `ATLAS_HUMANOID_V1` documents the Mixamo-compatible
-  bone contract. The browser uses the registered female GLB, six locomotion
-  clips, a character animation controller, and a retargeter. The generated
-  Stone Troll is not a registered runtime character.
-- **Clothing and runtime assets:** `prepare_clothing_asset.py` transfers
-  compatible skin weights and body morph targets. `register_clothing_asset.py`
-  and `validate_character_assets.py` check registration, hashes, rig
-  compatibility, and rights state. Pending authoring assets are not runtime
-  assets until reviewed and registered.
-- **Appearance persistence:** browser controls save a validated traveler
-  appearance profile through the local server into SQLite. Current controls
-  address hand-authored body morphs and existing assets; hair, age, stress, and
-  emotion do not yet drive appearance.
+  animation authoring/approval stages are not implemented. The former raw
+  Mixamo clips were removed during the rights audit; no character animations are
+  currently registered.
+- **Rig and base assets:** No character GLB, rig, or animation clips are
+  currently registered. The previous female model, model-derived humanoid rig,
+  vest, and raw Mixamo FBXs were removed because their source rights did not
+  support retaining those files in the public project repository.
+- **Clothing and runtime assets:** Clothing preparation code remains, but its
+  former base mesh and body-region map were removed. It is not a usable workflow
+  until a licensed replacement mesh and rig pass review. The asset validator
+  checks registered paths and checksums, plus GLB skinning when a manifest entry
+  supplies its skeleton contract.
+- **Appearance persistence:** browser controls can save a validated traveler
+  appearance profile through the local server into SQLite. With the prior model
+  removed, the profile currently has no registered character mesh to affect;
+  hair, age, stress, and emotion do not drive appearance.
 - **World persistence and analysis:** ontology-validated entities, relationships,
   actions, and provenance events are stored in SQLite. APIs expose authored
   graph edits, knowledge/memory reads, observed-event analytics, a narrow
@@ -596,8 +598,8 @@ implemented.
 | --- | --- | --- |
 | Design profiles | Implemented | Structured JSON; free-form prompts are not parsed by Blender. |
 | Parametric character builder | Implemented as blockout | Not a high-detail sculpt generator. Explicit `--allow-blockout` is required. |
-| Front-image measurement | Implemented, limited | Measures silhouette widths; cannot infer depth or production surface detail. |
-| Licensed Troll calibration | Measurement-only | Its geometry is not the Stone Troll design and must not be reused as the default mesh. |
+| Front-image measurement | Tool implemented, no retained image data | Use only sources with documented rights; a single view cannot infer depth or production surface detail. |
+| Licensed Troll calibration | Not retained | Stale calibration tied to an unavailable source was removed; CC-BY Troll Mauler remains an authoring reference only. |
 | Base review gate | Implemented, human-led | Requires sculpt and T-pose attestations; approval unlocks rig work only. |
 | Stone Troll geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. Texturing is a later stage. |
 | Recipe compiler | Implemented | Applies authored profile/grammar data; does not learn from a dataset. |
@@ -605,14 +607,14 @@ implemented.
 | AI request-to-recipe drafting | Planned | AI may draft structured proposals; deterministic validation and build execution remain required. |
 | Geometry-to-texture approval workflow | Planned | Geometry-first order is documented; no general stage-state service or procedural texture builder exists. |
 | AI-assisted landmark proposal | Planned | Current Blender add-on supports human placement; suggestions, confidence, and provenance are not implemented. |
-| Stone Troll rig and animation pipeline | Not implemented | Existing rig/animation assets apply to the registered browser base character, not the Troll candidate. |
+| Stone Troll rig and animation pipeline | Not implemented | No character rig or animation clips are currently registered. |
 | Structured observation dataset | Contract groundwork | Observation schema and intake guidance are defined; no reviewed dataset has been collected. |
-| Relationship discovery/miner | Planned | Wait until the model pipeline and observation vocabulary are stable. |
+| Relationship discovery/miner | Planned | Recipe curation can run alongside geometry work; do not claim mined findings until the vocabulary and independent licensed dataset support them. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |
 | Production-quality model generation | Not implemented | Requires a suitable modeling path and high-detail source/sculpt; do not claim the current blockout is production ready. |
 | Shared pipeline for every game model category | Not implemented | Character generation and clothing preparation exist; there is no unified generator for props, buildings, environments, and all assets. |
 | Age/stress-driven appearance | Not implemented | No simulation state currently changes hair, materials, morphs, or other visual traits over time. |
-| Playable world client | Prototype implemented | Browser sandbox, server-authoritative movement, traveler appearance persistence, limited interactions. |
+| Playable world client | Prototype implemented | Browser world/movement sandbox and appearance data persistence; no character model is currently registered after rights cleanup. |
 | World graph and history | Local foundation implemented | SQLite entities/relationships and immutable, provenance-bearing events; loopback development API. |
 | Analytics and simulation | Narrow prototype implemented | Event counts and one deterministic recorded-event resource-progression counterfactual. |
 | NPC personality, emotion, memory, autonomous behavior | Not implemented | Current NPCs and dialogue are scripted prototypes; no persistent agent mind/state yet. |
@@ -652,17 +654,21 @@ implemented.
 
 **Status: safeguards are implemented; the target geometry milestone remains
 open.** The milestone is a reviewed geometry-only Stone Troll in a complete
-T-pose. It does not require final textures or surface detailing.
+T-pose. It does not require final textures or surface detailing. The previous
+browser base was removed during a rights audit; no accepted runtime character
+mesh is registered at present.
 
 - Done: procedural output is opt-in and labeled `blockout_only`.
 - Done: acceptance fails closed without explicit sculpt and T-pose review; marker
   placement/export requires a checksum-matched review scoped only to rig work.
-- Done: the unsuitable Troll calibration stays measurement-only and rejected
-  procedural previews are removed from active pending-model folders.
+- Done: the unsuitable Sketchfab Troll calibration, unlicensed Bing reference
+  images, and derived measurements were removed; rejected procedural previews
+  are removed from active pending-model folders.
 - Available for evaluation: pinned CC-BY Troll Mauler and CC0 Blender human
   base references; neither is a target-matching, T-pose Atlas mesh.
-- Remaining: sculpt or build a new Stone Troll geometry source, ensure both
-  hands connect through the wrists and arms, pose it to the required T-pose,
+- Remaining: build a new Stone Troll geometry source from licensed references
+  or original authorship, ensure both hands connect through the wrists and arms,
+  pose it to the required T-pose,
   and review proportions/topology before texture/detail authoring.
 
 ### Phase B — Stabilize model authoring
@@ -756,9 +762,9 @@ T-pose. It does not require final textures or surface detailing.
 
 ## Decision log
 
-- The Stone Troll's `troll.glb` calibration stays `review_only`: its geometry
-  does not match the requested design, and measured topology showed many mesh
-  components and open boundaries.
+- The unavailable Sketchfab Troll calibration and Bing-generated reference
+  images are no longer retained. The pinned CC-BY Troll Mauler and CC0 Blender
+  human-base bundle are authoring references only, not the target mesh.
 - The base-mesh milestone is geometry-first: a reviewed, design-matched T-pose
   sculpt. It is not a textured or runtime-ready character; surface detail work
   follows geometry acceptance.
@@ -772,9 +778,10 @@ T-pose. It does not require final textures or surface detailing.
   compatible; downloaded models remain references until independently reviewed.
 - A front image is a measurement guide, not a complete 3D asset. Width fitting
   alone cannot solve the model-quality problem.
-- Recipe learning is a later stage than model-pipeline stabilization. The
-  observation contract can be prepared now; no statistical findings should be
-  claimed until reviewed independent examples exist.
+- Curate target recipes and rights-cleared independent observations in parallel
+  with geometry work. The authored Stone Troll recipe is not statistical
+  evidence; do not claim mined findings until reviewed independent examples
+  exist.
 - Implement recipe learning first as an offline Python library/CLI in the
   repository. A separate network service is unnecessary until scale,
   collaboration, or deployment needs justify one.
@@ -802,9 +809,9 @@ do not describe a planned stage as working software.
   suitable high-detail source is configured.
 - Added a `generation_quality` record and a review acknowledgment required
   before a blockout-derived base can be accepted for rigging.
-- Reverted the Stone Troll calibration to measurement-only and removed stale
-  generated preview artifacts from the active pending-model directory. Rejected
-  files were retained under `/tmp` during this work.
+- Historical note: the Stone Troll calibration was reverted to measurement-only
+  and stale generated previews removed. A later rights audit removed the
+  unavailable calibration and unverified reference images entirely.
 - Checked the profile validator, Python syntax compilation, and diff formatting;
   no full test suite was run.
 
@@ -916,3 +923,24 @@ do not describe a planned stage as working software.
   yet enforce the complete stage machine or provide AI recipe/marker services.
 - Verified Python syntax, diff formatting, and SHA-256 hashes for the pinned
   reference downloads. No test suite was run.
+
+### 2026-10-03 — Rights audit and asset cleanup
+
+- Removed the female runtime/source model and its textures, underwear archive,
+  model-derived rig and body-region records, pending Wayfarer vest, and vest
+  workspace because the underlying reuse rights were undocumented.
+- Removed the two Bing Image Creator reference images, derived silhouette
+  measurements, and stale Troll calibration/comparison records whose source was
+  unavailable or whose reuse rights were not verifiable for this project.
+- Removed the female-base runtime manifest entry, six raw Mixamo FBX clips, and
+  disabled character-model loading in the browser. No character mesh or
+  animation clips are registered pending rights-cleared replacements.
+- Kept the CC-BY Troll Mauler and CC0 Blender human-base references with their
+  pinned checksums and license records. They remain references only.
+- Updated the asset validator to check registered paths/checksums and GLB
+  skinning when a manifest entry declares its skeleton contract. Updated status
+  and clothing documentation to identify base-dependent tools as unusable.
+- No measurements from the removed image are retained. Recipe evidence
+  collection remains an active parallel task and must use rights-cleared,
+  independent examples; the authored Stone Troll profile is a target recipe,
+  not learned evidence.

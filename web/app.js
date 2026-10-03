@@ -8,9 +8,10 @@ import { retargetAnimationClips } from './animation/retarget.js';
 import { ModelAssetLoader } from './model_loader.js';
 
 const modelAssetLoader = new ModelAssetLoader();
-const travelerModelPaths = Object.freeze({
-  female: 'characters/female_base_atlas_v1.glb',
-});
+// No licensed Atlas runtime character is currently registered. Keep the
+// loading hook ready for the reviewed replacement model without fetching the
+// removed, rights-unverified prototype.
+const travelerModelPaths = Object.freeze({});
 let travelerAnimationsPromise = null;
 const travelerModelBounds = new Map();
 function loadTravelerAnimations() {

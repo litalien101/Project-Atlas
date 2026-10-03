@@ -1,2 +1,4 @@
 # PyYAML is MIT-licensed and is used with safe_load() to read Atlas's YAML contracts.
 PyYAML>=6.0,<8
+# JSON Schema validation for versioned model and observation contracts.
+jsonschema>=4.18,<5

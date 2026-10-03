@@ -24,9 +24,6 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "web/assets/manifest.yaml"
-RIG_CONTRACT = ROOT / "art/characters/atlas_humanoid_v1/atlas_humanoid_v1.json"
-BASE_CONTRACT = ROOT / "art/characters/atlas_female_base_v1/atlas_female_base_v1.json"
-BODY_REGIONS = ROOT / "art/characters/atlas_female_base_v1/atlas_body_regions_v1.json"
 SHA256_LENGTH = 64
 REQUIRED_FIT_REVIEW_CHECKS = {
     "idle", "walk", "run", "jump", "fall", "land", "morph_low", "morph_high",
@@ -139,7 +136,7 @@ def manifest_entries() -> list[dict[str, Any]]:
         parsed = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
     except (OSError, yaml.YAMLError) as error:
         raise ValidationError(f"Cannot read asset manifest: {error}") from error
-    require(isinstance(parsed, list) and parsed, "Asset manifest must be a non-empty YAML list")
+    require(isinstance(parsed, list), "Asset manifest must be a YAML list")
     ids: set[str] = set()
     paths: set[str] = set()
     for entry in parsed:
@@ -179,8 +176,16 @@ def validate_manifest(entry_list: list[dict[str, Any]], release: bool) -> list[s
             require(actual == expected.lower(),
                     f"{asset_id}: checksum mismatch for {relative}; expected {expected}, got {actual}")
             if path.suffix.lower() == ".glb":
-                rig = json.loads(RIG_CONTRACT.read_text(encoding="utf-8"))
-                validate_skinned_glb(path, rig["bones"])
+                skeleton = entry.get("skeleton_contract")
+                if skeleton:
+                    require(isinstance(skeleton, str), f"{asset_id}: skeleton_contract must name a JSON file")
+                    contract_path = (ROOT / skeleton).resolve()
+                    require(contract_path.is_relative_to(ROOT.resolve()) and contract_path.is_file(),
+                            f"{asset_id}: missing or unsafe skeleton contract {skeleton}")
+                    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+                    require(isinstance(contract.get("bones"), list),
+                            f"{asset_id}: skeleton contract has no bones list")
+                    validate_skinned_glb(path, contract["bones"])
 
         license_text = str(entry.get("license", "")).lower()
         rights = entry.get("redistribution_status")
@@ -208,41 +213,16 @@ def validate_manifest(entry_list: list[dict[str, Any]], release: bool) -> list[s
     return warnings
 
 
-def validate_contract_consistency() -> None:
-    try:
-        rig = json.loads(RIG_CONTRACT.read_text(encoding="utf-8"))
-        base = json.loads(BASE_CONTRACT.read_text(encoding="utf-8"))
-        regions = json.loads(BODY_REGIONS.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as error:
-        raise ValidationError(f"Cannot read character contract: {error}") from error
-    require(rig.get("skeleton_id") == base.get("skeleton_id"), "Base model and humanoid rig skeleton IDs differ")
-    require(rig.get("bone_count") == base.get("bone_count"), "Base model and humanoid rig bone counts differ")
-    source_hash = rig.get("source_sha256")
-    expected_hash = base.get("runtime_sha256")
-    require(source_hash == expected_hash,
-            "Humanoid rig source_sha256 does not match female base runtime_sha256; rebuild the rig reference")
-    require(regions.get("schema") == "atlas-body-regions/v1", "Unsupported body-region schema")
-    require(regions.get("source_sha256") == expected_hash,
-            "Body-region map is stale; rebuild it from the current female base")
-    require(regions.get("skeleton_id") == rig.get("skeleton_id"),
-            "Body-region map targets a different skeleton")
-    require(isinstance(regions.get("regions"), dict) and {
-        "head", "torso", "left_arm", "right_arm", "left_hand", "right_hand",
-        "left_leg", "right_leg", "left_foot", "right_foot",
-    }.issubset(regions["regions"]), "Body-region map is incomplete")
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--release", action="store_true", help="Fail unless every asset's redistribution status is cleared")
     args = parser.parse_args()
     try:
-        validate_contract_consistency()
         warnings = validate_manifest(manifest_entries(), args.release)
     except ValidationError as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
-    print("PASS: character asset files, checksums, glTF skin structure, and rig references are consistent")
+    print("PASS: registered asset paths and checksums are valid; GLB skeletons are checked when a contract is declared")
     for warning in warnings:
         print(f"REVIEW: {warning}")
     return 0

@@ -8,29 +8,12 @@
     "design_summary": "Realistic fantasy troll with an anatomically grounded heavy build, broad heavy nose and jaw, moss-green skin, slate mottling, amber eyes, swept-back horns, small ivory tusks, and broad pointed ears.",
     "assumptions": [
       "The procedural base remains a blockout and does not provide finished troll-specific topology or surface detail.",
-      "The CC BY 4.0 Troll mesh is a measurement reference only; its rest pose and design differ from this concept. It is not used as generated geometry.",
+      "The CC-BY Troll Mauler is an authoring reference only; its rest pose and design differ from this concept. It is not used as generated geometry.",
       "The requested actions are rig requirements; this profile does not generate animation clips."
     ]
   },
   "base_template": "atlas_parametric_humanoid_v1",
   "style": "realistic",
-  "reference_calibration": {
-    "record": "art/characters/reference_calibrations/troll_sketchfab.json",
-    "source_path": "../troll.glb",
-    "source_sha256": "55202c278dbf55637a084e1dc2608266619272f2e257da240adfe9d33b54eb4e",
-    "license": "CC-BY-4.0",
-    "use": "review_only",
-    "measurements": {
-      "width_over_height": 0.685692,
-      "depth_over_height": 0.38827,
-      "pelvis_height_percent": 40.939,
-      "shoulder_height_percent": 78.564,
-      "left_knee_height_percent": 21.802,
-      "left_ankle_height_percent": 6.523,
-      "head_height_percent": 86.532,
-      "left_eye_height_percent": 91.647
-    }
-  },
   "body": {
     "height_cm": 220,
     "build_percent": 118,

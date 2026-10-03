@@ -12,7 +12,7 @@ Character creation uses small, reviewable artifacts at each stage:
 2. **Profile to base model.** Blender currently creates a low-detail procedural
    blockout only. Generation requires the explicit `--allow-blockout` flag so a
    preview cannot be mistaken for a high-detail production model. An optional
-   front image adjusts the blockout's silhouette; it does not create new anatomy. It places
+   licensed front image adjusts the blockout's silhouette; it does not create new anatomy. It places
    named landmark guides and writes a review-only `.blend` plus static GLB
    preview under `art/characters/pending_models/`.
 3. **Human base review.** Inspect the silhouette and feature placement. Record
@@ -78,9 +78,9 @@ but T-pose remains the default.
 Procedural mode creates a new blockout mesh from parametric body forms; it is
 not a high-detail sculpt or a substitute for authored anatomy and materials.
 The generator refuses to create this blockout unless `--allow-blockout` is
-passed. Profiles marked `use: review_only` use measurements only. The current
-Stone Troll calibration is measurement-only because its source model does not
-match the requested design and has unsuitable surface topology. The profile exposes body
+passed. The former Stone Troll reference calibration was removed during the
+rights audit because its source was unavailable. Use only calibrated sources
+with documented rights. The profile exposes body
 proportions plus muscle definition and jaw, nose, hand, foot, and ear controls. Troll, orc, elf, and goblin
 also have modest deterministic silhouette priors; these are starting points,
 not species-specific anatomy. Horns, tusks, eyes, brows, and pointed ears are
@@ -231,31 +231,13 @@ neither listed source is an approved Stone Troll result.
 
 ## Licensed reference calibration
 
-Use licensed exemplars to measure proportions and compare recipe outputs. Keep
-the source file outside runtime assets; the calibration record stores its hash,
-embedded source/license attribution, normalized cross-sections, and rest-pose
-rig landmarks. It does not copy source geometry, materials, skinning, or motion.
-
-```sh
-blender --background --python tools/characters/calibrate_character_reference.py -- \
-  --source /path/to/reference.glb \
-  --output art/characters/reference_calibrations/reference_name.json
-
-blender --background --python tools/characters/calibrate_character_reference.py -- \
-  --source art/characters/pending_models/stone_troll/character_base_preview.glb \
-  --output /tmp/stone_troll_generated_calibration.json
-
-python3 tools/characters/compare_character_calibrations.py \
-  --reference art/characters/reference_calibrations/troll_sketchfab.json \
-  --generated-calibration /tmp/stone_troll_generated_calibration.json \
-  --character-record art/characters/pending_models/stone_troll/character.json \
-  --output art/characters/reference_calibrations/stone_troll_atlas_comparison.json
-```
-
-Licensed references currently support measurements only. A future seed-mesh
-path requires explicit asset review; do not promote a measurement reference to
-geometry merely because a license permits reuse. Whole-mesh sections can be
-skewed by pose, and source bone positions are not Atlas rig targets.
+The current authoring references are listed in
+[`../art/characters/sources/README.md`](../art/characters/sources/README.md).
+The CC-BY Troll Mauler and CC0 human-base bundle may be inspected locally as
+licensed references, but neither has a calibration record or is approved Atlas
+geometry. Create a new calibration only from a source with recorded rights,
+and retain its source hash and license alongside the measurements. Do not use
+Mixamo animation content for recipe learning or AI/ML training.
 
 Install `tools/characters/atlas_marker_placement_addon.py` through Blender's
 Preferences > Add-ons > Install from Disk, enable **Atlas Landmark Placement**,

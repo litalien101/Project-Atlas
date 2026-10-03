@@ -45,14 +45,14 @@
       "silhouette_tags": ["human_proportions"],
       "material_tags": ["skin"],
       "review_status": "approved",
-      "evidence": ["atlas_humanoid_v1"]
+      "evidence": []
     },
     "troll": {
       "proportion_multipliers": { "jaw": 1.03, "hand": 1.04, "foot": 1.03, "ear": 1.05, "nose": 1.04, "head": 1.0 },
       "silhouette_tags": ["heavy_upper_body", "broad_shoulder_girdle", "large_hands", "grounded_stance"],
       "material_tags": ["rough_skin", "moss_mottling", "scars"],
       "review_status": "draft",
-      "evidence": ["troll_sketchfab"]
+      "evidence": []
     },
     "orc": {
       "proportion_multipliers": { "jaw": 1.16, "hand": 1.08, "foot": 1.04, "ear": 1.0, "nose": 1.10, "head": 1.04 },
