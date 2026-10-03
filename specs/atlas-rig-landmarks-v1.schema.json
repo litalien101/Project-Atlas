@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Rig Landmarks v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "character_id", "coordinate_frame", "source_base_review_sha256", "marker_status", "markers"],
+  "properties": {
+    "schema": { "const": "atlas-rig-landmarks/v1" },
+    "character_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,47}$" },
+    "coordinate_frame": { "const": "ATLAS_GENERATED_CHARACTER_ROOT local meters, Z up" },
+    "source_base_review_sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "marker_status": { "const": "placement_exported_review_required" },
+    "markers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root", "spine_lower", "spine_upper", "neck", "head", "crown",
+        "collarbone_left", "collarbone_right", "eye_left", "eye_right",
+        "eyebrow_left", "eyebrow_right", "nose", "shoulder_left", "elbow_left",
+        "wrist_left", "hand_left", "shoulder_right", "elbow_right", "wrist_right",
+        "hand_right", "hip_left", "knee_left", "ankle_left", "hip_right", "knee_right", "ankle_right"
+      ],
+      "properties": {
+        "root": { "$ref": "#/$defs/point" },
+        "spine_lower": { "$ref": "#/$defs/point" },
+        "spine_upper": { "$ref": "#/$defs/point" },
+        "neck": { "$ref": "#/$defs/point" },
+        "head": { "$ref": "#/$defs/point" },
+        "crown": { "$ref": "#/$defs/point" },
+        "collarbone_left": { "$ref": "#/$defs/point" },
+        "collarbone_right": { "$ref": "#/$defs/point" },
+        "eye_left": { "$ref": "#/$defs/point" },
+        "eye_right": { "$ref": "#/$defs/point" },
+        "eyebrow_left": { "$ref": "#/$defs/point" },
+        "eyebrow_right": { "$ref": "#/$defs/point" },
+        "nose": { "$ref": "#/$defs/point" },
+        "shoulder_left": { "$ref": "#/$defs/point" },
+        "elbow_left": { "$ref": "#/$defs/point" },
+        "wrist_left": { "$ref": "#/$defs/point" },
+        "hand_left": { "$ref": "#/$defs/point" },
+        "shoulder_right": { "$ref": "#/$defs/point" },
+        "elbow_right": { "$ref": "#/$defs/point" },
+        "wrist_right": { "$ref": "#/$defs/point" },
+        "hand_right": { "$ref": "#/$defs/point" },
+        "hip_left": { "$ref": "#/$defs/point" },
+        "knee_left": { "$ref": "#/$defs/point" },
+        "ankle_left": { "$ref": "#/$defs/point" },
+        "hip_right": { "$ref": "#/$defs/point" },
+        "knee_right": { "$ref": "#/$defs/point" },
+        "ankle_right": { "$ref": "#/$defs/point" }
+      }
+    }
+  },
+  "$defs": {
+    "point": { "type": "array", "minItems": 3, "maxItems": 3, "items": { "type": "number" } }
+  }
+}

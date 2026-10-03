@@ -1,0 +1,24 @@
+{
+  "name": "project-atlas-reach-client",
+  "private": true,
+  "type": "module",
+  "version": "0.2.0",
+  "description": "Original 3D browser client for the Atlas Reach reference world",
+  "scripts": {
+    "build": "esbuild web/app.js --bundle --minify --format=esm --legal-comments=external --outfile=web/game.js",
+    "assets:check": "python3 tools/characters/validate_character_assets.py",
+    "assets:release-check": "python3 tools/characters/validate_character_assets.py --release",
+    "assets:register-clothing": "python3 tools/characters/register_clothing_asset.py",
+    "characters:profile-check": "python3 tools/characters/validate_character_design_profile.py",
+    "test": "node --test web/tests/*.test.mjs",
+    "test:stress": "node --test web/tests/network.test.mjs",
+    "test:python": "python3 -m unittest discover -s tests -v",
+    "ci": "npm run test && npm run test:python && npm run assets:check && npm run build"
+  },
+  "dependencies": {
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
+}

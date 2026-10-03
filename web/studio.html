@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101714">
+  <title>Atlas Studio · Project Atlas</title>
+  <link rel="stylesheet" href="/studio.css">
+  <script defer src="/studio.js"></script>
+</head>
+<body>
+  <main class="studio-shell">
+    <aside class="studio-rail">
+      <a class="atlas-mark" href="/" aria-label="Return to The Reach"><span>A</span><b>PROJECT<br>ATLAS</b></a>
+      <div class="rail-rule"></div>
+      <small class="rail-label">STUDIO</small>
+      <nav aria-label="Studio sections"><a class="rail-link is-active" href="#simulation">World simulation</a><a class="rail-link" href="#governance">Governance</a></nav>
+      <div class="rail-bottom"><i></i><span>LOCAL REFERENCE WORLD<br><b id="connection-label">CONNECTING</b></span></div>
+    </aside>
+
+    <section class="studio-main">
+      <header class="studio-header"><div><div class="eyebrow">THE REACH <span>/</span> CREATOR WORKSPACE</div><h1>World intelligence</h1></div><a class="return-link" href="/">← Return to the valley</a></header>
+      <section class="intro-row"><div><p>Explore a rule change against recorded world history. Atlas keeps the evidence, policy checks, and human decision connected.</p></div><div class="world-chip"><i></i> PRODUCTION WORLD · READ ONLY</div></section>
+
+      <section class="workspace-grid" id="simulation" aria-label="Simulation workspace">
+        <article class="panel proposal-panel">
+          <div class="panel-kicker"><span>01</span> PROPOSED CHANGE</div>
+          <h2>Beacon resource cost</h2>
+          <p class="panel-copy">Compare the current lumen-reed cost with a candidate rule. This run replays recorded gathering and beacon activations.</p>
+          <label class="field-label" for="reed-cost">LUMEN REEDS REQUIRED</label>
+          <div class="cost-control"><input id="reed-cost" type="range" min="1" max="4" step="1" value="3"><output id="cost-output" for="reed-cost">3 reeds</output></div>
+          <div class="range-labels"><span>1 · LOWER GATE</span><span>4 · HIGHER GATE</span></div>
+          <div class="baseline-line">CURRENT WORLD RULE <b id="baseline-cost">Loading…</b></div>
+          <button class="primary-action" id="run-simulation" type="button">Run simulation <span>→</span></button>
+          <p class="action-note">Simulation is isolated. The production world will not change.</p>
+        </article>
+
+        <article class="panel pipeline-panel" aria-live="polite">
+          <div class="panel-kicker"><span>02</span> EVIDENCE PIPELINE</div>
+          <h2 id="pipeline-title">Ready when you are</h2>
+          <p class="panel-copy" id="pipeline-copy">A simulation, policy evaluation, and decision record will appear here in sequence.</p>
+          <ol class="pipeline-steps" id="pipeline-steps">
+            <li data-step="simulation"><i>1</i><span><b>Simulation</b><small>Replay recorded events</small></span><em>WAITING</em></li>
+            <li data-step="policy"><i>2</i><span><b>Policy</b><small>Check creator constraints</small></span><em>WAITING</em></li>
+            <li data-step="decision"><i>3</i><span><b>Decision</b><small>Explain recommendation</small></span><em>WAITING</em></li>
+            <li data-step="review"><i>4</i><span><b>Human review</b><small>Creator remains in control</small></span><em>WAITING</em></li>
+          </ol>
+          <div class="pipeline-result" id="pipeline-result" hidden></div>
+        </article>
+      </section>
+
+      <section class="workspace-grid lower-grid" id="governance">
+        <article class="panel review-panel" id="review-panel" hidden>
+          <div class="panel-kicker"><span>03</span> HUMAN DECISION</div>
+          <h2>Review the proposal</h2>
+          <p class="panel-copy">Approval queues the change for deployment. It does not deploy or alter the running world.</p>
+          <label class="field-label" for="review-rationale">WHY ARE YOU MAKING THIS DECISION?</label>
+          <textarea id="review-rationale" minlength="12" maxlength="1000" rows="3" placeholder="Record the evidence or creator intent behind your choice."></textarea>
+          <div class="review-actions"><button data-review-action="approve" type="button">Approve</button><button data-review-action="reject" type="button">Reject</button><button data-review-action="delay" type="button">Delay</button><button data-review-action="escalate" type="button">Escalate</button></div>
+        </article>
+        <article class="panel evidence-panel" id="evidence-panel">
+          <div class="panel-kicker"><span>04</span> EVIDENCE & LIMITS</div>
+          <h2>What this model knows</h2>
+          <p class="panel-copy">The result is exact only for the event sequence shown. It does not infer missing actions or predict player behavior.</p>
+          <div class="evidence-stats"><div><small>WORLD EVENT WINDOW</small><b id="event-window">Not run</b></div><div><small>OBSERVED ACTIVATIONS</small><b id="activation-count">Not run</b></div><div><small>EVIDENCE REFERENCES</small><b id="evidence-count">Not run</b></div></div>
+          <details><summary>Read model limitations</summary><ul id="limitations-list"><li>Failed activation attempts are not recorded by the current game.</li><li>Player choice, retention, and satisfaction are outside this deterministic model.</li><li>Any deployed change will require a separate approval-gated action.</li></ul></details>
+          <div class="evidence-ids" id="evidence-ids" hidden></div>
+        </article>
+      </section>
+      <footer class="studio-footer"><span>ATLAS · EXPLAINABLE WORLD CHANGE</span><span>LOCAL DEVELOPMENT WORKSPACE</span></footer>
+      <div class="studio-toast" id="studio-toast" role="status" aria-live="polite" hidden></div>
+    </section>
+  </main>
+</body>
+</html>

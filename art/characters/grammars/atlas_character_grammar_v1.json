@@ -1,0 +1,88 @@
+{
+  "schema": "atlas-character-grammar/v1",
+  "grammar_id": "atlas_character_grammar",
+  "revision": 1,
+  "anatomy_relationships": [
+    {
+      "region": "shoulder_girdle",
+      "relations": [
+        "clavicle connects sternum to scapula",
+        "scapula supports the deltoid and upper arm",
+        "pectorals blend chest into the front of the upper arm",
+        "latissimus blends back into the rear of the upper arm",
+        "axilla is a continuous concave transition between torso and upper arm"
+      ],
+      "surface_policy": "Generate as one continuous deformable body surface with a smooth shoulder-to-chest transition; no floating shoulder or armpit filler objects.",
+      "review_status": "draft"
+    },
+    {
+      "region": "limb_junctions",
+      "relations": [
+        "upper arm joins the shoulder girdle",
+        "forearm joins upper arm at elbow",
+        "thigh joins pelvis at hip",
+        "calf joins thigh at knee"
+      ],
+      "surface_policy": "Maintain surface continuity through the neutral pose and preserve volume across joint landmarks.",
+      "review_status": "approved"
+    }
+  ],
+  "shared_defaults": {
+    "proportion_multipliers": {
+      "jaw": 1.0,
+      "hand": 1.0,
+      "foot": 1.0,
+      "ear": 1.0,
+      "nose": 1.0,
+      "head": 1.0
+    },
+    "pose": "t_pose_fingers_spread",
+    "surface_style": "realistic"
+  },
+  "archetypes": {
+    "humanoid": {
+      "proportion_multipliers": {},
+      "silhouette_tags": ["human_proportions"],
+      "material_tags": ["skin"],
+      "review_status": "approved",
+      "evidence": ["atlas_humanoid_v1"]
+    },
+    "troll": {
+      "proportion_multipliers": { "jaw": 1.03, "hand": 1.04, "foot": 1.03, "ear": 1.05, "nose": 1.04, "head": 1.0 },
+      "silhouette_tags": ["heavy_upper_body", "broad_shoulder_girdle", "large_hands", "grounded_stance"],
+      "material_tags": ["rough_skin", "moss_mottling", "scars"],
+      "review_status": "draft",
+      "evidence": ["troll_sketchfab"]
+    },
+    "orc": {
+      "proportion_multipliers": { "jaw": 1.16, "hand": 1.08, "foot": 1.04, "ear": 1.0, "nose": 1.10, "head": 1.04 },
+      "silhouette_tags": ["heavy_jaw", "strong_build"],
+      "material_tags": ["skin", "war_paint", "scars"],
+      "review_status": "draft",
+      "evidence": []
+    },
+    "elf": {
+      "proportion_multipliers": { "jaw": 0.96, "hand": 0.96, "foot": 1.0, "ear": 1.12, "nose": 0.96, "head": 1.0 },
+      "silhouette_tags": ["slender_build", "long_limbs"],
+      "material_tags": ["skin"],
+      "review_status": "draft",
+      "evidence": []
+    },
+    "goblin": {
+      "proportion_multipliers": { "jaw": 0.96, "hand": 1.12, "foot": 0.96, "ear": 1.12, "nose": 1.04, "head": 1.08 },
+      "silhouette_tags": ["compact_build", "large_hands"],
+      "material_tags": ["skin"],
+      "review_status": "draft",
+      "evidence": []
+    }
+  },
+  "evidence_policy": {
+    "reference_use": "measurements_and_evidence_only",
+    "minimum_reviewed_examples": 3,
+    "notes": [
+      "A reference contributes measurements and evidence; it is not copied as final geometry.",
+      "Archetype rules remain draft until reviewed across multiple licensed examples.",
+      "A material tag is a recipe label, not proof that a shader or texture exists."
+    ]
+  }
+}

@@ -1,0 +1,120 @@
+version: 1.1
+
+root_entity: Entity
+
+entities:
+  Entity:
+    required:
+      - id
+      - type
+      - created_at
+
+  Creator:
+    parent: Entity
+
+  Character:
+    parent: Entity
+
+  Player:
+    parent: Character
+
+  NPC:
+    parent: Character
+
+  Creature:
+    parent: Character
+
+  Item:
+    parent: Entity
+
+  ResourceNode:
+    parent: Entity
+
+  Quest:
+    parent: Entity
+
+  Region:
+    parent: Entity
+
+  Dialogue:
+    parent: Entity
+
+  Skill:
+    parent: Entity
+
+  Building:
+    parent: Entity
+
+  Guild:
+    parent: Entity
+
+  Faction:
+    parent: Entity
+
+  Event:
+    parent: Entity
+
+  KnowledgeObject:
+    parent: Entity
+
+  MemoryNode:
+    parent: Entity
+
+  TruthRecord:
+    parent: Entity
+
+relationships:
+  located_in:
+    source_types:
+      - Character
+    target_types:
+      - Region
+
+  placed_in:
+    source_types:
+      - Building
+      - ResourceNode
+    target_types:
+      - Region
+
+  gathers:
+    source_types:
+      - Player
+    target_types:
+      - ResourceNode
+
+  speaks_with:
+    source_types:
+      - Player
+    target_types:
+      - NPC
+
+  awakens:
+    source_types:
+      - Player
+    target_types:
+      - Building
+
+  attacks:
+    source_types:
+      - Player
+    target_types:
+      - Creature
+
+  guards:
+    source_types:
+      - Player
+    target_types:
+      - Creature
+
+  evades:
+    source_types:
+      - Player
+    target_types:
+      - Creature
+
+  reawakens:
+    source_types:
+      - Player
+    target_types:
+      - Creature

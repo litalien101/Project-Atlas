@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Recipe v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "character_id", "profile_sha256", "grammar", "builder", "body", "anatomy_relationships", "material_tags", "evidence"],
+  "properties": {
+    "schema": { "const": "atlas-character-recipe/v1" },
+    "character_id": { "type": "string" },
+    "profile_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "grammar": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "revision", "sha256"],
+      "properties": { "id": { "type": "string" }, "revision": { "type": "integer" }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "builder": { "type": "string" },
+    "body": { "type": "object", "additionalProperties": { "type": "number" } },
+    "anatomy_relationships": { "type": "array", "items": { "type": "object" } },
+    "silhouette_tags": { "type": "array", "items": { "type": "string" } },
+    "material_tags": { "type": "array", "items": { "type": "string" } },
+    "pose": { "type": "string" },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "draft_rules_applied": { "type": "boolean" }
+  }
+}

@@ -1,0 +1,40 @@
+version: 1
+decision_flow:
+  - observe
+  - analyze
+  - reason
+  - simulate
+  - policy_validation
+  - generate_decision
+  - human_approval
+  - deploy
+
+allowed_outputs:
+  - approve
+  - reject
+  - delay
+  - modify
+  - schedule
+  - escalate
+
+requirements:
+  confidence_threshold: 0.85
+  simulation_required: true
+  policy_validation_required: true
+  human_approval_required: true
+  autonomous_world_changes_enabled: false
+  immutable_decision_records: true
+  evidence_references_required: true
+  one_human_review_per_decision: true
+  approval_does_not_deploy: true
+  deployment_requires_separate_action: true
+
+review_actions:
+  - approve
+  - reject
+  - delay
+  - escalate
+
+review_requirements:
+  rationale_minimum_characters: 12
+  rationale_maximum_characters: 1000

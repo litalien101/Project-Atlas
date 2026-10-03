@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Observation v1",
+  "description": "One independently sourced, reviewable character example for future recipe relationship analysis.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "observation_id", "archetype_id", "source", "lineage", "review", "features", "relationships"],
+  "properties": {
+    "schema": { "const": "atlas-character-observation/v1" },
+    "observation_id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,95}$" },
+    "archetype_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,47}$" },
+    "taxonomy_revision": { "type": "integer", "minimum": 1 },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "reference", "license", "rights_status"],
+      "properties": {
+        "kind": { "enum": ["model", "image", "sculpt", "structured_recipe"] },
+        "reference": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "creator": { "type": "string", "maxLength": 300 },
+        "license": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "rights_status": { "enum": ["cleared_for_analysis", "review_required", "restricted", "unknown"] }
+      }
+    },
+    "lineage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["independent_source_id"],
+      "properties": {
+        "independent_source_id": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "derived_from": { "type": "array", "uniqueItems": true, "items": { "type": "string" } },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["draft", "reviewed", "rejected"] },
+        "reviewer": { "type": "string", "maxLength": 200 },
+        "reviewed_at_utc": { "type": "string", "format": "date-time" },
+        "rationale": { "type": "string", "maxLength": 2000 }
+      }
+    },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "style_id": { "type": "string", "maxLength": 80 },
+        "role_id": { "type": "string", "maxLength": 80 },
+        "setting_id": { "type": "string", "maxLength": 80 },
+        "tags": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,63}$" } }
+      }
+    },
+    "features": {
+      "description": "Canonical, human-reviewed feature IDs observed for this example. Absence is recorded separately from unknown.",
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "present": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } },
+        "absent": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } },
+        "unknown": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } }
+      }
+    },
+    "measurements": {
+      "description": "Optional normalized measurements; use ratios or dimensionless values with a named normalization basis.",
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["measurement_id", "value", "normalization"],
+        "properties": {
+          "measurement_id": { "$ref": "#/$defs/conceptId" },
+          "value": { "type": "number" },
+          "normalization": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "method": { "type": "string", "maxLength": 300 },
+          "review_status": { "enum": ["draft", "reviewed"] }
+        }
+      }
+    },
+    "relationships": {
+      "description": "Explicitly observed or reviewed structural relations; inferred population patterns belong in separate candidate-finding records.",
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["subject", "predicate", "object", "evidence_status"],
+        "properties": {
+          "subject": { "$ref": "#/$defs/conceptId" },
+          "predicate": { "enum": ["connects_to", "supports", "blends_into", "overlaps", "adjacent_to", "co_occurs_with", "contrasts_with", "part_of"] },
+          "object": { "$ref": "#/$defs/conceptId" },
+          "polarity": { "enum": ["present", "absent"] },
+          "context": { "type": "string", "maxLength": 500 },
+          "evidence_status": { "enum": ["observed", "human_reviewed"] },
+          "evidence_locator": { "type": "string", "maxLength": 500 }
+        }
+      }
+    },
+    "notes": { "type": "string", "maxLength": 5000 }
+  },
+  "$defs": {
+    "conceptId": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{1,95}$" }
+  }
+}

@@ -1,0 +1,394 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Model Recipe v1",
+  "description": "Reproducible technical inputs and validation expectations for building one versioned game model asset.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "recipe_id", "revision", "category", "intent", "parameters",
+    "dimensions", "geometry", "materials", "material_assignments", "components", "rigging",
+    "variants", "collision", "lods", "performance_budget", "provenance",
+    "validation", "outputs"
+  ],
+  "properties": {
+    "schema": { "const": "atlas-model-recipe/v1" },
+    "recipe_id": { "$ref": "#/$defs/id" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "category": {
+      "enum": ["character", "creature", "clothing", "equipment", "prop", "building", "environment", "resource", "other"]
+    },
+    "intent": {
+      "type": "object", "additionalProperties": false,
+      "required": ["summary", "source_prompt", "tags"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "source_prompt": { "type": "string", "maxLength": 10000 },
+        "tags": { "$ref": "#/$defs/idList" },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/constraint" } },
+        "exceptions": { "type": "array", "items": { "type": "string", "maxLength": 1000 } }
+      }
+    },
+    "parameters": {
+      "description": "Named build controls and learned recipe traits. influence_weight is importance for recipe composition, not a mesh skin weight.",
+      "type": "array", "items": { "$ref": "#/$defs/parameter" }
+    },
+    "dimensions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["unit", "coordinate_frame", "target_bounds", "measurements", "landmarks"],
+      "properties": {
+        "unit": { "enum": ["m", "cm", "mm"] },
+        "coordinate_frame": {
+          "type": "object", "additionalProperties": false,
+          "required": ["up_axis", "forward_axis", "origin"],
+          "properties": {
+            "up_axis": { "enum": ["+X", "-X", "+Y", "-Y", "+Z", "-Z"] },
+            "forward_axis": { "enum": ["+X", "-X", "+Y", "-Y", "+Z", "-Z"] },
+            "origin": { "type": "string", "minLength": 1, "maxLength": 120 },
+            "handedness": { "enum": ["right", "left"] }
+          }
+        },
+        "target_bounds": { "$ref": "#/$defs/bounds" },
+        "measurements": { "type": "array", "items": { "$ref": "#/$defs/measurement" } },
+        "landmarks": { "type": "array", "items": { "$ref": "#/$defs/landmark" } }
+      }
+    },
+    "geometry": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "builder", "topology", "surface_regions"],
+      "properties": {
+        "method": { "enum": ["authored", "parametric", "image_guided", "reference_derived", "hybrid"] },
+        "builder": { "$ref": "#/$defs/toolVersion" },
+        "source_mesh": { "$ref": "#/$defs/fileRef" },
+        "resolution": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "target_vertices": { "type": "integer", "minimum": 0 },
+            "target_triangles": { "type": "integer", "minimum": 0 },
+            "voxel_size": { "type": "number", "exclusiveMinimum": 0 },
+            "subdivision_levels": { "type": "integer", "minimum": 0, "maximum": 8 },
+            "smoothing_iterations": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "uv_policy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["required", "layout"],
+          "properties": {
+            "required": { "type": "boolean" },
+            "layout": { "enum": ["authored", "generated", "not_applicable"] },
+            "overlap_policy": { "enum": ["forbid", "allow_mirrored", "allow"] },
+            "texel_density_px_per_unit": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "topology": {
+          "type": "object", "additionalProperties": false,
+          "required": ["manifold_policy", "connected_region_groups", "boundary_policy"],
+          "properties": {
+            "manifold_policy": { "enum": ["closed_required", "region_specific", "open_allowed"] },
+            "connected_region_groups": { "type": "array", "items": { "$ref": "#/$defs/idList" } },
+            "boundary_policy": { "type": "string", "minLength": 1, "maxLength": 500 },
+            "max_non_manifold_edges": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "surface_regions": { "type": "array", "items": { "$ref": "#/$defs/surfaceRegion" } }
+      }
+    },
+    "materials": { "type": "array", "items": { "$ref": "#/$defs/material" } },
+    "material_assignments": {
+      "description": "Explicit mapping from semantic regions or components to declared material IDs.",
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["target_id", "material_id"],
+        "properties": {
+          "target_id": { "$ref": "#/$defs/id" },
+          "target_kind": { "enum": ["surface_region", "component"] },
+          "material_id": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "components": { "type": "array", "items": { "$ref": "#/$defs/component" } },
+    "rigging": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "skeleton_id", "rest_pose_id", "skinning", "motion"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "skeleton_id": { "type": ["string", "null"], "maxLength": 120 },
+        "skeleton_contract": { "$ref": "#/$defs/fileRef" },
+        "rest_pose_id": { "type": ["string", "null"], "maxLength": 120 },
+        "skinning": {
+          "type": "object", "additionalProperties": false,
+          "required": ["method", "max_influences", "normalize_weights"],
+          "properties": {
+            "method": { "enum": ["none", "authored", "transfer", "automatic", "hybrid"] },
+            "max_influences": { "type": "integer", "minimum": 0, "maximum": 8 },
+            "normalize_weights": { "type": "boolean" },
+            "weight_source": { "$ref": "#/$defs/fileRef" },
+            "weight_validation": { "type": "array", "items": { "$ref": "#/$defs/constraint" } },
+            "notes": { "type": "string", "maxLength": 2000 }
+          }
+        },
+        "motion": {
+          "type": "object", "additionalProperties": false,
+          "required": ["required", "clips"],
+          "properties": {
+            "required": { "type": "boolean" },
+            "retarget_contract": { "$ref": "#/$defs/fileRef" },
+            "clips": { "type": "array", "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["clip_id", "action", "file"],
+              "properties": {
+                "clip_id": { "$ref": "#/$defs/id" },
+                "action": { "$ref": "#/$defs/id" },
+                "file": { "$ref": "#/$defs/fileRef" },
+                "root_motion": { "type": "boolean" },
+                "review_status": { "enum": ["draft", "needs_review", "approved", "rejected"] }
+              }
+            } }
+          }
+        }
+      }
+    },
+    "variants": {
+      "description": "Supported appearance/state variants and the controls or registered assets needed to realize them.",
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["variant_id", "driver", "range", "outputs"],
+        "properties": {
+          "variant_id": { "$ref": "#/$defs/id" },
+          "driver": { "$ref": "#/$defs/id" },
+          "range": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "minItems": 2, "maxItems": 2 },
+          "outputs": { "type": "array", "items": { "$ref": "#/$defs/id" } },
+          "transition_policy": { "type": "string", "maxLength": 1000 },
+          "species_or_context": { "$ref": "#/$defs/idList" }
+        }
+      }
+    },
+    "collision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "shapes"],
+      "properties": {
+        "policy": { "enum": ["none", "primitive_colliders", "convex_hull", "mesh", "region_specific"] },
+        "shapes": { "type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["shape", "dimensions", "local_position"],
+          "properties": {
+            "shape": { "enum": ["box", "sphere", "capsule", "cylinder", "convex_hull", "mesh"] },
+            "dimensions": { "$ref": "#/$defs/vector3" },
+            "local_position": { "$ref": "#/$defs/vector3" },
+            "region_id": { "$ref": "#/$defs/id" }
+          }
+        } }
+      }
+    },
+    "lods": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["level", "screen_size", "mesh"],
+        "properties": {
+          "level": { "type": "integer", "minimum": 0, "maximum": 8 },
+          "screen_size": { "type": "number", "minimum": 0, "maximum": 1 },
+          "mesh": { "$ref": "#/$defs/fileRef" },
+          "material_variant": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "performance_budget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["max_triangles", "max_material_slots", "max_texture_memory_mb", "max_draw_calls"],
+      "properties": {
+        "max_triangles": { "type": "integer", "minimum": 0 },
+        "max_material_slots": { "type": "integer", "minimum": 0 },
+        "max_texture_memory_mb": { "type": "number", "minimum": 0 },
+        "max_draw_calls": { "type": "integer", "minimum": 0 },
+        "max_animation_bones": { "type": "integer", "minimum": 0 },
+        "target_devices": { "$ref": "#/$defs/idList" }
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sources", "recipe_lineage"],
+      "properties": {
+        "sources": { "type": "array", "items": { "$ref": "#/$defs/source" } },
+        "recipe_lineage": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+        "observation_set_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "learned_rule_ids": { "$ref": "#/$defs/idList" }
+      }
+    },
+    "validation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["checks", "review_status"],
+      "properties": {
+        "checks": { "type": "array", "items": { "$ref": "#/$defs/validationCheck" } },
+        "review_status": { "enum": ["draft", "needs_review", "approved", "rejected"] },
+        "reviewer": { "type": "string", "maxLength": 200 },
+        "reviewed_at_utc": { "type": "string", "format": "date-time" },
+        "evidence_files": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } }
+      }
+    },
+    "outputs": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "file", "sha256"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1, "maxLength": 120 },
+          "file": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "asset_id": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "notes": { "type": "string", "maxLength": 10000 }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9_.-]{1,95}$" },
+    "idList": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/id" } },
+    "vector3": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y", "z"],
+      "properties": { "x": { "type": "number" }, "y": { "type": "number" }, "z": { "type": "number" } }
+    },
+    "bounds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["width", "height", "depth"],
+      "properties": {
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
+        "depth": { "type": "number", "exclusiveMinimum": 0 }
+      }
+    },
+    "measurement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["measurement_id", "value", "unit", "normalization"],
+      "properties": {
+        "measurement_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1, "maxLength": 32 },
+        "normalization": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tolerance": { "type": "number", "minimum": 0 },
+        "evidence_refs": { "$ref": "#/$defs/idList" }
+      }
+    },
+    "landmark": {
+      "type": "object", "additionalProperties": false,
+      "required": ["landmark_id", "position", "frame"],
+      "properties": {
+        "landmark_id": { "$ref": "#/$defs/id" },
+        "position": { "$ref": "#/$defs/vector3" },
+        "frame": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "tolerance": { "type": "number", "minimum": 0 },
+        "evidence_refs": { "$ref": "#/$defs/idList" }
+      }
+    },
+    "parameter": {
+      "type": "object", "additionalProperties": false,
+      "required": ["parameter_id", "value", "influence_weight", "confidence", "source_kind"],
+      "properties": {
+        "parameter_id": { "$ref": "#/$defs/id" },
+        "value": { "type": ["number", "string", "boolean"] },
+        "unit": { "type": "string", "maxLength": 32 },
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "influence_weight": { "type": "number", "minimum": 0, "maximum": 1 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source_kind": { "enum": ["user_required", "authored", "observed", "learned_candidate", "approved_rule"] },
+        "evidence_refs": { "$ref": "#/$defs/idList" },
+        "constraints": { "type": "array", "items": { "$ref": "#/$defs/constraint" } }
+      }
+    },
+    "constraint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["constraint_id", "operator", "value"],
+      "properties": {
+        "constraint_id": { "$ref": "#/$defs/id" },
+        "operator": { "enum": ["eq", "ne", "lt", "lte", "gt", "gte", "in", "excludes", "requires"] },
+        "value": { "type": ["number", "string", "boolean", "array"] },
+        "unit": { "type": "string", "maxLength": 32 },
+        "severity": { "enum": ["hard", "soft"] }
+      }
+    },
+    "toolVersion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": { "name": { "type": "string", "minLength": 1 }, "version": { "type": "string", "minLength": 1 }, "config_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+    },
+    "fileRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": { "path": { "type": "string", "minLength": 1, "maxLength": 1000 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "format": { "type": "string", "maxLength": 32 } }
+    },
+    "surfaceRegion": {
+      "type": "object", "additionalProperties": false,
+      "required": ["region_id", "tags", "topology_policy"],
+      "properties": {
+        "region_id": { "$ref": "#/$defs/id" },
+        "tags": { "$ref": "#/$defs/idList" },
+        "topology_policy": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "connected_to": { "$ref": "#/$defs/idList" },
+        "landmarks": { "$ref": "#/$defs/idList" }
+      }
+    },
+    "material": {
+      "type": "object", "additionalProperties": false,
+      "required": ["material_id", "shader", "base_color", "roughness", "metallic", "textures"],
+      "properties": {
+        "material_id": { "$ref": "#/$defs/id" },
+        "shader": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "base_color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$" },
+        "roughness": { "type": "number", "minimum": 0, "maximum": 1 },
+        "metallic": { "type": "number", "minimum": 0, "maximum": 1 },
+        "normal_scale": { "type": "number", "minimum": 0 },
+        "textures": { "type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["channel", "file", "color_space"],
+          "properties": {
+            "channel": { "enum": ["base_color", "normal", "roughness", "metallic", "height", "opacity", "emissive", "occlusion", "other"] },
+            "file": { "$ref": "#/$defs/fileRef" },
+            "color_space": { "enum": ["sRGB", "Non-Color", "linear"] },
+            "resolution_px": { "type": "integer", "minimum": 1 }
+          }
+        } }
+      }
+    },
+    "component": {
+      "type": "object", "additionalProperties": false,
+      "required": ["component_id", "role", "required", "transform"],
+      "properties": {
+        "component_id": { "$ref": "#/$defs/id" },
+        "role": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "required": { "type": "boolean" },
+        "asset": { "$ref": "#/$defs/fileRef" },
+        "slot_or_socket": { "$ref": "#/$defs/id" },
+        "transform": {
+          "type": "object", "additionalProperties": false,
+          "required": ["position", "rotation_degrees", "scale"],
+          "properties": { "position": { "$ref": "#/$defs/vector3" }, "rotation_degrees": { "$ref": "#/$defs/vector3" }, "scale": { "$ref": "#/$defs/vector3" } }
+        },
+        "relationships": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["predicate", "target_id"], "properties": { "predicate": { "enum": ["attaches_to", "connects_to", "covers", "supports", "replaces"] }, "target_id": { "$ref": "#/$defs/id" } } } }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reference", "license", "rights_status"],
+      "properties": {
+        "reference": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "creator": { "type": "string", "maxLength": 300 },
+        "license": { "type": "string", "minLength": 1, "maxLength": 300 },
+        "rights_status": { "enum": ["cleared", "review_required", "restricted", "unknown"] },
+        "modifications": { "type": "array", "items": { "type": "string", "maxLength": 500 } }
+      }
+    },
+    "validationCheck": {
+      "type": "object", "additionalProperties": false,
+      "required": ["check_id", "stage", "status"],
+      "properties": {
+        "check_id": { "$ref": "#/$defs/id" },
+        "stage": { "enum": ["geometry", "topology", "material", "rig", "deformation", "appearance", "performance", "rights", "runtime"] },
+        "status": { "enum": ["not_run", "pass", "fail", "review_required"] },
+        "limits": { "type": "array", "items": { "$ref": "#/$defs/constraint" } },
+        "evidence_files": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "notes": { "type": "string", "maxLength": 2000 }
+      }
+    }
+  }
+}

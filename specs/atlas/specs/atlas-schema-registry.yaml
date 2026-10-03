@@ -1,0 +1,57 @@
+version: 1.1
+
+schema_registry:
+
+  validation_mode: strict
+
+  require_schema_registration: true
+
+  reject_unknown_types: true
+
+registered_schemas:
+
+  - Entity
+  - Creator
+  - Character
+  - Player
+  - NPC
+  - Creature
+  - Item
+  - ResourceNode
+  - Quest
+  - Region
+  - Dialogue
+  - Skill
+  - Building
+  - Guild
+  - Faction
+  - Event
+  - KnowledgeObject
+  - MemoryNode
+  - TruthRecord
+
+schema_requirements:
+
+  id:
+    type: uuid
+    required: true
+
+  type:
+    type: string
+    required: true
+
+  created_at:
+    type: datetime
+    required: true
+
+validation:
+
+  reject_missing_required_fields: true
+
+  reject_invalid_references: true
+
+  reject_unknown_properties: false
+
+  require_unique_ids: true
+
+  require_timestamp: true

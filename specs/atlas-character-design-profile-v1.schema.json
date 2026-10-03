@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Design Profile v1",
+  "description": "AI-authored, human-reviewable brief consumed by deterministic parametric Blender character tools.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "character_id", "display_name", "concept", "base_template",
+    "body", "palette", "traits", "actions"
+  ],
+  "properties": {
+    "schema": { "const": "atlas-character-design-profile/v1" },
+    "character_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,47}$" },
+    "display_name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "concept": {
+      "type": "object", "additionalProperties": false,
+      "required": ["archetype", "source_prompt", "design_summary", "assumptions"],
+      "properties": {
+        "archetype": { "type": "string", "enum": ["humanoid", "troll", "orc", "elf", "goblin"] },
+        "source_prompt": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "design_summary": { "type": "string", "minLength": 1, "maxLength": 1200 },
+        "assumptions": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 240 } }
+      }
+    },
+    "base_template": { "const": "atlas_parametric_humanoid_v1" },
+    "style": { "type": "string", "enum": ["realistic", "stylized", "low_poly", "painted"], "default": "realistic" },
+    "reference_calibration": {
+      "type": "object", "additionalProperties": false,
+      "required": ["record", "source_path", "source_sha256", "license", "use", "measurements"],
+      "properties": {
+        "record": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "source_path": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "source_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "license": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "use": { "const": "review_only" },
+        "measurements": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "width_over_height": { "type": "number", "minimum": 0, "maximum": 5 },
+            "depth_over_height": { "type": "number", "minimum": 0, "maximum": 5 },
+            "pelvis_height_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "shoulder_height_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "left_knee_height_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "left_ankle_height_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "head_height_percent": { "type": "number", "minimum": 0, "maximum": 100 },
+            "left_eye_height_percent": { "type": "number", "minimum": 0, "maximum": 100 }
+          },
+          "minProperties": 1
+        }
+      }
+    },
+    "body": {
+      "type": "object", "additionalProperties": false,
+      "required": ["height_cm", "build_percent", "shoulder_percent", "arm_length_percent", "leg_length_percent", "head_percent", "torso_length_percent", "bust_percent", "stomach_percent", "hips_percent", "glutes_percent", "thighs_percent", "jaw_percent", "hand_percent", "foot_percent", "ear_percent", "muscle_percent", "nose_percent"],
+      "properties": {
+        "height_cm": { "type": "integer", "minimum": 145, "maximum": 260 },
+        "build_percent": { "type": "integer", "minimum": 70, "maximum": 150 },
+        "shoulder_percent": { "type": "integer", "minimum": 75, "maximum": 150 },
+        "arm_length_percent": { "type": "integer", "minimum": 75, "maximum": 130 },
+        "leg_length_percent": { "type": "integer", "minimum": 75, "maximum": 130 },
+        "head_percent": { "type": "integer", "minimum": 75, "maximum": 160 },
+        "torso_length_percent": { "type": "integer", "minimum": 80, "maximum": 125 },
+        "bust_percent": { "type": "integer", "minimum": 70, "maximum": 130 },
+        "stomach_percent": { "type": "integer", "minimum": 70, "maximum": 140 },
+        "hips_percent": { "type": "integer", "minimum": 80, "maximum": 125 },
+        "glutes_percent": { "type": "integer", "minimum": 70, "maximum": 130 },
+        "thighs_percent": { "type": "integer", "minimum": 80, "maximum": 125 },
+        "jaw_percent": { "type": "integer", "minimum": 75, "maximum": 150 },
+        "hand_percent": { "type": "integer", "minimum": 75, "maximum": 150 },
+        "foot_percent": { "type": "integer", "minimum": 75, "maximum": 150 },
+        "ear_percent": { "type": "integer", "minimum": 75, "maximum": 175 },
+        "muscle_percent": { "type": "integer", "minimum": 65, "maximum": 160 },
+        "nose_percent": { "type": "integer", "minimum": 70, "maximum": 160 }
+      }
+    },
+    "palette": {
+      "type": "object", "additionalProperties": false,
+      "required": ["skin", "secondary", "accent", "eyes", "horns", "tusks"],
+      "properties": {
+        "skin": { "$ref": "#/$defs/color" },
+        "secondary": { "$ref": "#/$defs/color" },
+        "accent": { "$ref": "#/$defs/color" },
+        "eyes": { "$ref": "#/$defs/color" },
+        "horns": { "$ref": "#/$defs/color" },
+        "tusks": { "$ref": "#/$defs/color" }
+      }
+    },
+    "traits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["horns", "tusks", "pointed_ears"],
+      "properties": {
+        "horns": { "type": "boolean" },
+        "tusks": { "type": "boolean" },
+        "pointed_ears": { "type": "boolean" }
+      }
+    },
+    "actions": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": { "type": "string", "enum": ["idle", "walk", "run", "jump", "fall", "land", "climb", "swim", "attack"] }
+    }
+  },
+  "$defs": {
+    "color": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" }
+  }
+}

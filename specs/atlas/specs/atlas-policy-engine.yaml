@@ -1,0 +1,21 @@
+version: 1
+policies:
+  progression:
+    max_xp_change_per_patch_percent: 5
+  economy:
+    max_price_change_percent: 10
+    max_currency_supply_growth_percent: 15
+  resource_requirements:
+    max_cost_change_percent: 10
+  player_experience:
+    minimum_satisfaction_score: 85
+  content:
+    allow_destructive_removal: false
+  fairness:
+    allow_pay_to_win: false
+requirements:
+  confidence_threshold: 0.85
+  simulation_required: true
+  policy_validation_required: true
+  human_approval_required: true
+  autonomous_world_changes_enabled: false

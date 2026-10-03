@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "height_cm", "weight_kg", "skin_tone", "bust_percent",
+    "stomach_percent", "hips_percent", "glutes_percent", "thighs_percent",
+    "underwear_top", "underwear_bottom", "shoulder_guards"
+  ],
+  "properties": {
+    "schema": { "const": "atlas-character-profile/v1" },
+    "height_cm": { "type": "integer", "minimum": 150, "maximum": 190 },
+    "weight_kg": { "type": "integer", "minimum": 45, "maximum": 120 },
+    "skin_tone": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+    "bust_percent": { "type": "integer", "minimum": 70, "maximum": 130 },
+    "stomach_percent": { "type": "integer", "minimum": 70, "maximum": 140 },
+    "hips_percent": { "type": "integer", "minimum": 80, "maximum": 125 },
+    "glutes_percent": { "type": "integer", "minimum": 70, "maximum": 130 },
+    "thighs_percent": { "type": "integer", "minimum": 80, "maximum": 125 },
+    "underwear_top": { "type": "boolean" },
+    "underwear_bottom": { "type": "boolean" },
+    "shoulder_guards": { "type": "boolean" }
+  }
+}
