@@ -274,6 +274,9 @@ do not describe a planned stage as working software.
   observation validator. A targeted Recipe Studio endpoint exercise also
   confirmed two builds receive separate directories and previews (HTTP 200).
   Checked Python syntax and diff formatting; no full test suite was run.
+- Follow-up: centralized the screening status, severity, and outcome constants;
+  added a severity-count summary and accepted both screening tool versions in
+  the v1 report schema. The existing per-check details remain authoritative.
 
 ### 2026-10-03 — Character CLI consolidation deferred
 

@@ -9,8 +9,22 @@ import math
 from typing import Any
 
 SCHEMA = "atlas-character-source-screening/v1"
-TOOL_VERSION = "1.0.0"
+TOOL_VERSION = "1.1.0"
 PROFILE_ID = "humanoid-anatomy-reference-v1"
+
+STATUS_CLEAR = "clear"
+STATUS_FLAG = "flag"
+STATUS_UNKNOWN = "unknown"
+STATUS_CONCERN = "concern"
+
+SEVERITY_INFO = "info"
+SEVERITY_WARNING = "warning"
+SEVERITY_CONCERN = "concern"
+SEVERITY_BLOCKING = "blocking"
+
+OUTCOME_TECHNICAL_CONCERN = "technical_concern"
+OUTCOME_NEEDS_HUMAN_REVIEW = "needs_human_review"
+OUTCOME_TECHNICALLY_PROMISING = "technically_promising"
 
 
 def _check(
@@ -46,19 +60,19 @@ def screen_inspection(dossier: dict[str, Any]) -> dict[str, Any]:
     needs_review = False
 
     if not meshes:
-        checks.append(_check("mesh_geometry", "MESH_OBJECTS_MISSING", "concern", "blocking",
+        checks.append(_check("mesh_geometry", "MESH_OBJECTS_MISSING", STATUS_CONCERN, SEVERITY_BLOCKING,
                              "The dossier contains no mesh objects."))
         hard_concern = True
     elif focus is None:
         checks.append(_check(
-            "focus_mesh", "FOCUS_MESH_NOT_SELECTED", "unknown", "warning",
+            "focus_mesh", "FOCUS_MESH_NOT_SELECTED", STATUS_UNKNOWN, SEVERITY_WARNING,
             "No unambiguous focus mesh is identified; select the source mesh to evaluate.",
             {"mesh_object_count": len(meshes)},
         ))
         needs_review = True
     else:
         checks.append(_check(
-            "focus_mesh", "FOCUS_MESH_FOUND", "clear", "info",
+            "focus_mesh", "FOCUS_MESH_FOUND", STATUS_CLEAR, SEVERITY_INFO,
             "A focus mesh is identified in the dossier.", {"focus_object": focus_name},
         ))
         counts = {
@@ -67,32 +81,32 @@ def screen_inspection(dossier: dict[str, Any]) -> dict[str, Any]:
         }
         if any(not isinstance(value, int) or value <= 0 for value in counts.values()):
             checks.append(_check(
-                "usable_geometry", "FOCUS_GEOMETRY_EMPTY", "concern", "blocking",
+                "usable_geometry", "FOCUS_GEOMETRY_EMPTY", STATUS_CONCERN, SEVERITY_BLOCKING,
                 "The focus mesh has no usable vertex or polygon geometry.", counts,
             ))
             hard_concern = True
         else:
             checks.append(_check(
-                "usable_geometry", "FOCUS_GEOMETRY_PRESENT", "clear", "info",
+                "usable_geometry", "FOCUS_GEOMETRY_PRESENT", STATUS_CLEAR, SEVERITY_INFO,
                 "The focus mesh has vertices and polygons.", counts,
             ))
 
         box = focus.get("world_bounds") or {}
         dims = box.get("dimensions")
         if not isinstance(dims, list) or len(dims) != 3:
-            checks.append(_check("world_bounds", "WORLD_BOUNDS_MISSING", "unknown", "warning",
+            checks.append(_check("world_bounds", "WORLD_BOUNDS_MISSING", STATUS_UNKNOWN, SEVERITY_WARNING,
                                  "World-space bounds are missing or incomplete."))
             needs_review = True
         elif (any(not isinstance(value, (int, float)) or not math.isfinite(value) for value in dims)
               or any(value <= 1e-9 for value in dims)):
             checks.append(_check(
-                "world_bounds", "WORLD_BOUNDS_INVALID", "concern", "blocking",
+                "world_bounds", "WORLD_BOUNDS_INVALID", STATUS_CONCERN, SEVERITY_BLOCKING,
                 "At least one focus-mesh world-space dimension is zero or invalid.",
                 {"dimensions": dims},
             ))
             hard_concern = True
         else:
-            checks.append(_check("world_bounds", "WORLD_BOUNDS_VALID", "clear", "info",
+            checks.append(_check("world_bounds", "WORLD_BOUNDS_VALID", STATUS_CLEAR, SEVERITY_INFO,
                                  "All three world-space dimensions are positive.", {"dimensions": dims}))
 
         topology = focus.get("topology") or {}
@@ -115,42 +129,51 @@ def screen_inspection(dossier: dict[str, Any]) -> dict[str, Any]:
             topology_findings["connected_component_count"] = components
         if topology_findings:
             checks.append(_check(
-                "topology_review", "TOPOLOGY_FLAGS_PRESENT", "flag", "warning",
+                "topology_review", "TOPOLOGY_FLAGS_PRESENT", STATUS_FLAG, SEVERITY_WARNING,
                 "Topology metrics contain possible defects or disconnected parts; review in context. These counts do not automatically reject the model.",
                 topology_findings,
             ))
             needs_review = True
         else:
             checks.append(_check(
-                "topology_review", "TOPOLOGY_NO_FLAGS", "clear", "info",
+                "topology_review", "TOPOLOGY_NO_FLAGS", STATUS_CLEAR, SEVERITY_INFO,
                 "No boundary, non-manifold, wire, zero-area, or multiple-component flags were reported.",
             ))
 
         if focus.get("evaluated_geometry_reliable") is False:
             driver_count = len(focus.get("driver_curves", []))
             checks.append(_check(
-                "evaluated_geometry", "EVALUATED_GEOMETRY_UNRELIABLE", "flag", "warning",
+                "evaluated_geometry", "EVALUATED_GEOMETRY_UNRELIABLE", STATUS_FLAG, SEVERITY_WARNING,
                 "Evaluated geometry may not reflect intended controls; raw source mesh metrics remain separately reported.",
                 {"driver_curve_count": driver_count},
             ))
             needs_review = True
         elif focus.get("evaluated_geometry_reliable") is True:
-            checks.append(_check("evaluated_geometry", "EVALUATED_GEOMETRY_RELIABLE", "clear", "info",
+            checks.append(_check("evaluated_geometry", "EVALUATED_GEOMETRY_RELIABLE", STATUS_CLEAR, SEVERITY_INFO,
                                  "The dossier reports evaluated geometry as reliable."))
         else:
-            checks.append(_check("evaluated_geometry", "EVALUATED_GEOMETRY_RELIABILITY_UNKNOWN", "unknown", "warning",
+            checks.append(_check("evaluated_geometry", "EVALUATED_GEOMETRY_RELIABILITY_UNKNOWN", STATUS_UNKNOWN, SEVERITY_WARNING,
                                  "Evaluated-geometry reliability is not recorded."))
             needs_review = True
 
     if hard_concern:
-        outcome = "technical_concern"
+        outcome = OUTCOME_TECHNICAL_CONCERN
         rationale = "The dossier reports a blocking geometry or bounds concern; inspect the source before using it."
     elif needs_review:
-        outcome = "needs_human_review"
+        outcome = OUTCOME_NEEDS_HUMAN_REVIEW
         rationale = "Technical intake is incomplete or reports conditions requiring contextual review."
     else:
-        outcome = "technically_promising"
+        outcome = OUTCOME_TECHNICALLY_PROMISING
         rationale = "The measured technical checks found no blocking concerns; this only makes the source promising for human review."
+
+    severity_counts = {
+        SEVERITY_INFO: 0,
+        SEVERITY_WARNING: 0,
+        SEVERITY_CONCERN: 0,
+        SEVERITY_BLOCKING: 0,
+    }
+    for check in checks:
+        severity_counts[check["severity"]] += 1
 
     return {
         "schema": SCHEMA,
@@ -162,6 +185,7 @@ def screen_inspection(dossier: dict[str, Any]) -> dict[str, Any]:
         },
         "source": {"path": source.get("path"), "sha256": source.get("sha256")},
         "triage": {"outcome": outcome, "rationale": [rationale]},
+        "summary": {"severity_counts": severity_counts},
         "technical_checks": checks,
         "human_review": {
             "required": True,
