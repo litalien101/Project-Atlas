@@ -15,7 +15,7 @@ python3 tools/characters/download_reference_model.py blender-human-bases
 - **Download:** [OpenGameArt Troll Mauler](https://opengameart.org/content/troll-mauler)
 - **Creator:** piacenti
 - **License:** [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/); credit the creator and identify modifications when distributing a derivative.
-- **Pinned source:** `troll.blend`, SHA-256 `83fc5e524d31020b8d7c9641517f965cecd65840b3119582b4e984649f708c51`.
+- **Pinned source:** `troll.blend`, SHA-256 `83fc5e524d31020d8b7c9641517f965cecd65840b3119582b4e984649f708c51`.
 - **Inspection:** Blender 2.73 source file; current Blender 5.2 opened it with a legacy-version warning. It contains a 2,999-vertex medium body mesh, a 749-vertex low mesh, a 33-bone armature, 47 body vertex groups, and packed 4K maps. The rendered preview is a hunched, brown troll with clothing; it is not the Atlas Stone Troll, is not in the required T-pose, and its rig/topology have not been approved for Atlas.
 - **Use:** sculpting and topology workflow reference only until the design is adapted, cleaned, posed, and reviewed. Do not register it as a runtime asset or describe it as the generated Stone Troll.
 

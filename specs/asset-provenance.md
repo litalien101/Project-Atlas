@@ -2,6 +2,8 @@
 
 ## Decision for The Reach
 
+The workspace credit list is [`../ASSET_ATTRIBUTIONS.md`](../ASSET_ATTRIBUTIONS.md); source-library status and removals are tracked in [`../../Reference_Assets/ASSET_LICENSE_REGISTER.md`](../../Reference_Assets/ASSET_LICENSE_REGISTER.md). Atlas voluntarily credits CC0 sources as well as meeting licenses that require attribution.
+
 The previous browser character prototype and derived clothing assets were removed on 2026-10-03 because their ownership and reuse rights were not documented. There is currently no registered Atlas character model in the runtime manifest; appearance controls and animation plumbing are not evidence of a usable character asset. The world is rendered with Three.js, whose code is under MIT; it supplies rendering functionality, not game assets.
 
 Do not extract or package models, textures, animations, maps, sounds, or other game data from the RuneAi cache or Darkan reference client in this project. The local RuneAi repository contains a 601 MB `main_file_cache.dat2` plus cache indexes and a hash manifest, but the inspected cache files do not establish a reuse license. The vendored Darkan client and server source trees identify GPL-3.0; their source license does not establish rights to separately bundled game cache assets. Cleaning, retopologizing, recoloring, or converting an asset does not establish permission to reuse its underlying content.

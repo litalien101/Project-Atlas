@@ -4,10 +4,11 @@ Run with the repository's Blender version:
   blender --background --python tools/characters/generate_character_base.py -- \
     --profile art/characters/profiles/stone_troll.json
 
-By default, the body is built from profile-scaled parametric forms. A reference
-mesh is used only when explicitly passed with --reference-glb and authorized by
-the profile calibration. In either mode, the source rig is not used as the Atlas
-rig; review and marker placement remain required.
+By default, the body is built from profile-scaled parametric forms. A reviewed
+reference mesh can instead seed the body; its exact file, object, calibration,
+and human rights/geometry review are pinned in the profile and build plan. The
+source geometry is normalized, posed to the Atlas T-pose where its rig permits,
+and baked without carrying over the source rig or animation.
 """
 
 from __future__ import annotations
@@ -31,7 +32,7 @@ from character_image_reference import fit_mesh_to_front_profile, measure_front_r
 
 MARKER_PREFIX = "ATLAS_MARKER_"
 PROFILE_SCHEMA = "atlas-character-design-profile/v1"
-GENERATOR_VERSION = "atlas-character-base/v27"
+GENERATOR_VERSION = "atlas-character-base/v28"
 DEFAULT_NEUTRAL_POSE = "t_pose_fingers_spread"
 
 # Archetype modifiers are deterministic silhouette priors. Explicit profile
@@ -50,15 +51,20 @@ def arguments() -> argparse.Namespace:
     if "--" not in sys.argv:
         raise SystemExit("Pass generator options after --. See the script header.")
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--profile", type=Path, required=True)
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--profile", type=Path, help="Design profile for a direct blockout build")
+    inputs.add_argument(
+        "--build-plan", type=Path,
+        help="Frozen atlas-character-geometry-build-plan/v1 compiled from a profile and recipe",
+    )
     parser.add_argument("--output-root", type=Path, default=ROOT / "art/characters/pending_models")
     parser.add_argument(
         "--allow-blockout", action="store_true",
         help="Explicitly generate the low-detail procedural concept mesh; this is not a production character.",
     )
     parser.add_argument(
-        "--reference-glb", type=Path,
-        help="Reserved for a future reviewed geometry source; current profile calibrations are measurement-only.",
+        "--reference-model", "--reference-glb", dest="reference_model", type=Path,
+        help="Optional .glb/.blend geometry seed; it must match an approved profile geometry-seed record.",
     )
     parser.add_argument(
         "--reference-image", type=Path,
@@ -83,6 +89,87 @@ def load_profile(path: Path) -> dict:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def canonical_sha256(value: object) -> str:
+    payload = json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def resolve_project_path(value: str) -> Path:
+    path = Path(value)
+    return path.resolve() if path.is_absolute() else (ROOT / path).resolve()
+
+
+def load_geometry_build_plan(path: Path) -> tuple[dict, dict]:
+    """Verify a frozen plan and all recorded inputs before building its snapshot."""
+    plan_path = path.expanduser().resolve(strict=True)
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    if not isinstance(plan, dict) or plan.get("schema") != "atlas-character-geometry-build-plan/v1":
+        raise ValueError("unsupported or malformed character geometry build plan")
+    recorded_plan_hash = plan.get("plan_sha256")
+    unhashed_plan = dict(plan)
+    unhashed_plan.pop("plan_sha256", None)
+    if not isinstance(recorded_plan_hash, str) or canonical_sha256(unhashed_plan) != recorded_plan_hash:
+        raise ValueError("geometry build plan checksum is missing or does not match its contents")
+
+    input_snapshots = {}
+    for key in ("profile", "character_recipe", "profile_schema", "recipe_schema"):
+        item = plan.get("inputs", {}).get(key)
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str):
+            raise ValueError(f"geometry build plan is missing input record {key!r}")
+        input_path = resolve_project_path(item["path"])
+        if not input_path.is_file() or sha256(input_path) != item.get("sha256"):
+            raise ValueError(f"geometry build plan input changed or is unavailable: {item['path']}")
+        input_snapshots[key] = json.loads(input_path.read_text(encoding="utf-8"))
+    reference_geometry = plan.get("inputs", {}).get("reference_geometry")
+    if reference_geometry:
+        source_item = reference_geometry.get("source", {})
+        record_item = reference_geometry.get("calibration_record", {})
+        source_path = resolve_project_path(source_item.get("path", ""))
+        record_path = resolve_project_path(record_item.get("path", ""))
+        if not source_path.is_file() or sha256(source_path) != source_item.get("sha256"):
+            raise ValueError("geometry seed source changed or is unavailable")
+        if not record_path.is_file() or sha256(record_path) != record_item.get("sha256"):
+            raise ValueError("geometry seed calibration record changed or is unavailable")
+        record_snapshot = json.loads(record_path.read_text(encoding="utf-8"))
+        if record_snapshot != record_item.get("snapshot"):
+            raise ValueError("geometry seed calibration record snapshot differs from its frozen build plan")
+        calibration = plan.get("inputs", {}).get("profile", {}).get("snapshot", {}).get("reference_calibration", {})
+        if calibration.get("use") != "geometry_seed" or calibration.get("source_sha256") != source_item.get("sha256"):
+            raise ValueError("geometry seed input does not match the frozen design profile")
+        if reference_geometry.get("review") != calibration.get("geometry_seed_review"):
+            raise ValueError("geometry seed review attestation differs from the frozen design profile")
+        if resolve_project_path(calibration.get("source_path", "")) != source_path:
+            raise ValueError("geometry seed source path differs from the frozen design profile")
+        if reference_geometry.get("selected_mesh_object") != record_snapshot.get("geometry", {}).get("selected_mesh_object"):
+            raise ValueError("selected source mesh differs from the frozen calibration record")
+    builder = plan.get("builder")
+    compiler = plan.get("compiler")
+    if not isinstance(builder, dict) or builder.get("sha256") != sha256(Path(__file__).resolve()):
+        raise ValueError("geometry build plan was compiled for a different Blender builder revision")
+    compiler_path = resolve_project_path(compiler.get("path", "")) if isinstance(compiler, dict) else None
+    if compiler_path is None or not compiler_path.is_file() or sha256(compiler_path) != compiler.get("sha256"):
+        raise ValueError("geometry build plan compiler revision is unavailable or has changed")
+
+    profile = plan.get("build_profile")
+    source_profile = plan.get("inputs", {}).get("profile", {}).get("snapshot")
+    recipe = plan.get("inputs", {}).get("character_recipe", {}).get("snapshot")
+    if not isinstance(profile, dict) or not isinstance(recipe, dict):
+        raise ValueError("geometry build plan lacks its profile or recipe snapshots")
+    if source_profile != input_snapshots["profile"] or recipe != input_snapshots["character_recipe"]:
+        raise ValueError("geometry build plan snapshots do not match their hashed input files")
+    expected_build_profile = load_profile(resolve_project_path(plan["inputs"]["profile"]["path"]))
+    expected_build_profile["body"] = recipe["body"]
+    if profile != expected_build_profile:
+        raise ValueError("effective build profile does not apply exactly the frozen recipe body controls")
+    if profile.get("character_id") != plan.get("character_id") or recipe.get("character_id") != plan.get("character_id"):
+        raise ValueError("geometry build plan character IDs do not agree")
+    if profile.get("body") != recipe.get("body") or recipe.get("pose") != DEFAULT_NEUTRAL_POSE:
+        raise ValueError("geometry build plan profile does not match its recipe body and canonical T-pose")
+    if plan.get("rigging", {}).get("required_for_mesh_build") is not False:
+        raise ValueError("first-stage geometry build plans must not require a rig")
+    return plan, profile
 
 
 def normalized_reference_point(point: Vector, low: Vector, high: Vector) -> Vector:
@@ -369,14 +456,158 @@ def stitch_reference_axilla_surfaces(body: bpy.types.Object) -> int:
     return stitched_sides
 
 
-def import_reference_body(path: Path, target_height: float) -> tuple[bpy.types.Object, dict[str, Vector], dict[str, float], int]:
+def adapt_reference_proportions(
+    body: bpy.types.Object, profile: dict, landmarks: dict[str, Vector],
+) -> dict[str, float]:
+    """Apply supported profile proportion controls to a normalized source mesh.
+
+    This is a deterministic, smooth spatial warp over the reviewed source mesh,
+    not a retopology or a claim that arbitrary source anatomy will deform well.
+    The result still requires visual and topology review.
+    """
+    controls = profile["body"]
+    vertices = body.data.vertices
+    if not vertices:
+        raise RuntimeError("Reference body mesh is empty.")
+    low_z = min(vertex.co.z for vertex in vertices)
+    high_z = max(vertex.co.z for vertex in vertices)
+    height = high_z - low_z
+    if height <= 1e-6:
+        raise RuntimeError("Reference body has no measurable height.")
+
+    def fallback(name: str, z: float, x: float = 0.0) -> Vector:
+        point = landmarks.get(name)
+        return point.copy() if point is not None else Vector((x, 0.0, z))
+
+    # The importer normalizes source geometry to z=0..1. Rigged sources provide
+    # stronger anchors; these conservative defaults support unrigged body meshes.
+    pelvis = fallback("root", low_z + height * 0.47)
+    shoulder_left = fallback("shoulder_left", low_z + height * 0.78, -0.15)
+    shoulder_right = fallback("shoulder_right", low_z + height * 0.78, 0.15)
+    if abs(shoulder_left.x) + abs(shoulder_right.x) < 0.02:
+        sample_z = low_z + height * 0.78
+        sample = [abs(vertex.co.x) for vertex in vertices if abs(vertex.co.z - sample_z) <= height * 0.04]
+        half = max(sample, default=0.15)
+        shoulder_left = Vector((-half * 0.62, 0, sample_z))
+        shoulder_right = Vector((half * 0.62, 0, sample_z))
+    shoulder_z = (shoulder_left.z + shoulder_right.z) * 0.5
+    shoulder_half = max(0.06, (abs(shoulder_left.x) + abs(shoulder_right.x)) * 0.5)
+    knee_left = fallback("knee_left", low_z + height * 0.30, -0.07)
+    knee_right = fallback("knee_right", low_z + height * 0.30, 0.07)
+    if abs(knee_left.z - pelvis.z) < height * 0.05 and abs(knee_right.z - pelvis.z) < height * 0.05:
+        knee_left.z = knee_right.z = low_z + height * 0.30
+    ankle_left = fallback("ankle_left", low_z + height * 0.08, -0.06)
+    ankle_right = fallback("ankle_right", low_z + height * 0.08, 0.06)
+    if abs(ankle_left.z - pelvis.z) < height * 0.05 and abs(ankle_right.z - pelvis.z) < height * 0.05:
+        ankle_left.z = ankle_right.z = low_z + height * 0.08
+    wrist_left = fallback("wrist_left", shoulder_z, -shoulder_half * 1.8)
+    wrist_right = fallback("wrist_right", shoulder_z, shoulder_half * 1.8)
+    if abs(wrist_left.x) + abs(wrist_right.x) < shoulder_half * 0.5:
+        sample_z = low_z + height * 0.77
+        sample = [abs(vertex.co.x) for vertex in vertices if abs(vertex.co.z - sample_z) <= height * 0.04]
+        half = max(sample, default=shoulder_half * 1.8)
+        wrist_left = Vector((-half, 0, sample_z))
+        wrist_right = Vector((half, 0, sample_z))
+    neck = fallback("neck", low_z + height * 0.83)
+    head = fallback("head", low_z + height * 0.91)
+    waist_z = pelvis.z + (shoulder_z - pelvis.z) * 0.45
+    thigh_z = pelvis.z + ((knee_left.z + knee_right.z) * 0.5 - pelvis.z) * 0.45
+
+    def pulse(z: float, center: float, spread: float) -> float:
+        spread = max(spread, height * 0.015)
+        return math.exp(-0.5 * ((z - center) / spread) ** 2)
+
+    def smooth01(value: float) -> float:
+        value = min(1.0, max(0.0, value))
+        return value * value * (3.0 - 2.0 * value)
+
+    ratios = {name: controls[name] / 100.0 for name in (
+        "build_percent", "shoulder_percent", "arm_length_percent", "leg_length_percent",
+        "head_percent", "torso_length_percent", "stomach_percent", "hips_percent",
+        "thighs_percent", "hand_percent", "foot_percent",
+    )}
+    torso_span = max(height * 0.16, shoulder_z - pelvis.z)
+    leg_span = max(height * 0.16, pelvis.z - (knee_left.z + knee_right.z) * 0.5)
+    head_span = max(height * 0.08, high_z - neck.z)
+    transformed_landmarks: dict[str, Vector] = {}
+
+    def transform(point: Vector) -> Vector:
+        original = point.copy()
+        z = original.z
+        if z < pelvis.z:
+            z = pelvis.z + (z - pelvis.z) * ratios["leg_length_percent"]
+        elif z <= shoulder_z:
+            z = pelvis.z + (z - pelvis.z) * ratios["torso_length_percent"]
+        else:
+            z = pelvis.z + torso_span * ratios["torso_length_percent"] + (z - shoulder_z)
+
+        x = original.x * ratios["build_percent"]
+        y = original.y * ratios["build_percent"]
+        torso_weight = math.exp(-0.5 * (abs(original.x) / max(shoulder_half * 1.25, 0.08)) ** 2)
+        section_factor = 1.0
+        section_factor *= 1.0 + (ratios["shoulder_percent"] - 1.0) * pulse(original.z, shoulder_z, torso_span * 0.22) * torso_weight
+        section_factor *= 1.0 + (ratios["stomach_percent"] - 1.0) * pulse(original.z, waist_z, torso_span * 0.18) * torso_weight
+        section_factor *= 1.0 + (ratios["hips_percent"] - 1.0) * pulse(original.z, pelvis.z, torso_span * 0.20) * torso_weight
+        section_factor *= 1.0 + (ratios["thighs_percent"] - 1.0) * pulse(original.z, thigh_z, leg_span * 0.24)
+        x *= section_factor
+        y *= section_factor
+
+        arm_weight = pulse(original.z, shoulder_z, height * 0.075)
+        for wrist in (wrist_left, wrist_right):
+            if abs(original.x) > shoulder_half * 0.95:
+                distance = abs(original.x - math.copysign(shoulder_half, original.x))
+                arm_weight = max(arm_weight, pulse(original.z, wrist.z, height * 0.07) * smooth01(distance / max(abs(wrist.x) - shoulder_half, 0.05)))
+        if arm_weight > 0:
+            x *= 1.0 + (ratios["arm_length_percent"] - 1.0) * arm_weight
+
+        # Scale the head and extremities around their source landmarks so their
+        # relative placement follows the warped torso and limb lengths.
+        head_weight = smooth01((original.z - neck.z) / head_span)
+        mapped_head_center = Vector((head.x * ratios["build_percent"], head.y * ratios["build_percent"],
+                                     pelvis.z + torso_span * ratios["torso_length_percent"] + (head.z - shoulder_z)))
+        point = Vector((x, y, z))
+        point = mapped_head_center + (point - mapped_head_center) * (1.0 + (ratios["head_percent"] - 1.0) * head_weight)
+
+        for wrist in (wrist_left, wrist_right):
+            wrist_center = Vector((wrist.x * ratios["build_percent"], wrist.y * ratios["build_percent"],
+                                   pelvis.z + (wrist.z - pelvis.z) * ratios["torso_length_percent"]))
+            hand_weight = pulse(original.z, wrist.z, height * 0.055) * smooth01((abs(original.x) - shoulder_half * 0.70) / max(height * 0.08, 0.01))
+            point = wrist_center + (point - wrist_center) * (1.0 + (ratios["hand_percent"] - 1.0) * hand_weight)
+        for ankle in (ankle_left, ankle_right):
+            ankle_center = Vector((ankle.x * ratios["build_percent"], ankle.y * ratios["build_percent"],
+                                   pelvis.z + (ankle.z - pelvis.z) * ratios["leg_length_percent"]))
+            foot_weight = pulse(original.z, ankle.z - height * 0.015, height * 0.045) * smooth01((height * 0.09 - (original - ankle).length) / max(height * 0.05, 0.01))
+            point = ankle_center + (point - ankle_center) * (1.0 + (ratios["foot_percent"] - 1.0) * foot_weight)
+        return point
+
+    for vertex in vertices:
+        vertex.co = transform(vertex.co)
+    for name, point in landmarks.items():
+        transformed_landmarks[name] = transform(point)
+    body.data.update()
+    landmarks.clear()
+    landmarks.update(transformed_landmarks)
+    body["atlas.source_profile_adaptations"] = json.dumps(ratios, sort_keys=True)
+    return ratios
+
+
+def import_reference_body(path: Path, target_height: float, source_object_name: str, profile: dict) -> tuple[bpy.types.Object, dict[str, Vector], dict[str, float], int]:
     path = path.expanduser().resolve(strict=True)
-    bpy.ops.import_scene.gltf(filepath=str(path))
+    if path.suffix.lower() == ".glb":
+        bpy.ops.import_scene.gltf(filepath=str(path))
+    elif path.suffix.lower() == ".blend":
+        # Geometry is loaded from the reviewed project source itself. The
+        # named object in its calibration record prevents accidentally using
+        # another mesh from a multi-asset Blender library.
+        bpy.ops.wm.open_mainfile(filepath=str(path))
+    else:
+        raise RuntimeError("Reference geometry must be a .glb or .blend file.")
     depsgraph = bpy.context.evaluated_depsgraph_get()
-    source_meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and len(obj.data.vertices) >= 100]
-    if not source_meshes:
-        raise RuntimeError(f"Reference model has no substantial mesh: {path}")
-    source = max(source_meshes, key=lambda obj: len(obj.data.vertices))
+    source = bpy.data.objects.get(source_object_name)
+    if source is None or source.type != "MESH":
+        raise RuntimeError(f"Calibrated source mesh {source_object_name!r} is missing from {path}")
+    if len(source.data.vertices) < 100:
+        raise RuntimeError(f"Calibrated source mesh is too small to use as a body: {source_object_name!r}")
     evaluated = source.evaluated_get(depsgraph)
     points = [evaluated.matrix_world @ vertex.co for vertex in evaluated.data.vertices]
     low = Vector(tuple(min(point[axis] for point in points) for axis in range(3)))
@@ -472,6 +703,7 @@ def import_reference_body(path: Path, target_height: float) -> tuple[bpy.types.O
         "ankle_left": ankle_l or pelvis.copy(), "hip_right": bone_point("hips", "pelvis") or pelvis.copy(),
         "knee_right": knee_r or pelvis.copy(), "ankle_right": ankle_r or pelvis.copy(),
     }
+    source_adaptations = adapt_reference_proportions(body, profile, landmarks)
     landmarks = project_surface_landmarks(body, landmarks)
 
     # Keep only the baked visible mesh; imported armatures/helper objects never
@@ -492,6 +724,7 @@ def import_reference_body(path: Path, target_height: float) -> tuple[bpy.types.O
     body["atlas.t_pose_arm_vertices_left"] = posed_vertices["left"]
     body["atlas.t_pose_arm_vertices_right"] = posed_vertices["right"]
     body["atlas.axilla_stitched_sides"] = axilla_fill_count
+    body["atlas.source_profile_adaptations"] = json.dumps(source_adaptations, sort_keys=True)
     dimension_profile = {"body": {
         "build_percent": 100, "shoulder_percent": 100, "torso_length_percent": 100,
         "head_percent": 100, "arm_length_percent": 100, "leg_length_percent": 100,
@@ -502,13 +735,30 @@ def import_reference_body(path: Path, target_height: float) -> tuple[bpy.types.O
     }, "concept": {"archetype": "humanoid"}}
     dimensions = build_dimensions(dimension_profile)
     dimensions.update({
-        "pelvis_z": pelvis.z, "ankle_z": average(ankle_l, ankle_r, Vector((0, 0, 0.06))).z,
-        "wrist_z": average(wrist_l, wrist_r, Vector((0, 0, 0.5))).z,
-        "shoulder_z": average(shoulder_l, shoulder_r, chest).z,
-        "neck_z": neck.z, "shoulder_half": max(0.01, abs((shoulder_l or chest).x)),
-        "wrist_half": max(0.01, abs((wrist_l or chest).x)),
-        "hip_half": max(0.01, abs(pelvis.x)),
+        "pelvis_z": landmarks["root"].z,
+        "ankle_z": average(landmarks["ankle_left"], landmarks["ankle_right"], Vector((0, 0, 0.06))).z,
+        "knee_z": average(landmarks["knee_left"], landmarks["knee_right"], Vector((0, 0, 0.3))).z,
+        "wrist_z": average(landmarks["wrist_left"], landmarks["wrist_right"], Vector((0, 0, 0.5))).z,
+        "shoulder_z": average(landmarks["shoulder_left"], landmarks["shoulder_right"], chest).z,
+        "neck_z": landmarks["neck"].z,
+        "head_z": landmarks["head"].z,
+        "waist_z": landmarks["root"].z + (landmarks["shoulder_left"].z - landmarks["root"].z) * 0.45,
+        "chest_z": landmarks["root"].z + (landmarks["shoulder_left"].z - landmarks["root"].z) * 0.75,
+        "shoulder_half": max(0.01, abs(landmarks["shoulder_left"].x), abs(landmarks["shoulder_right"].x)),
+        "wrist_half": max(0.01, abs(landmarks["wrist_left"].x), abs(landmarks["wrist_right"].x)),
+        "hip_half": max(0.01, abs(landmarks["hip_left"].x), abs(landmarks["hip_right"].x)),
+        "head": profile["body"]["head_percent"] / 100,
+        "ear": profile["body"]["ear_percent"] / 100,
+        "jaw": profile["body"]["jaw_percent"] / 100,
+        "nose": profile["body"]["nose_percent"] / 100,
     })
+    head_vertices = [vertex.co for vertex in body.data.vertices if vertex.co.z >= landmarks["neck"].z]
+    if head_vertices:
+        dimensions["head_rx"] = max(abs(point.x - landmarks["head"].x) for point in head_vertices)
+        dimensions["head_ry"] = max(abs(point.y - landmarks["head"].y) for point in head_vertices)
+        dimensions["head_rz"] = max(
+            abs(point.z - landmarks["head"].z) for point in head_vertices
+        )
     components = connected_component_sizes(body.data)
     return body, landmarks, dimensions, components
 
@@ -1013,6 +1263,47 @@ def create_features(profile: dict, d: dict[str, float], landmarks: dict[str, Vec
     return objects
 
 
+def create_reference_trait_features(profile: dict, d: dict[str, float], landmarks: dict[str, Vector]) -> list[bpy.types.Object]:
+    """Add only requested traits that are not guaranteed by a seed human mesh."""
+    objects: list[bpy.types.Object] = []
+    traits, palette = profile["traits"], profile["palette"]
+    head_center = landmarks["head"]
+    rx = max(d.get("head_rx", 0.06), 0.035) * d.get("head", 1.0)
+    ry = max(d.get("head_ry", 0.06), 0.035) * d.get("head", 1.0)
+    rz = max(d.get("head_rz", 0.08), 0.045) * d.get("head", 1.0)
+    if traits["horns"]:
+        material = make_material("Atlas Seed Horns", palette["horns"], 0.5)
+        for side, sign in (("L", -1), ("R", 1)):
+            direction = Vector((sign * 0.32, -0.55, 0.77)).normalized()
+            base = head_center + Vector((sign * rx * 0.38, -ry * 0.10, rz * 0.70))
+            depth = rz * 0.85
+            objects.append(add_cone(
+                f"ATLAS_FEATURE_HORN_{side}", base + direction * (depth * 0.48),
+                rx * 0.20, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 12,
+            ))
+    if traits["tusks"]:
+        material = make_material("Atlas Seed Tusks", palette["tusks"], 0.42)
+        for side, sign in (("L", -1), ("R", 1)):
+            direction = Vector((sign * 0.18, 0.18, 1.0)).normalized()
+            base = head_center + Vector((sign * rx * 0.28, ry * 0.82, -rz * 0.50))
+            depth = rz * 0.40 * d.get("jaw", 1.0)
+            objects.append(add_cone(
+                f"ATLAS_FEATURE_TUSK_{side}", base + direction * (depth * 0.45),
+                rx * 0.12, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 10,
+            ))
+    if traits["pointed_ears"]:
+        material = make_material("Atlas Seed Pointed Ears", palette["skin"])
+        for side, sign in (("L", -1), ("R", 1)):
+            direction = Vector((sign * 0.90, -0.35, 0.10)).normalized()
+            base = head_center + Vector((sign * rx * 0.82, 0.0, -rz * 0.08))
+            depth = rx * 0.80 * d.get("ear", 1.0)
+            objects.append(add_cone(
+                f"ATLAS_FEATURE_EAR_{side}", base + direction * (depth * 0.48),
+                ry * 0.28, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 12,
+            ))
+    return objects
+
+
 def parent_preserving_world(obj: bpy.types.Object, parent: bpy.types.Object) -> None:
     bpy.context.view_layer.update()
     world = obj.matrix_world.copy()
@@ -1146,30 +1437,51 @@ def export_static_preview(body: bpy.types.Object, features: list[bpy.types.Objec
 
 def main() -> None:
     args = arguments()
-    profile_path = args.profile.resolve()
-    profile = load_profile(profile_path)
+    build_plan = None
+    character_recipe = None
+    if args.build_plan:
+        build_plan, profile = load_geometry_build_plan(args.build_plan)
+        source_profile = build_plan["inputs"]["profile"]["snapshot"]
+        profile_path = resolve_project_path(build_plan["inputs"]["profile"]["path"])
+        character_recipe = build_plan["inputs"]["character_recipe"]["snapshot"]
+    else:
+        profile_path = args.profile.resolve()
+        profile = load_profile(profile_path)
+        source_profile = profile
+    if build_plan and args.reference_image:
+        raise ValueError("reference images must be declared inputs to a build plan before recipe-driven generation")
     output_dir = args.output_root.resolve() / profile["character_id"]
     blend_output = output_dir / "character_base.blend"
     glb_output = output_dir / "character_base_preview.glb"
     regions_output = output_dir / "body_regions.json"
     record_output = output_dir / "character.json"
     profile_copy = output_dir / "design_profile.json"
+    recipe_copy = output_dir / "character_recipe.json"
+    plan_copy = output_dir / "geometry_build_plan.json"
     bpy.ops.wm.read_factory_settings(use_empty=True)
-    if args.reference_glb and args.reference_image:
-        raise ValueError("Choose either --reference-image or --reference-glb, not both.")
+    if args.reference_model and args.reference_image:
+        raise ValueError("Choose either --reference-image or --reference-model, not both.")
     if not 0.0 <= args.image_fit_strength <= 1.0:
         raise ValueError("--image-fit-strength must be between 0 and 1.")
     image_measurements = measure_front_reference(args.reference_image) if args.reference_image else None
     image_fit_report = None
     image_measurements_path = None
     calibration = profile.get("reference_calibration")
-    reference_path = args.reference_glb
+    reference_path = args.reference_model
+    if calibration and calibration.get("use") == "geometry_seed":
+        declared_source = resolve_project_path(calibration["source_path"])
+        if reference_path and reference_path.expanduser().resolve() != declared_source:
+            raise ValueError("--reference-model must match the geometry seed declared in the profile")
+        reference_path = declared_source
+    elif reference_path:
+        raise ValueError("--reference-model requires a reviewed geometry_seed declaration in the design profile")
     reference_mode = reference_path is not None
+    if reference_mode and not build_plan:
+        raise ValueError("reference-seeded builds must use a frozen geometry build plan so the source and calibration record are hash-pinned")
     if not reference_mode and not args.allow_blockout:
         print(
             "No production mesh source is configured. The procedural path creates a low-detail blockout, "
-            "not a high-quality model. The current Troll calibration is measurement-only; supply a future "
-            "reviewed geometry source or explicitly pass --allow-blockout "
+            "not a high-quality model. Supply an explicitly reviewed geometry seed or pass --allow-blockout "
             "to create a concept preview. A front image only guides silhouette width; it cannot supply "
             "hidden geometry, surface detail, or production topology.",
             file=sys.stderr,
@@ -1178,11 +1490,8 @@ def main() -> None:
         sys.exit(1)
     source_provenance = {}
     if reference_mode:
-        if not calibration or calibration.get("use") != "geometry_seed":
-            raise RuntimeError(
-                "Reference geometry is disabled for current profiles. Calibrations are measurement-only "
-                "until a source is reviewed for design fit, topology, provenance, and license."
-            )
+        if not calibration or calibration.get("use") != "geometry_seed" or calibration.get("geometry_seed_review", {}).get("status") != "approved":
+            raise RuntimeError("Reference geometry requires an explicit approved design-fit, topology, and license review in the profile.")
         reference_path = reference_path.expanduser().resolve(strict=True)
         if calibration and sha256(reference_path) != calibration["source_sha256"]:
             raise RuntimeError("Reference model SHA-256 does not match the profile calibration. Recalibrate the source before generation.")
@@ -1191,9 +1500,20 @@ def main() -> None:
             provenance_record = json.loads(provenance_path.read_text(encoding="utf-8"))
             if provenance_record.get("source_sha256") != calibration["source_sha256"]:
                 raise RuntimeError("Reference calibration record does not match the profile source hash.")
+            if build_plan:
+                frozen_reference = build_plan.get("inputs", {}).get("reference_geometry")
+                if not frozen_reference or frozen_reference.get("source", {}).get("sha256") != sha256(reference_path):
+                    raise RuntimeError("Reference geometry is not the source frozen into the build plan.")
+                if frozen_reference.get("calibration_record", {}).get("sha256") != sha256(provenance_path):
+                    raise RuntimeError("Reference calibration record is not the version frozen into the build plan.")
             source_provenance = provenance_record.get("provenance", {})
+            if source_provenance.get("license") != calibration["license"]:
+                raise RuntimeError("Reference license in the profile does not match the calibration record.")
+            source_object_name = provenance_record.get("geometry", {}).get("selected_mesh_object")
+            if not source_object_name:
+                raise RuntimeError("Reference calibration record does not identify a selected source mesh.")
         body, landmarks, dimensions, anatomical_components = import_reference_body(
-            reference_path, profile["body"]["height_cm"] / 100,
+            reference_path, profile["body"]["height_cm"] / 100, source_object_name, profile,
         )
         if source_provenance:
             body["atlas.source_title"] = source_provenance.get("title", "")
@@ -1240,7 +1560,11 @@ def main() -> None:
 
     # A failed topology gate must not leave a partially updated review package.
     output_dir.mkdir(parents=True, exist_ok=True)
-    profile_copy.write_text(json.dumps(profile, indent=2) + "\n", encoding="utf-8")
+    profile_copy.write_text(json.dumps(source_profile, indent=2) + "\n", encoding="utf-8")
+    if character_recipe:
+        recipe_copy.write_text(json.dumps(character_recipe, indent=2) + "\n", encoding="utf-8")
+    if build_plan:
+        plan_copy.write_text(json.dumps(build_plan, indent=2) + "\n", encoding="utf-8")
     if image_measurements:
         image_measurements_path = output_dir / "image_measurements.json"
         image_measurements["fit"] = image_fit_report
@@ -1250,7 +1574,10 @@ def main() -> None:
         features = create_features(profile, dimensions, landmarks)
         body = join_as_single_mesh_object(body, features)
     else:
-        features = []
+        features = create_reference_trait_features(profile, dimensions, landmarks)
+        if features:
+            body = join_as_single_mesh_object(body, features)
+        body["atlas.body_topology"] = "licensed_reference_mesh_with_profile_adaptations_and_trait_islands"
         body["atlas.mesh_object_count"] = 1
     region_document = add_region_metadata(body, dimensions)
     regions_output.write_text(json.dumps(region_document, indent=2) + "\n", encoding="utf-8")
@@ -1260,9 +1587,12 @@ def main() -> None:
     root.empty_display_type = "CIRCLE"
     root["atlas.character_id"] = profile["character_id"]
     root["atlas.profile_schema"] = profile["schema"]
+    if build_plan:
+        root["atlas.geometry_build_plan_sha256"] = build_plan["plan_sha256"]
+        root["atlas.character_recipe_sha256"] = build_plan["inputs"]["character_recipe"]["sha256"]
     root["atlas.generator_version"] = GENERATOR_VERSION
     root["atlas.base_review_status"] = "review_required"
-    root["atlas.next_stage"] = "accept_base_then_place_rig_markers"
+    root["atlas.next_stage"] = "geometry_review"
     root["atlas.neutral_pose"] = DEFAULT_NEUTRAL_POSE
     parent_preserving_world(body, root)
     marker_names = create_marker_guides(root, landmarks)
@@ -1289,7 +1619,21 @@ def main() -> None:
         "character_id": profile["character_id"],
         "display_name": profile["display_name"],
         "design_profile_schema": profile["schema"],
-        "design_profile": profile,
+        "design_profile": source_profile,
+        "effective_build_profile": profile,
+        "character_recipe": ({
+            "schema": character_recipe["schema"],
+            "path": recipe_copy.name,
+            "sha256": sha256(recipe_copy),
+            "grammar": character_recipe["grammar"],
+            "draft_rules_applied": character_recipe.get("draft_rules_applied", False),
+        } if character_recipe else None),
+        "geometry_build_plan": ({
+            "schema": build_plan["schema"],
+            "path": plan_copy.name,
+            "sha256": sha256(plan_copy),
+            "plan_sha256": build_plan["plan_sha256"],
+        } if build_plan else None),
         "generator_version": GENERATOR_VERSION,
         "neutral_pose": DEFAULT_NEUTRAL_POSE,
         "pipeline_stage": "base_generated",
@@ -1303,7 +1647,13 @@ def main() -> None:
             ),
         },
         "base_review_status": "review_required",
-        "next_stage": "accept_base_then_place_rig_markers",
+        "next_stage": "geometry_review",
+        "rigging": {
+            "required_for_mesh_review": False,
+            "armature_generated": False,
+            "skin_weights_generated": False,
+            "animation_generated": False,
+        },
         "base_template": profile["base_template"],
         "skeleton_id": None,
         "actions_requested": profile["actions"],
@@ -1331,6 +1681,8 @@ def main() -> None:
             "preview_glb": glb_output.name,
             "profile": profile_copy.name,
             "body_regions": regions_output.name,
+            **({"character_recipe": recipe_copy.name} if character_recipe else {}),
+            **({"geometry_build_plan": plan_copy.name} if build_plan else {}),
             **({"image_measurements": image_measurements_path.name} if image_measurements_path else {}),
         },
         "sha256": {
@@ -1338,6 +1690,8 @@ def main() -> None:
             "blend": sha256(blend_output),
             "preview_glb": sha256(glb_output),
             "body_regions": sha256(regions_output),
+            **({"character_recipe": sha256(recipe_copy)} if character_recipe else {}),
+            **({"geometry_build_plan": sha256(plan_copy)} if build_plan else {}),
             **({"image_measurements": sha256(image_measurements_path)} if image_measurements_path else {}),
         },
         "source_model": ({
@@ -1347,6 +1701,10 @@ def main() -> None:
             "title": source_provenance.get("title"),
             "author": source_provenance.get("author"),
             "url": source_provenance.get("source"),
+            "selected_mesh_object": source_object_name if reference_mode else None,
+            "calibration_record": calibration["record"] if calibration else None,
+            "calibration_record_sha256": sha256(provenance_path) if reference_mode else None,
+            "geometry_seed_review": calibration.get("geometry_seed_review") if calibration else None,
             "source_mesh_baked_without_source_rig": True,
         } if reference_mode else None),
         "image_reference": ({

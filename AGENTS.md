@@ -23,10 +23,13 @@ subsystem; do not infer production readiness from a generated preview.
 
 ## Character pipeline
 
-The repository does not call an AI API. An AI or user supplies a compact
-design-profile JSON; Blender scripts deterministically generate or process the
-mesh. The stages are profile, base generation, human base acceptance, landmark
-placement, rig/weight review, appearance, then separate runtime release review.
+The repository does not call an AI API. The local Recipe Studio can compile a
+small set of explicit text measurements and feature toggles into a Stone Troll
+profile; qualitative prose is preserved but not guessed into geometry. A user
+can also supply compact design-profile JSON. Blender scripts deterministically
+generate or process the mesh. The stages are profile, recipe/build plan, base
+generation, human base acceptance, texture/material authoring, landmark
+placement, rig/weight review, animation, then separate runtime release review.
 The runtime appearance save profile is distinct from the creator design
 profile. Begin with `specs/atlas-character-generation.md` and follow its
 commands and review gates.
@@ -37,12 +40,16 @@ world-system implementation: revise status/roadmap entries and add a dated note
 listing the change and verification performed. Keep it factual; do not mark a
 planned capability as implemented.
 
-The `stone_troll` calibration is measurement-only. Its source is a poor geometry
-match and must not be used as the troll model. Procedural generation creates a
-low-detail blockout only and now requires `--allow-blockout`; do not present it
-as a high-quality or production-ready character. The current pipeline has no
-high-detail mesh generator. The image path uses local pixel measurements only;
-it cannot infer hidden geometry, surface detail, or production topology.
+The former `stone_troll` calibration was removed during the rights audit; do
+not restore or use that source as troll geometry. Procedural generation creates
+a low-detail blockout and requires `--allow-blockout`. An optional geometry-seed
+path can adapt a separately calibrated `.glb` or `.blend` only after a human
+attests rights, topology, and design fit; hash checks and that attestation do
+not establish visual quality or production readiness. No current source is an
+approved Stone Troll geometry seed. The pipeline has no high-detail mesh
+generator. The image path uses local pixel measurements only; it cannot infer
+hidden geometry, surface detail, or production topology. See
+`specs/atlas-character-generation.md` for the source-seed workflow and limits.
 
 ## Useful commands
 
@@ -60,6 +67,10 @@ Character profile and asset checks:
 npm run characters:profile-check -- art/characters/profiles/stone_troll.json
 npm run assets:check
 ```
+
+Run the deterministic authoring UI from the repository root with
+`python3 tools/characters/recipe_studio_server.py`; it binds to loopback at
+`http://127.0.0.1:8766` by default.
 
 Blender generation requires Blender 4.x or newer with glTF support:
 

@@ -106,6 +106,11 @@ source lineage, rights, and review status. A collection of 100 recipes should
 be 100 traceable observations, not 100 derivatives counted as independent
 evidence from one source.
 
+The first-pass Blender intake tool now writes a technical dossier and a
+separate, unknown-by-default observation draft for `.blend`, `.glb`, or `.gltf`
+sources. It does not infer semantic anatomy, verify rights, or produce a recipe.
+No approved observation dataset or miner exists.
+
 The planned local analysis flow is:
 
 1. Normalize names and aliases to versioned concept IDs.
@@ -553,28 +558,50 @@ implemented.
   Schema and Python validator. `compile_character_recipe.py` applies the
   authored grammar, scales supported proportions, carries relationships/tags,
   and records profile and grammar hashes. Draft archetype rules require an
-  explicit opt-in. Cross-recipe discovery is not connected to this compiler.
+  explicit opt-in. `compile_character_geometry_plan.py` validates the
+  profile/recipe pair and freezes supported geometry inputs, snapshots, hashes,
+  T-pose, and the no-rig requirement into a candidate build plan. Cross-recipe
+  discovery is not connected to this compiler.
 - **Full model recipe contract:** `atlas-model-recipe-v1.schema.json` specifies
   cross-category build inputs, dimensions, transforms, materials, rig/weight
   references, UV policy, material assignments, motion clips, variants,
   collision, LOD/performance budgets, provenance, QA, and checksummed outputs.
   It is schema groundwork only; no current generator executes this contract.
-- **Prompt-to-recipe orchestration:** Intended workflow is documented in the
-  creator-to-runtime section. No AI prompt adapter, recipe drafting service,
-  full-contract build-plan compiler, or stage-state orchestrator exists yet.
+- **Text-to-recipe UI:** `recipe_studio_server.py` serves a loopback-only,
+  chat-style workbench. `deterministic_recipe_compiler.py` maps a limited set
+  of explicit measurements and feature toggles into the Stone Troll profile;
+  unparsed prose is preserved but does not silently alter geometry. The UI
+  compiles a character recipe/build plan and can run Blender to create a
+  blockout candidate. There is no general natural-language parser or AI
+  recipe service.
+- **Prompt-to-recipe orchestration:** The broader workflow is documented in
+  the creator-to-runtime section. A full-contract build-plan compiler,
+  multi-archetype templates, general stage-state orchestrator, and AI-assisted
+  drafting remain unimplemented. The geometry-plan adapter is scoped to the
+  existing structured character profile and recipe.
 - **Reference and image tools:** Blender calibration records source metadata,
   measurements, bounds, cross-sections, and rig landmarks. The front-image
   reader extracts a silhouette with local pixel operations and fits width by
-  height; it does not infer unseen depth or surface details.
+  height; it does not infer unseen depth or surface details. The first-pass
+  `inspect_character_source.py` intake records hash-pinned geometry/rig
+  inventories and writes unknown-by-default observation drafts; unresolved or
+  invalid mesh drivers make evaluated geometry summaries explicitly unreliable.
 - **Mesh generation and review:** `generate_character_base.py` builds a
   deterministic parametric blockout, semantic body regions, and landmark
   guides. `character_topology.py` analyzes components/boundaries and gates the
   sampled torso-to-shoulder connection. `refresh_character_base_preview.py`,
   `review_character_base.py`, `export_character_markers.py`, and
   `atlas_marker_placement_addon.py` form the preview, human review, and marker
-  handoff. The explicit `--allow-blockout` option and sculpt/T-pose review,
-  preview checksum, and rig-authoring-only scope prevent an untouched blockout
-  from advancing. This gate does not certify production readiness.
+  handoff. Blender can consume a frozen character geometry build plan and
+  records its recipe/plan hashes with the candidate. The explicit
+  `--allow-blockout` option and sculpt/T-pose review, preview checksum, and
+  rig-authoring-only scope prevent an untouched blockout from advancing. This
+  gate does not certify production readiness.
+- **Recipe-driven geometry slice:** supported body proportions from the
+  existing character recipe now flow through a checksum-bound plan into
+  Blender. This does not execute the full cross-category model-recipe schema;
+  the builder still emits a low-detail blockout and no target-matching Stone
+  Troll mesh has been accepted.
 - **Geometry acceptance:** Current review tooling requires explicit sculpt and
   T-pose attestations, a passing sampled shoulder-connectivity check, and an
   unchanged preview hash. It does not yet measure the full geometry acceptance
@@ -608,19 +635,21 @@ implemented.
 | Area | Status | Notes |
 | --- | --- | --- |
 | Design profiles | Implemented | Structured JSON; free-form prompts are not parsed by Blender. |
-| Parametric character builder | Implemented as blockout | Not a high-detail sculpt generator. Explicit `--allow-blockout` is required. |
+| Character geometry builder | Implemented, limited | Explicit `--allow-blockout` procedural mode plus an opt-in, hash-pinned `.glb`/`.blend` source-seed path with human review attestation and coarse supported warps. Neither path is production-ready. |
 | Front-image measurement | Tool implemented, no retained image data | Use only sources with documented rights; a single view cannot infer depth or production surface detail. |
 | Licensed Troll calibration | Not retained | Stale calibration tied to an unavailable source was removed; CC-BY Troll Mauler remains an authoring reference only. |
 | Base review gate | Implemented, human-led | Requires sculpt and T-pose attestations; approval unlocks rig work only. |
 | Stone Troll unrigged geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. No armature or skinning is required for this first approval; rigging follows later. |
 | Recipe compiler | Implemented | Applies authored profile/grammar data; does not learn from a dataset. |
+| Character recipe-to-Blender geometry plan | Implemented, limited | Hash-bound plan applies supported recipe body proportions and T-pose to procedural geometry or a separately calibrated and reviewed source mesh; it does not execute the full model-recipe contract. |
+| Recipe Studio UI and deterministic text compiler | Implemented prototype | Loopback chat UI handles explicit Stone Troll measurements/toggles, plan compilation, procedural blockout generation, and local GLB preview; source-seeded builds remain CLI-only and adjectives are not mapped automatically. |
 | Cross-category model recipe schema | Contract groundwork | Captures build detail and provenance; builder/compiler integration is not implemented. |
-| AI request-to-recipe drafting | Planned | AI may draft structured proposals; deterministic validation and build execution remain required. |
+| General text-to-recipe authoring | Planned, AI optional | Current prototype only maps explicit values for the Stone Troll; broader vocabulary, templates, ambiguity handling, and editable structured review remain. |
 | Geometry-to-texture approval workflow | Planned | Geometry-first order is documented; no general stage-state service or procedural texture builder exists. |
 | Marker placement UI and skeleton generation | Planned | Blender add-on supports manual marker edits/exports only; the Mixamo-style visual workflow and marker-driven armature builder are not implemented. |
 | AI-assisted landmark proposal | Planned | Suggestions, per-marker confidence, and provenance are not implemented. |
 | Stone Troll rig and animation pipeline | Not implemented | No character rig or animation clips are registered; rig generation must follow approved visual markers. |
-| Structured observation dataset | Contract groundwork | Observation schema and intake guidance are defined; no reviewed dataset has been collected. |
+| Structured observation dataset | Intake prototype | Blender source inspection emits hash-pinned technical dossiers and unknown-by-default draft observations; no reviewed dataset has been collected. |
 | Relationship discovery/miner | Planned | Recipe curation can run alongside geometry work; do not claim mined findings until the vocabulary and independent licensed dataset support them. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |
 | Production-quality model generation | Not implemented | Requires a suitable modeling path and high-detail source/sculpt; do not claim the current blockout is production ready. |
@@ -638,6 +667,7 @@ implemented.
 
 - [`README.md`](README.md): current project scope, local run instructions,
   browser/runtime assets, APIs, simulations, policy flow, and limits.
+- [`to_do.md`](to_do.md): detailed, staged character asset-authoring work list.
 - [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md):
   profile, blockout, reference-image, review, marker, and recipe workflow.
 - [`specs/atlas-model-recipe-v1.schema.json`](specs/atlas-model-recipe-v1.schema.json):
@@ -664,11 +694,27 @@ implemented.
 
 ### Phase A — Stop bad outputs being treated as finished
 
-**Status: safeguards are implemented; the target geometry milestone remains
-open.** The milestone is a reviewed geometry-only Stone Troll in a complete
-T-pose. It does not require final textures or surface detailing. The previous
-browser base was removed during a rights audit; no accepted runtime character
-mesh is registered at present.
+**Status: safeguards, a recipe-driven blockout path, and a reviewed-source
+adaptation path are implemented; the target geometry milestone remains open.** The milestone is a reviewed
+geometry-only Stone Troll in a complete T-pose. It does not require final
+textures, surface detailing, or a rig. The previous browser base was removed
+during a rights audit; no accepted runtime character mesh is registered.
+
+### 2026-10-03 — Reviewed source-mesh adaptation path
+
+- Added an opt-in geometry-seed mode for exact calibrated `.glb` and `.blend`
+  mesh objects. The build plan pins source and calibration hashes and freezes
+  the rights, topology, and design-fit review attestation.
+- The Blender builder now imports the selected mesh, applies supported coarse
+  proportion warps, uses source joint bones for arm posing where available,
+  and retains source materials while recording provenance. It does not
+  retopologize, and features/material controls remain limited.
+- Updated the profile contract, calibration guidance, pipeline specification,
+  source audit, and per-file TODO audit. The Recipe Studio UI still launches
+  only the procedural route. No catalogued source has been approved as a
+  Stone Troll seed, and no accepted runtime character was created.
+- Verification: inspected the changed implementation and documentation for
+  consistency. No tests were run.
 
 - Done: procedural output is opt-in and labeled `blockout_only`.
 - Done: acceptance fails closed without explicit sculpt and T-pose review; marker
@@ -682,6 +728,11 @@ mesh is registered at present.
   or original authorship, ensure both hands connect through the wrists and arms,
   pose it to the required T-pose,
   and review proportions/topology before texture/detail authoring.
+- Done: generated a recipe-driven `blockout_only` Stone Troll candidate in
+  `art/characters/pending_models/stone_troll/`.
+- Remaining: visually inspect and iterate on that candidate against
+  rights-cleared design references. Generation and the sampled shoulder test
+  do not establish that the target mesh has been achieved.
 
 ### Phase B — Stabilize model authoring
 
@@ -791,6 +842,16 @@ mesh is registered at present.
   placement and approval -> deterministic marker-driven skeleton generation ->
   skinning/deformation review -> animation -> runtime packaging. AI can propose
   recipes and landmarks but cannot approve assets or bypass deterministic checks.
+- Prefer deterministic text parsing and recipe compilation for supported
+  vocabulary, units, and controls. Prompt the creator to resolve missing or
+  conflicting requirements; reserve optional AI assistance for ambiguous or
+  unsupported descriptions rather than routine geometry execution.
+- The first executable geometry slice is limited to a validated
+  `atlas-character-recipe/v1` and source profile compiled into a hash-bound
+  `atlas-character-geometry-build-plan/v1`. Blender consumes supported body
+  proportions and the canonical T-pose and emits a blockout-only, unrigged
+  candidate. The cross-category model recipe and general text parser are not
+  implemented; Recipe Studio currently recognizes a small fixed vocabulary.
 - A free model's license does not make it design-compatible or Atlas-rig
   compatible; downloaded models remain references until independently reviewed.
 - A front image is a measurement guide, not a complete 3D asset. Width fitting
@@ -977,3 +1038,42 @@ do not describe a planned stage as working software.
 - Clarified that the first accepted T-pose geometry is an unrigged, unskinned
   mesh. It requires no armature, bones, weights, or animation to pass mesh
   review; those stages follow the later visual-marker workflow.
+
+### 2026-10-03 — Recipe Studio and deterministic geometry slice
+
+- Added `compile_character_geometry_plan.py` to validate a compiled character
+  recipe against its source profile, freeze input snapshots and tool/schema
+  hashes, and declare the canonical T-pose and no-rig requirement.
+- Connected the Blender blockout generator to the frozen plan. The plan's
+  supported body values now drive geometry and its recipe/build-plan snapshots
+  are recorded with the candidate. It still creates only a low-detail blockout.
+- Added a loopback-only chat-style Recipe Studio. Its deterministic text
+  compiler handles explicit supported Stone Troll values and feature toggles;
+  it preserves prose without guessing proportions. The UI compiles a plan,
+  launches Blender for a candidate, and provides a local orbitable GLB preview.
+  Each UI build attempt receives a unique trial directory rather than
+  overwriting an earlier candidate.
+- Added the seed Stone Troll character recipe, local draft-state ignore rule,
+  detailed `to_do.md`, and run instructions in the README and generation guide.
+- Ran the recipe compiler, geometry-plan compiler, and Blender builder to create
+  a review-only candidate. Started the local UI and confirmed its health/page
+  responses and explicit-value prompt mapping. No AI service or full test suite
+  was used. Target-mesh quality and visual-review gates remain open.
+
+### 2026-10-03 — First-pass source observation intake
+
+- Added a Blender intake command for `.blend`, `.glb`, and `.gltf` sources. It
+  records source hashes, scene objects, transforms, mesh/topology/material
+  details, rig/actions, driver validity and target binding, and optional
+  whole-mesh normalized shape summaries. Invalid or unbound drivers mark
+  evaluated geometry as unreliable. Shape measurements use virtual uniform
+  height-to-1 normalization; source meshes and transforms remain unchanged.
+- Added a versioned anatomy-region vocabulary, four observation states, a
+  source-inspection schema, an observation draft schema extension for dossier
+  hashes, and a validator for vocabulary/state and human-review metadata.
+- Generated records keep semantic labels unknown and rights at
+  `review_required`; no source has been promoted and no learning/mining is
+  enabled. Updated README, generation guide, observation workflow, and roadmap.
+- Verification performed: documentation/code review and JSON schema checks,
+  plus a Blender Studio library intake run (382 mesh datablocks; schema-valid
+  dossier and draft). No full test suite or model quality review was run.

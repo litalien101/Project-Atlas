@@ -1,12 +1,14 @@
-"""Extract normalized shape and rig measurements from a licensed GLB reference.
+"""Extract normalized shape and rig measurements from a GLB or Blender reference.
 
 Run with Blender:
   blender --background --python tools/characters/calibrate_character_reference.py -- \
     --source /path/to/rights-cleared-reference.glb \
     --output art/characters/references/calibrations/reference_id.json
 
-This records measurements and provenance only. It does not copy source geometry,
-textures, skeletons, or animations into Atlas assets.
+For .blend sources also pass --object-name and source provenance flags. This
+records measurements and provenance; it does not grant geometry-seed approval
+or copy content into runtime assets. A separate human review and profile
+attestation are required before the builder can use the source geometry.
 """
 
 from __future__ import annotations
@@ -33,6 +35,11 @@ def arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--object-name", help="Exact source mesh object; required for .blend files and multi-mesh GLBs.")
+    parser.add_argument("--source-title", help="Source title (required for .blend files without embedded provenance).")
+    parser.add_argument("--source-author", help="Creator name (required for .blend files without embedded provenance).")
+    parser.add_argument("--source-license", help="Exact license label (required for .blend files without embedded provenance).")
+    parser.add_argument("--source-url", help="Original source page URL (required for .blend files without embedded provenance).")
     return parser.parse_args(sys.argv[sys.argv.index("--") + 1 :])
 
 
@@ -67,11 +74,38 @@ def v3(value: Vector) -> list[float]:
 def main() -> None:
     args = arguments()
     source = args.source.expanduser().resolve(strict=True)
-    metadata = read_glb_metadata(source)
-
     bpy.ops.object.select_all(action="SELECT")
     bpy.ops.object.delete(use_global=False)
-    bpy.ops.import_scene.gltf(filepath=str(source))
+    if source.suffix.lower() == ".glb":
+        metadata = read_glb_metadata(source)
+        bpy.ops.import_scene.gltf(filepath=str(source))
+    elif source.suffix.lower() == ".blend":
+        if not args.object_name:
+            raise ValueError("Pass --object-name for a Blender source so calibration cannot select an unrelated mesh.")
+        if not all((args.source_title, args.source_author, args.source_license, args.source_url)):
+            raise ValueError("Blender sources require --source-title, --source-author, --source-license, and --source-url provenance.")
+        bpy.ops.wm.open_mainfile(filepath=str(source))
+        metadata = {
+            "generator": "Blender source project",
+            "title": args.source_title,
+            "author": args.source_author,
+            "license": args.source_license,
+            "source": args.source_url,
+            "glb_mesh_count": None,
+            "glb_skin_count": None,
+            "glb_animation_names": [],
+        }
+    else:
+        raise ValueError("Calibration accepts a .glb or .blend source file.")
+
+    if args.source_title:
+        metadata["title"] = args.source_title
+    if args.source_author:
+        metadata["author"] = args.source_author
+    if args.source_license:
+        metadata["license"] = args.source_license
+    if args.source_url:
+        metadata["source"] = args.source_url
 
     depsgraph = bpy.context.evaluated_depsgraph_get()
     mesh_measurements = []
@@ -88,8 +122,16 @@ def main() -> None:
         mesh_measurements.append((len(points), obj, points, low, high))
     if not mesh_measurements:
         raise ValueError("No substantial mesh object found in reference GLB.")
-    mesh_measurements.sort(key=lambda row: row[0], reverse=True)
-    _, body_obj, points, low, high = mesh_measurements[0]
+    if args.object_name:
+        selected = next((row for row in mesh_measurements if row[1].name == args.object_name), None)
+        if selected is None:
+            available = ", ".join(row[1].name for row in mesh_measurements)
+            raise ValueError(f"Source mesh {args.object_name!r} was not found among substantial meshes: {available}")
+        selected_row = selected
+    else:
+        mesh_measurements.sort(key=lambda row: row[0], reverse=True)
+        selected_row = mesh_measurements[0]
+    _, body_obj, points, low, high = selected_row
     height = high.z - low.z
     if height <= 1e-6:
         raise ValueError("Reference mesh has no measurable vertical extent.")

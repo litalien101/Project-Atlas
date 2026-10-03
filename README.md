@@ -6,13 +6,42 @@ The Reach is Atlas's playable reference world. The browser movement/world protot
 
 For orientation, read this file and [`MASTER_FILE.md`](MASTER_FILE.md), the current project vision, architecture, status, and roadmap. [`AGENTS.md`](AGENTS.md) is the short contributor and AI guide. Read [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the character workflow and [`specs/asset-provenance.md`](specs/asset-provenance.md) for rights and release rules. The local game entry point is `atlas_server`; browser sources are in `web/`; character tools are in `tools/characters/`; runtime assets and checksums are under `web/assets/` and `web/assets/manifest.yaml`.
 
-The character pipeline has a design-profile contract and deterministic Blender blockout tools. It does not yet create a finished mesh, call an AI service, or generate a rig. Only assets with documented usable rights are retained. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
+The detailed staged character-authoring checklist is in [`to_do.md`](to_do.md). The preferred design is deterministic recipe compilation and Blender execution for supported inputs, with optional AI assistance only for ambiguous or unsupported creator descriptions.
+
+### Recipe Studio
+
+Run the local, deterministic character authoring UI from the repository root:
+
+```sh
+python3 tools/characters/recipe_studio_server.py
+```
+
+Open <http://127.0.0.1:8766>. The first workbench is limited to the Stone Troll
+profile and explicit geometry values such as `height 220 cm` and
+`shoulders 125%`. Qualitative words remain attached to the brief and are not
+converted into proportions automatically. The UI can compile a candidate build
+plan and ask Blender to generate an unrigged blockout for review. It does not
+call an AI service and does not create a production-ready mesh. Each UI build
+attempt gets a unique directory under
+`art/characters/pending_models/recipe_studio/` so revisions remain available
+for comparison.
+
+The character pipeline has a design-profile contract and deterministic Blender tools. It can create either an explicitly requested procedural blockout or a draft adapted from a separately calibrated, human-approved source mesh. It does not create a finished production mesh, call an AI service, or generate a rig. Only assets with documented usable rights are retained. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
+
+For source evidence intake, `tools/characters/inspect_character_source.py`
+creates a hash-pinned technical dossier and an unreviewed observation draft
+from upright humanoid `.blend`, `.glb`, or `.gltf` sources. Its height-to-one
+shape normalization is virtual; original files and scale metadata are kept.
+It inventories geometry but does not infer anatomy, recreate a full mesh, or
+validate rights. See the [observation intake workflow](art/characters/recipe_observations/README.md)
+and its schemas before using the output; only human-reviewed records belong in
+the observation dataset.
 
 The first character quality target is the geometry-only mesh in the approved T-pose. Textures and fine surface details are later stages; passing the mesh gate is not production or runtime approval. Optional free modeling references and their exact licenses are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
 
 ## Run locally
 
-Requires Python 3.11 or newer and Node.js 20+. The Python server uses PyYAML to validate Atlas's YAML contracts; the browser client uses Three.js for rendering. Both projects use the permissive MIT license. Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+Requires Python 3.11 or newer and Node.js 20+. The Python server uses PyYAML to validate Atlas's YAML contracts; the browser client uses Three.js for rendering. Both projects use the permissive MIT license. Third-party software notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md); external art-source credits and licenses are in [`ASSET_ATTRIBUTIONS.md`](ASSET_ATTRIBUTIONS.md).
 
 ```bash
 cd Project_Atlas
@@ -54,7 +83,7 @@ Clothing authoring is paused until a licensed, reviewed base mesh and rig are av
 
 ### Text-to-character generation
 
-The creator workflow uses a compact, validated [`atlas-character-design-profile/v1`](specs/atlas-character-design-profile-v1.schema.json) contract. The current Blender generator makes low-detail concept blockouts; it has no high-detail text-to-3D backend. Blockout generation requires `--allow-blockout`, and the review gate will not accept one as a rigging candidate until it has been manually sculpted and reviewed. A front-view image can adjust silhouette width, but it cannot supply hidden geometry, surface detail, or production topology. Reference intake requires documented reuse rights; no Stone Troll reference image is currently retained. See [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the actual limits and review gates.
+The creator workflow uses a compact, validated [`atlas-character-design-profile/v1`](specs/atlas-character-design-profile-v1.schema.json) contract. Procedural blockout generation requires `--allow-blockout`. The alternate source-seeded path requires a calibrated `.glb` or `.blend`, matching hashes, documented provenance, and a human attestation of rights, topology, and design fit; it only applies coarse supported shape changes and does not retopologize. Neither path creates a finished mesh or has a high-detail text-to-3D backend. A front-view image can adjust silhouette width in procedural mode, but cannot supply hidden geometry, surface detail, or production topology. No Stone Troll source has been approved as geometry seed. See [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for commands, limits, and review gates.
 
 Run `npm run assets:check` to validate registered asset paths and SHA-256 checksums, plus GLB skin structure when a manifest entry declares its skeleton contract. `npm run assets:release-check` also requires every registered asset to have `redistribution_status: cleared`; do not clear that field without documenting the applicable redistribution terms. Automated checks do not replace visual review.
 

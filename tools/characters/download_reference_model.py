@@ -17,7 +17,7 @@ SOURCES = {
     "troll-mauler": {
         "url": "https://opengameart.org/sites/default/files/troll.blend",
         "filename": "troll-mauler-piacenti.blend",
-        "sha256": "83fc5e524d31020b8d7c9641517f965cecd65840b3119582b4e984649f708c51",
+        "sha256": "83fc5e524d31020d8b7c9641517f965cecd65840b3119582b4e984649f708c51",
         "license": "CC-BY-3.0",
     },
     "blender-human-bases": {

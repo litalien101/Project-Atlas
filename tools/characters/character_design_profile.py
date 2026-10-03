@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import math
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -67,7 +68,11 @@ def validate_profile(value: Any) -> dict[str, Any]:
         raise ValueError(f"style must be one of: {', '.join(sorted(STYLES))}.")
 
     if "reference_calibration" in top:
-        calibration = _object(top["reference_calibration"], {"record", "source_path", "source_sha256", "license", "use", "measurements"}, "reference_calibration")
+        calibration = _object(
+            top["reference_calibration"],
+            {"record", "source_path", "source_sha256", "license", "use", "measurements"},
+            "reference_calibration", {"geometry_seed_review"},
+        )
         if not isinstance(calibration["record"], str) or not calibration["record"].strip() or len(calibration["record"]) > 240:
             raise ValueError("reference_calibration.record must be a non-empty path or identifier up to 240 characters.")
         if not isinstance(calibration["source_path"], str) or not calibration["source_path"].strip() or len(calibration["source_path"]) > 500:
@@ -76,8 +81,34 @@ def validate_profile(value: Any) -> dict[str, Any]:
             raise ValueError("reference_calibration.source_sha256 must be a lowercase SHA-256 hex digest.")
         if not isinstance(calibration["license"], str) or not calibration["license"].strip() or len(calibration["license"]) > 80:
             raise ValueError("reference_calibration.license must be a non-empty label up to 80 characters.")
-        if calibration["use"] != "review_only":
-            raise ValueError("reference_calibration.use must be 'review_only'.")
+        if calibration["use"] not in {"review_only", "geometry_seed"}:
+            raise ValueError("reference_calibration.use must be 'review_only' or 'geometry_seed'.")
+        geometry_seed_review = calibration.get("geometry_seed_review")
+        if calibration["use"] == "geometry_seed":
+            if not isinstance(geometry_seed_review, dict):
+                raise ValueError("geometry_seed use requires an explicit geometry_seed_review attestation.")
+            _object(
+                geometry_seed_review,
+                {"status", "reviewer", "reviewed_at_utc", "design_fit_reviewed", "topology_reviewed", "license_reviewed", "rationale"},
+                "reference_calibration.geometry_seed_review",
+            )
+            if geometry_seed_review["status"] != "approved":
+                raise ValueError("geometry_seed_review.status must be 'approved'.")
+            if any(geometry_seed_review[field] is not True for field in
+                   ("design_fit_reviewed", "topology_reviewed", "license_reviewed")):
+                raise ValueError("geometry_seed use requires explicit design-fit, topology, and license review attestations.")
+            if not isinstance(geometry_seed_review["reviewer"], str) or not geometry_seed_review["reviewer"].strip() or len(geometry_seed_review["reviewer"]) > 200:
+                raise ValueError("geometry_seed_review.reviewer must contain 1 to 200 characters.")
+            if not isinstance(geometry_seed_review["reviewed_at_utc"], str) or not geometry_seed_review["reviewed_at_utc"].strip():
+                raise ValueError("geometry_seed_review.reviewed_at_utc must be an ISO date-time.")
+            try:
+                datetime.fromisoformat(geometry_seed_review["reviewed_at_utc"].replace("Z", "+00:00"))
+            except ValueError as error:
+                raise ValueError("geometry_seed_review.reviewed_at_utc must be an ISO date-time.") from error
+            if not isinstance(geometry_seed_review["rationale"], str) or not geometry_seed_review["rationale"].strip() or len(geometry_seed_review["rationale"]) > 2000:
+                raise ValueError("geometry_seed_review.rationale must contain 1 to 2000 characters.")
+        elif geometry_seed_review is not None:
+            raise ValueError("geometry_seed_review is only valid when use is 'geometry_seed'.")
         measurement_ranges = {
             "width_over_height": (0, 5), "depth_over_height": (0, 5),
             "pelvis_height_percent": (0, 100), "shoulder_height_percent": (0, 100),

@@ -3,14 +3,71 @@
 This folder is reserved for one versioned observation per independent,
 rights-reviewed character source. Files must conform to
 [`atlas-character-observation-v1.schema.json`](../../../specs/atlas-character-observation-v1.schema.json).
+Technical source dossiers use
+[`atlas-character-source-inspection-v1.schema.json`](../../../specs/atlas-character-source-inspection-v1.schema.json).
+The initial feature terms are listed in
+[`atlas-character-observation-vocabulary-v1.json`](../../../specs/atlas-character-observation-vocabulary-v1.json).
 
 ## What belongs here
 
 Each observation records canonical features, optional normalized measurements,
 explicit structural relationships, source/license details, derivation lineage,
 and human review status. Use stable concept IDs rather than free-form synonyms.
-Record `present`, `absent`, and `unknown` separately; a feature omitted from a
-description is not evidence that the feature is absent.
+Record `present`, `absent`, `unknown`, and `not_applicable` separately; a
+feature omitted from a description is not evidence that it is absent. The
+intake tool puts every vocabulary item in `unknown`; it never assigns anatomy
+states automatically. A reviewer can move terms to another state after
+examining the source from useful views.
+
+## Intake tool
+
+Run Blender 4.x or newer from the Atlas repository root:
+
+```sh
+blender --background --python tools/characters/inspect_character_source.py -- \
+  --source /path/to/source.glb \
+  --archetype-id humanoid \
+  --independent-source-id blender-studio:human-base-meshes-v1.4.1 \
+  --focus-object Body \
+  --source-title 'Human Base Meshes v1.4.1' \
+  --source-author 'Blender Studio and community contributors' \
+  --source-license 'CC0 1.0' \
+  --source-url 'https://www.blender.org/download/demo-files/' \
+  --output-dir /path/to/intake-draft
+python3 tools/characters/validate_character_observation.py \
+  /path/to/intake-draft/observation.draft.json
+```
+
+The first-pass vocabulary and normalization support upright humanoid sources
+only; quadruped, dragon, and other archetype vocabularies/reference dimensions
+must be defined before those assets are extracted as observations. The tool
+supports `.blend`, `.glb`, and `.gltf`, hashes the source file, and
+creates `source_inspection.json` plus `observation.draft.json`. The dossier
+reports objects, transforms, bounds, mesh counts, connected components,
+boundary/non-manifold/wire edges, zero-area polygons, modifier/UV/color/custom
+attribute/material summaries, vertex groups, armature bones, actions, and
+whole-mesh world-Z cross-sections. Driver curves and their validity are also
+recorded; evaluated counts are marked unreliable if a mesh has an invalid
+driver or an unresolved driver target. Local `.gltf` buffers and images are
+hashed when their referenced files are present. For a scene with multiple
+meshes, select a focus object by its exact Blender object name; without one,
+the observation contains no focus-mesh measurements.
+
+The measurements are simple geometric summaries, not anatomical labels or a
+complete description from which to reproduce a mesh. For upright humanoids,
+the shape profile uses a virtual, uniform height-to-1 normalization with the
+horizontal bounding-box center at XY origin and the feet/floor at Z=0. The
+source mesh, object transforms, and original file are not rescaled or rewritten;
+raw bounds and scene unit metadata remain in the dossier. This normalization
+assumes the source is upright in world Z. Pose and facing direction still need
+human review. The tool always sets rights to `review_required`, and its output
+does not approve the source's license, quality, fit, or runtime suitability.
+Keep draft outputs
+outside the approved observation collection until source identity/lineage,
+rights evidence, geometry, labels, and measurements are reviewed. Never change
+the observation review status to `reviewed` until a named reviewer, UTC time,
+and rationale are recorded. Validate edited observations with the command
+above. Do not feed drafts to a miner.
 
 Only reviewed observations with `rights_status: cleared_for_analysis` should
 contribute to recipe-mining statistics. Do not count multiple poses, renders,

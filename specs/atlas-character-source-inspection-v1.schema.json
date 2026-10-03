@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Source Inspection v1",
+  "description": "Deterministic technical inventory and mesh QA observations for one source scene. It does not determine licensing, semantic anatomy, or quality approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "tool", "source", "provenance_claims", "scene", "mesh_objects", "armatures", "actions", "limitations"],
+  "properties": {
+    "schema": { "const": "atlas-character-source-inspection/v1" },
+    "tool": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "blender_version"],
+      "properties": {
+        "name": { "const": "inspect_character_source.py" },
+        "version": { "const": "1.0.0" },
+        "blender_version": { "type": "string" }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "format"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "format": { "enum": ["blend", "glb", "gltf"] },
+        "companion_files": { "type": "array", "items": { "$ref": "#/$defs/file" } }
+      }
+    },
+    "provenance_claims": {
+      "type": "object", "additionalProperties": false,
+      "required": ["title", "creator", "source_url", "license_label", "rights_review_status"],
+      "properties": {
+        "title": { "type": ["string", "null"] },
+        "creator": { "type": ["string", "null"] },
+        "source_url": { "type": ["string", "null"] },
+        "license_label": { "type": ["string", "null"] },
+        "rights_review_status": { "const": "review_required" }
+      }
+    },
+    "scene": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "unit_system", "unit_scale", "up_axis", "object_counts"],
+      "properties": {
+        "name": { "type": "string" },
+        "unit_system": { "type": "string" },
+        "unit_scale": { "type": "number" },
+        "up_axis": { "const": "Z" },
+        "object_counts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "objects": { "type": "array", "items": { "$ref": "#/$defs/sceneObject" } }
+      }
+    },
+    "mesh_objects": { "type": "array", "items": { "$ref": "#/$defs/meshObject" } },
+    "armatures": { "type": "array", "items": { "$ref": "#/$defs/armature" } },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+    "focus_object": { "type": ["string", "null"] },
+    "normalized_shape_profile": {
+      "description": "Whole-mesh vertical cross-sections. They are geometric summaries and are not semantic body-region measurements.",
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["object_name", "axis", "normalization_basis", "origin_policy", "normalized_height", "sections"],
+      "properties": {
+        "object_name": { "type": "string" },
+        "axis": { "const": "world_z" },
+        "normalization_basis": { "const": "focus_mesh_world_z_height" },
+        "origin_policy": { "const": "center_xy_floor_z" },
+        "normalized_height": { "const": 1.0 },
+        "sections": { "type": "array", "items": { "$ref": "#/$defs/section" } }
+      }
+    },
+    "limitations": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "vec3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "minItems": 3, "maxItems": 3 },
+    "boundsOrNull": { "anyOf": [{ "type": "null" }, { "type": "object", "additionalProperties": false, "required": ["low", "high", "dimensions"], "properties": { "low": { "$ref": "#/$defs/vec3" }, "high": { "$ref": "#/$defs/vec3" }, "dimensions": { "$ref": "#/$defs/vec3" } } }] },
+    "driverCurve": {
+      "type": "object", "additionalProperties": false,
+      "required": ["data_path", "array_index", "is_valid", "has_unresolved_targets", "expression", "variables"],
+      "properties": {
+        "data_path": { "type": "string" }, "array_index": { "type": "integer" },
+        "is_valid": { "type": "boolean" }, "has_unresolved_targets": { "type": "boolean" },
+        "expression": { "type": "string" },
+        "variables": { "type": "array", "items": { "$ref": "#/$defs/driverVariable" } }
+      }
+    },
+    "driverVariable": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "targets"],
+      "properties": {
+        "name": { "type": "string" }, "type": { "type": "string" },
+        "targets": { "type": "array", "items": { "$ref": "#/$defs/driverTarget" } }
+      }
+    },
+    "driverTarget": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id_name", "data_path", "bone_target"],
+      "properties": {
+        "id_name": { "type": ["string", "null"] }, "data_path": { "type": "string" },
+        "bone_target": { "type": "string" }
+      }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256", "bytes"],
+      "properties": { "path": { "type": "string" }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }, "bytes": { "type": "integer", "minimum": 0 } }
+    },
+    "sceneObject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "type", "parent", "location", "rotation_euler", "scale", "world_bounds"],
+      "properties": {
+        "name": { "type": "string" }, "type": { "type": "string" }, "parent": { "type": ["string", "null"] },
+        "location": { "$ref": "#/$defs/vec3" }, "rotation_euler": { "$ref": "#/$defs/vec3" }, "scale": { "$ref": "#/$defs/vec3" },
+        "world_bounds": { "$ref": "#/$defs/boundsOrNull" }
+      }
+    },
+    "meshObject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "mesh_data_name", "vertex_count", "edge_count", "polygon_count", "triangle_count", "world_bounds", "topology", "normals", "modifiers", "vertex_groups", "uv_layers", "color_attributes", "mesh_attributes", "material_slots", "evaluated_geometry_reliable", "driver_curves"],
+      "properties": {
+        "name": { "type": "string" }, "mesh_data_name": { "type": "string" },
+        "vertex_count": { "type": "integer", "minimum": 0 }, "edge_count": { "type": "integer", "minimum": 0 }, "polygon_count": { "type": "integer", "minimum": 0 }, "triangle_count": { "type": "integer", "minimum": 0 },
+        "evaluated_vertex_count": { "type": ["integer", "null"], "minimum": 0 }, "evaluated_polygon_count": { "type": ["integer", "null"], "minimum": 0 },
+        "evaluated_geometry_reliable": { "type": "boolean", "description": "False when driver curves are invalid or have unresolved targets, so evaluated geometry may not reflect intended controls." },
+        "driver_curves": { "type": "array", "items": { "$ref": "#/$defs/driverCurve" } },
+        "world_bounds": { "$ref": "#/$defs/boundsOrNull" },
+        "topology": { "type": "object", "additionalProperties": false, "required": ["connected_component_count", "largest_component_vertex_counts", "boundary_edge_count", "non_manifold_edge_count", "wire_edge_count"], "properties": { "connected_component_count": { "type": "integer", "minimum": 0 }, "largest_component_vertex_counts": { "type": "array", "items": { "type": "integer", "minimum": 0 } }, "boundary_edge_count": { "type": "integer", "minimum": 0 }, "non_manifold_edge_count": { "type": "integer", "minimum": 0 }, "wire_edge_count": { "type": "integer", "minimum": 0 } } },
+        "normals": { "type": "object", "additionalProperties": false, "required": ["zero_area_polygon_count"], "properties": { "zero_area_polygon_count": { "type": "integer", "minimum": 0 } } },
+        "modifiers": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "vertex_groups": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "uv_layers": { "type": "array", "items": { "type": "string" } },
+        "color_attributes": { "type": "array", "items": { "type": "string" } },
+        "mesh_attributes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "material_slots": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    },
+    "armature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "bone_count", "bones"],
+      "properties": { "name": { "type": "string" }, "bone_count": { "type": "integer", "minimum": 0 }, "bones": { "type": "array", "items": { "type": "object", "additionalProperties": true } } }
+    },
+    "action": { "type": "object", "additionalProperties": false, "required": ["name", "frame_start", "frame_end"], "properties": { "name": { "type": "string" }, "frame_start": { "type": "number" }, "frame_end": { "type": "number" } } },
+    "section": { "type": "object", "additionalProperties": false, "required": ["height_percent", "sample_vertex_count", "x_extent_over_height", "y_extent_over_height", "center_x_over_height", "center_y_over_height"], "properties": { "height_percent": { "type": "integer", "minimum": 0, "maximum": 100 }, "sample_vertex_count": { "type": "integer", "minimum": 0 }, "x_extent_over_height": { "type": "number" }, "y_extent_over_height": { "type": "number" }, "center_x_over_height": { "type": "number" }, "center_y_over_height": { "type": "number" } } }
+  }
+}

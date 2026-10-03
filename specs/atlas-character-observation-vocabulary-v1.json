@@ -1,0 +1,25 @@
+{
+  "schema": "atlas-character-observation-vocabulary/v1",
+  "revision": 1,
+  "description": "Initial human-anatomy regions for source observations. These labels describe visible regions; they are not anatomy rules or build instructions.",
+  "concepts": [
+    { "concept_id": "head", "label": "Head", "kind": "anatomy_region", "sided": false },
+    { "concept_id": "neck", "label": "Neck", "kind": "anatomy_region", "sided": false },
+    { "concept_id": "torso", "label": "Torso", "kind": "anatomy_region", "sided": false },
+    { "concept_id": "pelvis", "label": "Pelvis", "kind": "anatomy_region", "sided": false },
+    { "concept_id": "shoulder_left", "label": "Left shoulder", "kind": "anatomy_region", "region": "shoulder", "side": "left" },
+    { "concept_id": "shoulder_right", "label": "Right shoulder", "kind": "anatomy_region", "region": "shoulder", "side": "right" },
+    { "concept_id": "upper_arm_left", "label": "Left upper arm", "kind": "anatomy_region", "region": "upper_arm", "side": "left" },
+    { "concept_id": "upper_arm_right", "label": "Right upper arm", "kind": "anatomy_region", "region": "upper_arm", "side": "right" },
+    { "concept_id": "forearm_left", "label": "Left forearm", "kind": "anatomy_region", "region": "forearm", "side": "left" },
+    { "concept_id": "forearm_right", "label": "Right forearm", "kind": "anatomy_region", "region": "forearm", "side": "right" },
+    { "concept_id": "hand_left", "label": "Left hand", "kind": "anatomy_region", "region": "hand", "side": "left" },
+    { "concept_id": "hand_right", "label": "Right hand", "kind": "anatomy_region", "region": "hand", "side": "right" },
+    { "concept_id": "thigh_left", "label": "Left thigh", "kind": "anatomy_region", "region": "thigh", "side": "left" },
+    { "concept_id": "thigh_right", "label": "Right thigh", "kind": "anatomy_region", "region": "thigh", "side": "right" },
+    { "concept_id": "calf_left", "label": "Left calf", "kind": "anatomy_region", "region": "calf", "side": "left" },
+    { "concept_id": "calf_right", "label": "Right calf", "kind": "anatomy_region", "region": "calf", "side": "right" },
+    { "concept_id": "foot_left", "label": "Left foot", "kind": "anatomy_region", "region": "foot", "side": "left" },
+    { "concept_id": "foot_right", "label": "Right foot", "kind": "anatomy_region", "region": "foot", "side": "right" }
+  ]
+}

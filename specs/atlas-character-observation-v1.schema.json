@@ -51,12 +51,26 @@
       }
     },
     "features": {
-      "description": "Canonical, human-reviewed feature IDs observed for this example. Absence is recorded separately from unknown.",
+      "description": "Canonical feature IDs classified by a human. The extractor places all vocabulary IDs in unknown; it never assigns present, absent, or not_applicable automatically.",
       "type": "object", "additionalProperties": false,
+      "required": ["present", "absent", "unknown", "not_applicable"],
       "properties": {
         "present": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } },
         "absent": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } },
-        "unknown": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } }
+        "unknown": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } },
+        "not_applicable": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/conceptId" } }
+      }
+    },
+    "evidence_files": {
+      "description": "Hash-pinned supporting artifacts, such as a machine-generated source inspection dossier.",
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["role", "path", "sha256"],
+        "properties": {
+          "role": { "enum": ["source_inspection", "screenshot", "annotation"] },
+          "path": { "type": "string", "minLength": 1, "maxLength": 1000 },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
       }
     },
     "measurements": {

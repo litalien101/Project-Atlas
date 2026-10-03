@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101714">
+  <title>Recipe Studio · Project Atlas</title>
+  <link rel="stylesheet" href="/studio.css">
+  <script type="importmap">
+    {"imports":{"three":"/vendor/build/three.module.js","three/addons/":"/vendor/examples/jsm/"}}
+  </script>
+  <script type="module" src="/studio.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="Atlas Recipe Studio home">
+        <span class="brand-mark">A</span>
+        <span><b>ATLAS</b><small>CHARACTER AUTHORING</small></span>
+      </a>
+      <div class="local-status"><i></i><span>LOCAL COMPILER</span><b>NO AI CALLS</b></div>
+    </header>
+
+    <section class="intro" id="top">
+      <div class="intro-copy">
+        <p class="eyebrow">RECIPE STUDIO <span>·</span> EARLY WORKBENCH</p>
+        <h1>Describe the shape.<br><em>Keep every choice visible.</em></h1>
+        <p class="lede">Write a character brief in your own words. Atlas maps explicit, supported values into a recipe and shows what it could not interpret before building anything.</p>
+      </div>
+      <div class="stage-pill"><span class="stage-dot"></span><div><b>GEOMETRY STAGE</b><small>UNRIGGED · UNSKINNED · T-POSE</small></div></div>
+    </section>
+
+    <div class="workbench">
+      <section class="chat-card" aria-label="Deterministic recipe compiler">
+        <div class="chat-head">
+          <div class="chat-avatar">✦</div>
+          <div class="chat-title"><b>Recipe compiler</b><small>STONE TROLL PROFILE · DETERMINISTIC MODE</small></div>
+          <button id="clear-chat" class="quiet-button" type="button" title="Clear conversation">NEW DRAFT</button>
+        </div>
+
+        <div class="thread" id="thread" aria-live="polite" aria-relevant="additions text">
+          <article class="message assistant-message">
+            <div class="message-avatar">A</div>
+            <div class="message-content">
+              <div class="message-meta">ATLAS COMPILER <time>READY</time></div>
+              <p>Tell me what you want to change about the Stone Troll’s geometry. I understand explicit measurements such as <code>height 220 cm</code>, <code>shoulders 125%</code>, and feature switches such as <code>without horns</code>.</p>
+              <p class="message-note">Words like “massive” stay in your saved brief until you choose a numeric value. I won’t guess proportions from adjectives.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="examples">
+          <span>TRY A DETAIL</span>
+          <button type="button" data-prompt="Make the troll 220 cm tall, with shoulders 130% and hands 115%.">Height + proportions</button>
+          <button type="button" data-prompt="Keep the same build, but without horns and with pointed ears.">Feature switches</button>
+          <button type="button" data-prompt="Make him massive with huge hands and broad shoulders.">Qualitative wording</button>
+        </div>
+
+        <form class="composer" id="prompt-form">
+          <label class="sr-only" for="prompt-input">Describe the character changes</label>
+          <textarea id="prompt-input" rows="3" maxlength="2000" placeholder="For example: 220 cm tall, shoulders 130%, hands 115%, without horns…"></textarea>
+          <div class="composer-bottom">
+            <span><kbd>ENTER</kbd> TO COMPILE <i>·</i> <span id="char-count">0 / 2000</span></span>
+            <button class="send-button" id="send-button" type="submit"><span>Parse brief</span><b>↑</b></button>
+          </div>
+        </form>
+        <div class="privacy-line"><span>⌑</span> Your text stays on this computer. No network model is contacted.</div>
+      </section>
+
+      <aside class="recipe-column">
+        <section class="recipe-card" aria-labelledby="recipe-title">
+          <div class="section-kicker"><span>01</span> LIVE RECIPE</div>
+          <div class="recipe-heading"><div><h2 id="recipe-title">Stone Troll</h2><p id="recipe-subtitle">Base profile · draft values</p></div><span class="draft-badge" id="draft-badge">WAITING</span></div>
+          <div class="recipe-summary" id="recipe-summary">
+            <div class="summary-empty"><span>✧</span><b>Your structured recipe will appear here.</b><small>Submit a brief to see exactly which fields the compiler changes.</small></div>
+          </div>
+          <div id="mapping-notice" class="mapping-notice" hidden></div>
+          <label class="acknowledge" id="acknowledge-wrap" hidden>
+            <input id="acknowledge-unparsed" type="checkbox">
+            <span>I understand that unparsed wording is saved as brief text but will not change the geometry.</span>
+          </label>
+          <div class="recipe-actions">
+            <button id="compile-plan" class="action-secondary" type="button" disabled>Compile build plan <span>→</span></button>
+            <button id="build-candidate" class="action-primary" type="button" disabled>Build blockout candidate <span>↗</span></button>
+          </div>
+          <p class="action-caption" id="action-caption">A human review is required. This stage creates no rig, weights, animation, or final materials.</p>
+        </section>
+
+        <section class="preview-card" id="preview-card" hidden>
+          <div class="preview-head"><div><div class="section-kicker"><span>02</span> CANDIDATE PREVIEW</div><b>Unrigged T-pose blockout</b></div><span class="review-badge">REVIEW REQUIRED</span></div>
+          <div class="preview-stage" id="preview-stage"><canvas id="preview-canvas" aria-label="Rotatable 3D preview of the generated Stone Troll blockout"></canvas><div class="preview-hint" id="preview-hint">Drag to orbit <i>·</i> scroll to zoom</div><div class="preview-loading" id="preview-loading" hidden>Loading preview…</div></div>
+          <div class="preview-meta" id="preview-meta"></div>
+        </section>
+
+        <section class="pipeline-card">
+          <div class="section-kicker"><span>03</span> WHAT HAPPENS NEXT</div>
+          <ol class="pipeline-list">
+            <li class="is-active"><i>1</i><span><b>Geometry</b><small>Recipe → Blender blockout</small></span><em>NOW</em></li>
+            <li><i>2</i><span><b>Texture & materials</b><small>Separate recipe and approval</small></span></li>
+            <li><i>3</i><span><b>Markers → skeleton</b><small>Creator places visual anchors</small></span></li>
+            <li><i>4</i><span><b>Weights & animation</b><small>Review deformation, then animate</small></span></li>
+          </ol>
+        </section>
+      </aside>
+    </div>
+
+    <footer class="footer"><span>PROJECT ATLAS <i>·</i> CHARACTER PIPELINE</span><span>PROFILE + RECIPE + REVIEWABLE BUILD PLAN</span></footer>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </main>
+</body>
+</html>

@@ -7,3 +7,4 @@ art/characters/.source_cache/
 data/world.sqlite3
 data/world.sqlite3-shm
 data/world.sqlite3-wal
+data/recipe_studio/
