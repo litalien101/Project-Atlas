@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
 
 import bpy
 from mathutils import Vector
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from character_quality import is_rigging_candidate  # noqa: E402
 
 
 MARKER_PREFIX = "ATLAS_MARKER_"
@@ -38,8 +42,22 @@ def main() -> None:
         record = json.loads(args.character_record.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise RuntimeError(f"Cannot read character review record: {error}") from error
-    if record.get("base_review_status") != "accepted":
-        raise RuntimeError("Accept the base model before exporting rig markers")
+    if not is_rigging_candidate(record):
+        raise RuntimeError(
+            "Rig markers require a connected base accepted for rig authoring after a recorded sculpt review. "
+            "This gate does not approve production or runtime use."
+        )
+    files = record.get("files")
+    hashes = record.get("sha256")
+    if not isinstance(files, dict) or not isinstance(hashes, dict):
+        raise RuntimeError("Rig markers require a complete, checksum-bearing base review record")
+    preview_name = files.get("preview_glb")
+    expected_preview_hash = hashes.get("preview_glb")
+    if not isinstance(preview_name, str) or not expected_preview_hash:
+        raise RuntimeError("Rig markers require a preview GLB with a recorded SHA-256 checksum")
+    preview = args.character_record.parent / preview_name
+    if not preview.is_file() or hashlib.sha256(preview.read_bytes()).hexdigest() != expected_preview_hash:
+        raise RuntimeError("Rig markers require the unchanged preview GLB that was reviewed for the base-mesh gate")
     bpy.ops.wm.open_mainfile(filepath=str(args.blend.resolve()))
     root = bpy.data.objects.get("ATLAS_GENERATED_CHARACTER_ROOT")
     if root is None:
@@ -60,6 +78,7 @@ def main() -> None:
     payload = {
         "schema": "atlas-rig-landmarks/v1",
         "character_id": record["character_id"],
+        "approval_scope": "rig_authoring_candidate_only",
         "coordinate_frame": "ATLAS_GENERATED_CHARACTER_ROOT local meters, Z up; root scale applied",
         "source_base_review_sha256": record["sha256"]["preview_glb"],
         "marker_status": "placement_exported_review_required",

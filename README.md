@@ -8,6 +8,8 @@ For orientation, read this file and [`MASTER_FILE.md`](MASTER_FILE.md), the curr
 
 The character pipeline uses a compact design-profile JSON, deterministic Blender generation, human base review, landmark placement, then separate rigging/weighting and appearance stages. It does not call an AI service or create a finished rigged character. Work in `art/characters/pending_models/` and `pending_equipment/` is authoring/review data, not a runtime asset. Runtime activation requires explicit review and registration.
 
+The first character quality target is the geometry-only mesh in the approved T-pose. Textures and fine surface details are later stages; passing the mesh gate is not production or runtime approval. Optional free modeling references and their exact licenses are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
+
 ## Run locally
 
 Requires Python 3.11 or newer and Node.js 20+. The Python server uses PyYAML to validate Atlas's YAML contracts; the browser client uses Three.js for rendering. Both projects use the permissive MIT license. Third-party notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

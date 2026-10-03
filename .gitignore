@@ -3,6 +3,7 @@ node_modules/
 __pycache__/
 *.py[cod]
 *.blend1
+art/characters/.source_cache/
 data/world.sqlite3
 data/world.sqlite3-shm
 data/world.sqlite3-wal

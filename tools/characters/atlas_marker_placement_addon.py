@@ -10,6 +10,7 @@ bl_info = {
     "category": "3D View",
 }
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -39,7 +40,33 @@ def base_is_accepted(scene):
         record = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return False
-    return record.get("base_review_status") == "accepted"
+    quality = record.get("generation_quality")
+    review = record.get("base_review")
+    hashes = record.get("sha256")
+    mesh = record.get("mesh")
+    if not all(isinstance(value, dict) for value in (quality, review, hashes, mesh)):
+        return False
+    files = record.get("files")
+    if not isinstance(files, dict) or not isinstance(files.get("preview_glb"), str):
+        return False
+    preview = path.parent / files["preview_glb"]
+    try:
+        current_preview_hash = hashlib.sha256(preview.read_bytes()).hexdigest()
+    except OSError:
+        return False
+    return bool(
+        record.get("base_review_status") == "accepted"
+        and quality.get("tier") == "blockout_only"
+        and quality.get("production_ready") is False
+        and review.get("decision") == "accept"
+        and review.get("approval_scope") == "rigging_candidate_only"
+        and review.get("reviewed_sculpt") is True
+        and review.get("reviewed_t_pose") is True
+        and review.get("preview_sha256") == hashes.get("preview_glb")
+        and current_preview_hash == hashes.get("preview_glb")
+        and record.get("neutral_pose") == "t_pose_fingers_spread"
+        and mesh.get("shoulder_core_connected") is True
+    )
 
 
 class ATLAS_OT_activate_marker(bpy.types.Operator):

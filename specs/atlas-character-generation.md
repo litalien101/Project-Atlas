@@ -16,19 +16,26 @@ Character creation uses small, reviewable artifacts at each stage:
    named landmark guides and writes a review-only `.blend` plus static GLB
    preview under `art/characters/pending_models/`.
 3. **Human base review.** Inspect the silhouette and feature placement. Record
-   accept or reject with a named reviewer and rationale. Only accepted bases
-   unlock marker export.
-4. **Rig marker placement.** Move the named empty guides in Blender to the
-   character's joints and facial landmarks, then export their positions as
-   `atlas-rig-landmarks/v1`. Marker data is a separate input artifact.
-5. **Rig, weights, and motion review.** Use the accepted base and reviewed
-   landmarks to build or fit the Atlas-compatible skeleton, generate skin
-   weights, and inspect the requested actions. This remains a distinct gate;
-   marker export does not approve a rig.
-6. **Appearance and runtime export.** Add detailed materials, textures, eyes,
-   hair, and other surface features after the base and deformation are accepted.
-   A separate release process must review provenance, rig compatibility, and
-   runtime behavior before registration.
+   accept or reject with a named reviewer and rationale. Geometry approval
+   means only that the base may advance; it does not approve texture, rig, or
+   runtime use.
+4. **Texture and material review.** After geometry approval, author UVs,
+   materials, textures, eyes, hair, and other appearance details. Review this
+   output separately; appearance edits must not silently change the approved
+   geometry.
+5. **Rig marker placement.** Once appearance is approved, move the named empty
+   guides in Blender to the character's joints and facial landmarks, then
+   export their positions as `atlas-rig-landmarks/v1`. Marker data is a
+   separate input artifact linked to the exact reviewed mesh hash. Current
+   tooling allows manual placement; AI marker proposals are future work.
+6. **Skeleton, weights, and deformation review.** Use the accepted base and
+   reviewed landmarks to build or fit the Atlas-compatible skeleton, generate
+   skin weights, and inspect representative poses. This remains a distinct
+   gate; marker export does not approve a rig.
+7. **Animation and runtime export.** With an approved rig, author or retarget
+   animation and review required actions. Package only after reviewing
+   provenance, rig compatibility, animation behavior, and runtime constraints.
+   Registration is a separate release gate.
 
 The existing `atlas-character-profile/v1` is the in-game appearance/save
 contract. The design profile defined here is a creator input and does not change
@@ -205,13 +212,22 @@ python3 tools/characters/review_character_base.py \
   --character-dir art/characters/pending_models/stone_troll \
   --reviewer "Reviewer name" --decision accept \
   --rationale "Base silhouette and proportions accepted for rig authoring." \
-  --reviewed-sculpt
+  --reviewed-sculpt --reviewed-t-pose
 ```
 
-The review tool rejects generated blockouts by default. Pass
-`--reviewed-sculpt` only after the Blender mesh has been manually sculpted into
-a high-detail base and the preview has been refreshed. The flag records an
-explicit human review; it does not itself validate visual quality.
+The review tool rejects generated blockouts by default. After sculpting the
+geometry-only base, refresh the preview and inspect it against the reference.
+Pass `--reviewed-sculpt --reviewed-t-pose` only after confirming the mesh is
+complete, matches the design, has connected hands/wrists/arms, and holds the
+required T-pose. These flags record human attestations; they do not automate
+visual-quality judgment. Acceptance unlocks rig-authoring work only. It does
+not approve textures, runtime use, or release.
+
+The geometry-only mesh is the first quality milestone. Final materials,
+textures, skin/hair detail, and other surface work are later stages and are not
+required to approve this stage. Free geometry references and their licenses are
+listed in [`../art/characters/sources/README.md`](../art/characters/sources/README.md);
+neither listed source is an approved Stone Troll result.
 
 ## Licensed reference calibration
 

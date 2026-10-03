@@ -223,9 +223,31 @@ a production seed.
 
 The generator now refuses the procedural path unless `--allow-blockout` is
 explicit. Its record labels the output `blockout_only`. The base-review tool
-does not accept a blockout for rigging unless a reviewer records that it has
-been manually sculpted into a high-detail base. This is a human attestation,
-not an automated quality metric.
+does not advance it to rig authoring unless a reviewer confirms that it has
+been sculpted into the intended mesh and verifies the complete T-pose in the
+refreshed preview. The review record is tied to the preview checksum and only
+unlocks rig-authoring work. It does not mark the asset production-ready.
+
+The first character quality milestone is a **geometry-only base mesh**: a
+complete, connected, correctly proportioned model in the required
+`t_pose_fingers_spread` pose, matching the approved design and passing
+structural checks. It does not need final materials, textures, hair, skin
+detail, or runtime packaging. Those belong to later stages. The automated
+shoulder test is only a topology check; silhouette, hands/wrists, proportions,
+and actual T-pose alignment still require review against the reference images.
+Acceptance is scoped to the base-mesh/rig-authoring stage, never a finished or
+shippable character.
+
+“Perfect” is a quality goal, not a machine-verifiable boolean. For this gate,
+mesh approval means the creator accepts the design and the recorded checks
+pass: the declared scale and coordinate frame are consistent; the T-pose is
+complete; wrists join the arms and hands; required anatomy regions are present
+and attached as specified; there are no unexplained floating or missing body
+parts; normals and surface continuity meet the category policy; and silhouette
+and proportions have been reviewed from the available reference views. Separate
+eyes, teeth, or other intentionally distinct surfaces are allowed when their
+component relationships are explicitly recorded. A topology report alone does
+not establish any of these visual or anatomical judgments.
 
 The intended model pipeline is broader than humanoid meshes. It should manage
 asset recipes, source references, geometry, materials, textures, rigs or other
@@ -235,6 +257,126 @@ will have appropriate validators: a creature needs anatomy and deformation
 checks; a building needs scale, collision, and modular-fit checks; an item
 needs attachment points and material checks. Shared intake, versioning, review,
 and release contracts should surround category-specific generation tools.
+
+Two external sources have been downloaded and inspected as authoring
+references: the CC-BY Troll Mauler sculpt and Blender Studio's CC0 human-base
+bundle. Their metadata, exact checksums, acquisition command, and limitations
+are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
+They remain in the local ignored source cache and are not runtime assets. The
+Troll Mauler has a different crouched design and pose, while the Blender source
+is human anatomy; neither has been adopted as the Stone Troll output. The
+target's high-quality T-pose geometry remains to be authored and reviewed.
+
+### 4a. Creator-to-runtime gated character workflow
+
+The intended creator experience starts with a plain-language request from the
+project owner, a developer, or later an AI-assisted workflow. The request can
+include reference images, target dimensions, must-have traits, exclusions,
+style, runtime budget, and intended actions. AI is a recipe author and
+constrained assistant; it is not the geometry executor or an approval
+authority.
+
+Each stage writes a versioned artifact and advances only after its checks and
+review gate pass. A rejected artifact remains available as traceable trial
+evidence; fixes create a new revision rather than silently changing the
+approved artifact.
+
+1. **Request intake.** Preserve the user's original text and image hashes.
+   Record required traits, explicit exclusions, category, scale, coordinate
+   frame, use case, and unresolved questions. A single view must not be treated
+   as evidence for hidden-side anatomy.
+2. **AI recipe proposal.** Given the request, schema, and only approved learned
+   findings, an AI can propose a detailed model recipe. The proposal includes
+   dimensions, proportions, named landmarks, geometry/topology requirements,
+   semantic regions, required components and relations, and constraints. Every
+   inferred value carries its source/confidence or is labeled as an assumption.
+   Hard user requirements remain hard constraints. The AI cannot promote
+   candidate findings into approved rules or write runtime assets.
+3. **Recipe validation and planning.** A local deterministic validator checks
+   schema, units/coordinate frame, ranges, dependencies, asset rights, and
+   conflicts with hard requirements. A compiler resolves approved rules and
+   explicit parameter values into a frozen build plan with input/tool hashes.
+   Missing essentials return to the creator for clarification; they are not
+   silently guessed. Current profile validation and character-recipe
+   compilation provide only part of this stage; the full model recipe is not
+   yet wired in.
+4. **Geometry build.** A versioned Blender/Python builder consumes the frozen
+   plan and source assets to create the untextured mesh in
+   `t_pose_fingers_spread`. The first deliverable is geometry, not a finished
+   textured character. It includes the approved silhouette and proportions,
+   a complete body with no detached hands or limb gaps, named regions and
+   landmarks, declared units/frame, and geometry/topology reports. Texture,
+   material, hair, and fine-surface detail are not prerequisites here.
+5. **Mesh review and iteration.** Show an interactive Blender preview with
+   reference overlays, front/side/back views when available, measurements,
+   connected-component diagnostics, and T-pose landmarks. The creator accepts
+   or rejects the mesh with a rationale. Rejection sends the request/recipe or
+   geometry controls back for a new revision. Approval means only “accepted as
+   the base mesh for the next stage”; it does not mean textured, rigged, or
+   production-ready.
+6. **Texture/material recipe and build.** Once geometry is approved, an AI may
+   propose material regions and a texture recipe using the approved mesh,
+   design request, compatible approved observations, and material constraints.
+   Deterministic local code and Blender tools then create UVs and applicable
+   texture channels (for example base color, roughness, normal, and ambient
+   occlusion) from authored or procedural inputs. Every map records resolution,
+   color space, source/license, seed or parameters, and hash. Texture review is
+   separate from geometry approval; a texture failure does not rewrite the
+   accepted mesh.
+7. **Visual landmark placement.** After appearance review, open the model in a
+   marker-placement view. Required anchors can include root/pelvis, spine,
+   neck, crown/chin, eyes, shoulders, elbows, wrists, hand roots/fingertips,
+   hips, knees, ankles, and feet. A future AI assistant may propose initial
+   surface positions by mesh analysis and the recipe, with per-marker confidence
+   and provenance. The creator must be able to inspect, drag, and approve every
+   marker; a low-confidence or occluded landmark remains a human placement.
+   Store marker coordinates in a declared model frame, linked to the exact
+   approved mesh hash.
+8. **Skeleton and skinning.** A deterministic rig builder maps approved
+   landmarks to a versioned skeleton definition, checks bone names/hierarchy,
+   rest pose, scale, orientation, and joint limits, then generates or transfers
+   skin weights. Validate normalized weights, max influences, empty/unweighted
+   vertices, and deformation at representative shoulder, elbow, wrist, finger,
+   hip, and knee poses. A mesh/marker change invalidates downstream rig review.
+9. **Animation.** With an approved rig, retarget licensed clips or build
+   authored/procedural clips. Record source/license, rig and retargeter hashes,
+   root-motion policy, and clip metadata. Preview contact, balance, clipping,
+   deformation, and transitions across required actions. Animation approval is
+   distinct from rig approval.
+10. **Package and release.** Export category-appropriate runtime assets, verify
+    hashes, rights, dimensions, materials, topology, rig/animation contracts,
+    LOD/performance budgets, and client loading. Register only the exact
+    approved output hashes. The runtime manifest must not point at mutable
+    work-in-progress files.
+11. **Reviewed learning feedback.** Record what failed or succeeded, with
+    request/recipe/build versions, tool settings, source lineage, review
+    rationale, and output hashes. A local miner may turn independent reviewed
+    examples into candidate findings. Candidates need evidence and human
+    approval before they inform future AI recipe proposals. Derived revisions
+    are related trials, not independent source examples.
+
+The conceptual stage state is:
+
+```text
+request
+  -> recipe_draft -> recipe_validated -> mesh_candidate -> mesh_approved
+  -> texture_candidate -> texture_approved
+  -> landmarks_approved -> rig_candidate -> rig_approved
+  -> animation_candidate -> animation_approved -> runtime_candidate
+  -> runtime_approved
+```
+
+Every arrow is a gate, not an implicit side effect. Each downstream artifact
+records the parent artifact IDs and hashes. If a parent changes, dependent
+stages become stale and must be rebuilt or re-reviewed. The current code has
+profile/recipe validation, procedural blockout generation, human marker editing,
+and some asset checks; this end-to-end state machine, AI recipe authoring,
+texture builder, AI marker proposals, skeleton generation, and animation
+authoring flow remain planned work. AI assistance is optional at every stage:
+the same versioned recipe and local tools should be usable by creators without
+an AI service. Any AI-proposed recipe values or landmarks must be validated,
+traceable to evidence or marked as assumptions, and reviewed before they affect
+an accepted artifact.
 
 The long-term update loop is: generate or author a candidate, validate it,
 review it in its target game context, record failures and successful changes as
@@ -405,6 +547,9 @@ implemented.
   references, UV policy, material assignments, motion clips, variants,
   collision, LOD/performance budgets, provenance, QA, and checksummed outputs.
   It is schema groundwork only; no current generator executes this contract.
+- **Prompt-to-recipe orchestration:** Intended workflow is documented in the
+  creator-to-runtime section. No AI prompt adapter, recipe drafting service,
+  full-contract build-plan compiler, or stage-state orchestrator exists yet.
 - **Reference and image tools:** Blender calibration records source metadata,
   measurements, bounds, cross-sections, and rig landmarks. The front-image
   reader extracts a silhouette with local pixel operations and fits width by
@@ -415,9 +560,18 @@ implemented.
   sampled torso-to-shoulder connection. `refresh_character_base_preview.py`,
   `review_character_base.py`, `export_character_markers.py`, and
   `atlas_marker_placement_addon.py` form the preview, human review, and marker
-  handoff. The generator's explicit `--allow-blockout` option and review
-  acknowledgment prevent an untouched blockout from being treated as an
-  accepted rigging base.
+  handoff. The explicit `--allow-blockout` option and sculpt/T-pose review,
+  preview checksum, and rig-authoring-only scope prevent an untouched blockout
+  from advancing. This gate does not certify production readiness.
+- **Geometry acceptance:** Current review tooling requires explicit sculpt and
+  T-pose attestations, a passing sampled shoulder-connectivity check, and an
+  unchanged preview hash. It does not yet measure the full geometry acceptance
+  checklist; complete visual/anatomical review remains human-led.
+- **Texture, landmark, rig, and animation stages:** Existing marker guides and
+  manual marker-placement UI are a handoff foundation. Texture recipe/build,
+  assisted marker placement, a Stone Troll skeleton/weight generator, and its
+  animation authoring/approval stages are not implemented. Existing locomotion
+  clips and retargeting serve the registered browser base character only.
 - **Rig and base assets:** `ATLAS_HUMANOID_V1` documents the Mixamo-compatible
   bone contract. The browser uses the registered female GLB, six locomotion
   clips, a character animation controller, and a retargeter. The generated
@@ -444,9 +598,14 @@ implemented.
 | Parametric character builder | Implemented as blockout | Not a high-detail sculpt generator. Explicit `--allow-blockout` is required. |
 | Front-image measurement | Implemented, limited | Measures silhouette widths; cannot infer depth or production surface detail. |
 | Licensed Troll calibration | Measurement-only | Its geometry is not the Stone Troll design and must not be reused as the default mesh. |
-| Base review gate | Implemented, human-led | Requires a sculpt-review acknowledgment for blockout-derived bases. |
+| Base review gate | Implemented, human-led | Requires sculpt and T-pose attestations; approval unlocks rig work only. |
+| Stone Troll geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. Texturing is a later stage. |
 | Recipe compiler | Implemented | Applies authored profile/grammar data; does not learn from a dataset. |
 | Cross-category model recipe schema | Contract groundwork | Captures build detail and provenance; builder/compiler integration is not implemented. |
+| AI request-to-recipe drafting | Planned | AI may draft structured proposals; deterministic validation and build execution remain required. |
+| Geometry-to-texture approval workflow | Planned | Geometry-first order is documented; no general stage-state service or procedural texture builder exists. |
+| AI-assisted landmark proposal | Planned | Current Blender add-on supports human placement; suggestions, confidence, and provenance are not implemented. |
+| Stone Troll rig and animation pipeline | Not implemented | Existing rig/animation assets apply to the registered browser base character, not the Troll candidate. |
 | Structured observation dataset | Contract groundwork | Observation schema and intake guidance are defined; no reviewed dataset has been collected. |
 | Relationship discovery/miner | Planned | Wait until the model pipeline and observation vocabulary are stable. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |
@@ -481,6 +640,8 @@ implemented.
 - [`specs/asset-provenance.md`](specs/asset-provenance.md) and
   [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md): source, license, and
   redistribution requirements.
+- [`art/characters/sources/README.md`](art/characters/sources/README.md):
+  checksum-pinned free model references and their licenses/limitations.
 - [`specs/local-multiplayer.md`](specs/local-multiplayer.md) and
   [`specs/visual-direction.md`](specs/visual-direction.md): current local
   networking prototype and art-direction goals.
@@ -489,10 +650,20 @@ implemented.
 
 ### Phase A — Stop bad outputs being treated as finished
 
-- Keep procedural output explicit and labeled as a blockout.
-- Prevent unreviewed blockouts from advancing to rigging.
-- Keep the unsuitable Troll mesh measurement-only.
-- Replace or sculpt the Stone Troll base before model-pipeline stabilization.
+**Status: safeguards are implemented; the target geometry milestone remains
+open.** The milestone is a reviewed geometry-only Stone Troll in a complete
+T-pose. It does not require final textures or surface detailing.
+
+- Done: procedural output is opt-in and labeled `blockout_only`.
+- Done: acceptance fails closed without explicit sculpt and T-pose review; marker
+  placement/export requires a checksum-matched review scoped only to rig work.
+- Done: the unsuitable Troll calibration stays measurement-only and rejected
+  procedural previews are removed from active pending-model folders.
+- Available for evaluation: pinned CC-BY Troll Mauler and CC0 Blender human
+  base references; neither is a target-matching, T-pose Atlas mesh.
+- Remaining: sculpt or build a new Stone Troll geometry source, ensure both
+  hands connect through the wrists and arms, pose it to the required T-pose,
+  and review proportions/topology before texture/detail authoring.
 
 ### Phase B — Stabilize model authoring
 
@@ -588,6 +759,17 @@ implemented.
 - The Stone Troll's `troll.glb` calibration stays `review_only`: its geometry
   does not match the requested design, and measured topology showed many mesh
   components and open boundaries.
+- The base-mesh milestone is geometry-first: a reviewed, design-matched T-pose
+  sculpt. It is not a textured or runtime-ready character; surface detail work
+  follows geometry acceptance.
+- The intended creator pipeline is request -> structured recipe proposal ->
+  deterministic recipe validation/build plan -> Blender mesh -> creator geometry
+  approval -> texture/material build and approval -> landmark placement and
+  approval -> skeleton/skinning -> deformation approval -> animation -> runtime
+  packaging. AI can propose recipes and landmark positions but cannot approve
+  assets or bypass deterministic checks.
+- A free model's license does not make it design-compatible or Atlas-rig
+  compatible; downloaded models remain references until independently reviewed.
 - A front image is a measurement guide, not a complete 3D asset. Width fitting
   alone cannot solve the model-quality problem.
 - Recipe learning is a later stage than model-pipeline stabilization. The
@@ -692,3 +874,45 @@ do not describe a planned stage as working software.
   by the existing character compiler or Blender builder.
 - Validated schema structure and documentation links; no full test suite was
   run.
+
+### 2026-10-03 — Phase A safeguards and mesh-first acceptance
+
+- Tightened base acceptance to fail closed when the quality tier, T-pose,
+  sculpt attestation, connected shoulder core, or explicit non-production state
+  is missing. Marker editing/export now requires the checksum-matched
+  rig-authoring-only acceptance record.
+- Defined the first model milestone as geometry-only: a complete design-matched
+  T-pose mesh. Textures, skin detail, materials, and runtime release are later
+  stages and do not gate the mesh milestone.
+- Downloaded and recorded the CC-BY Troll Mauler source and Blender Studio's
+  CC0 Human Base Meshes bundle for local reference. Neither was promoted to the
+  Stone Troll asset because each needs design-specific sculpting and T-pose
+  review. Large binaries remain in an ignored cache and can be fetched again
+  with the pinned downloader.
+- The Phase A safeguards are in place, but the target Stone Troll mesh is still
+  pending. No finished or production-ready model is claimed.
+- Checked pinned file hashes, Python syntax, schema/profile validity, and diff
+  formatting; no full test suite was run.
+
+### 2026-10-03 — Staged AI-assisted character authoring design
+
+- Recorded the intended path from a creator's text/images through an AI-proposed
+  structured recipe, deterministic validation/build planning, Blender geometry,
+  creator mesh approval, texture/material approval, landmark review,
+  skeleton/skinning, deformation review, animation, and runtime release.
+- Defined downstream artifacts as versioned children of approved inputs; edits
+  invalidate dependent approvals. AI may propose recipes or landmark positions
+  with evidence/confidence, but deterministic checks and creator approvals
+  control stage transitions.
+- Set the first success target to a design-matched, connected geometry-only
+  Stone Troll in the canonical T-pose. Texturing is intentionally the next
+  stage, after creator approval of the mesh.
+- Documented that “perfect” is an aspiration translated into visible review
+  criteria and structural checks, not an automated pass/fail claim. The current
+  checks still cover only shoulder connectivity and provenance-bound review;
+  full geometry review remains human-led.
+- Reordered the character-generation guide to put texture approval before
+  landmark placement, matching the intended workflow. Existing tools do not
+  yet enforce the complete stage machine or provide AI recipe/marker services.
+- Verified Python syntax, diff formatting, and SHA-256 hashes for the pinned
+  reference downloads. No test suite was run.

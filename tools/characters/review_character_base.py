@@ -25,7 +25,11 @@ def main() -> int:
     parser.add_argument("--rationale", required=True)
     parser.add_argument(
         "--reviewed-sculpt", action="store_true",
-        help="Confirm a blockout was manually sculpted into a high-detail base before acceptance.",
+        help="Confirm the blockout was sculpted into the intended high-quality base mesh.",
+    )
+    parser.add_argument(
+        "--reviewed-t-pose", action="store_true",
+        help="Confirm the saved preview is a complete, correctly aligned T-pose mesh.",
     )
     args = parser.parse_args()
     directory = args.character_dir.resolve()
@@ -37,22 +41,42 @@ def main() -> int:
     except (OSError, json.JSONDecodeError) as error:
         print(f"Cannot read generated-character record: {error}", file=sys.stderr)
         return 1
-    if args.decision == "accept" and record.get("mesh", {}).get("shoulder_core_connected") is not True:
+    mesh = record.get("mesh")
+    if args.decision == "accept" and (
+        not isinstance(mesh, dict) or mesh.get("shoulder_core_connected") is not True
+    ):
         print(
             "Cannot accept this base: it has no passing torso-to-both-shoulders "
             "topology result. Regenerate with the current generator after repairing the mesh.",
             file=sys.stderr,
         )
         return 1
-    if (args.decision == "accept"
-            and record.get("generation_quality", {}).get("tier") == "blockout_only"
-            and not args.reviewed_sculpt):
-        print(
-            "Cannot accept this base as a rigging candidate: the generator labels it as a low-detail blockout. "
-            "First sculpt and review a high-detail base in Blender, refresh the preview, then pass --reviewed-sculpt.",
-            file=sys.stderr,
-        )
-        return 1
+    quality = record.get("generation_quality")
+    if args.decision == "accept":
+        if not isinstance(quality, dict) or quality.get("tier") != "blockout_only":
+            print(
+                "Cannot accept this base: its generation quality tier is missing or unsupported. "
+                "A reviewed source-intake path must be implemented for non-blockout assets.",
+                file=sys.stderr,
+            )
+            return 1
+        if quality.get("production_ready") is not False:
+            print(
+                "Cannot accept this base: production readiness must remain explicitly false "
+                "at the rigging-candidate gate.",
+                file=sys.stderr,
+            )
+            return 1
+        if record.get("neutral_pose") != "t_pose_fingers_spread":
+            print("Cannot accept this base: its recorded neutral pose is not the required T-pose.", file=sys.stderr)
+            return 1
+        if not args.reviewed_sculpt or not args.reviewed_t_pose:
+            print(
+                "Cannot advance this base: first sculpt it into the intended high-quality mesh, verify the complete "
+                "T-pose in the refreshed preview, then pass both --reviewed-sculpt and --reviewed-t-pose.",
+                file=sys.stderr,
+            )
+            return 1
     preview = directory / record.get("files", {}).get("preview_glb", "")
     expected = record.get("sha256", {}).get("preview_glb")
     if not preview.is_file() or not expected or digest(preview) != expected:
@@ -71,13 +95,6 @@ def main() -> int:
         print("Cannot record review: body-region metadata is missing or out of date.", file=sys.stderr)
         return 1
     accepted = args.decision == "accept"
-    if (accepted and args.reviewed_sculpt
-            and record.get("generation_quality", {}).get("tier") == "blockout_only"):
-        record["generation_quality"] = {
-            **record["generation_quality"],
-            "tier": "manually_sculpted_reviewed",
-            "reason": "A reviewer confirmed a high-detail manual sculpt; rigging, deformation, and release gates remain.",
-        }
     record["base_review_status"] = "accepted" if accepted else "rejected"
     record["pipeline_stage"] = "base_accepted" if accepted else "base_rejected"
     record["next_stage"] = "place_and_export_rig_markers" if accepted else "revise_design_profile"
@@ -86,12 +103,15 @@ def main() -> int:
         "decision": args.decision,
         "rationale": args.rationale.strip(),
         "reviewed_sculpt": bool(args.reviewed_sculpt),
+        "reviewed_t_pose": bool(args.reviewed_t_pose),
+        "approval_scope": "rigging_candidate_only" if accepted else "rejected",
         "reviewed_at_utc": datetime.now(timezone.utc).isoformat(),
         "preview_sha256": expected,
     }
     record_path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(f"Recorded base review: {record['base_review_status']}")
     if accepted:
+        print("This base is accepted for rig-authoring work only; it is not production-ready or textured.")
         print("Rig marker placement is now unlocked for this character.")
     return 0
 
