@@ -232,8 +232,11 @@ unlocks rig-authoring work. It does not mark the asset production-ready.
 The first character quality milestone is a **geometry-only base mesh**: a
 complete, connected, correctly proportioned model in the required
 `t_pose_fingers_spread` pose, matching the approved design and passing
-structural checks. It does not need final materials, textures, hair, skin
-detail, or runtime packaging. Those belong to later stages. The automated
+structural checks. This first mesh is deliberately unrigged and unskinned: it
+does not need an armature, bones, skin weights, or animation. Those are created
+later from approved visual markers. It also does not need final materials,
+textures, hair, skin detail, or runtime packaging. Those belong to later
+stages. The automated
 shoulder test is only a topology check; silhouette, hands/wrists, proportions,
 and actual T-pose alignment still require review against the reference images.
 Acceptance is scoped to the base-mesh/rig-authoring stage, never a finished or
@@ -306,8 +309,10 @@ approved artifact.
    `t_pose_fingers_spread`. The first deliverable is geometry, not a finished
    textured character. It includes the approved silhouette and proportions,
    a complete body with no detached hands or limb gaps, named regions and
-   landmarks, declared units/frame, and geometry/topology reports. Texture,
-   material, hair, and fine-surface detail are not prerequisites here.
+   landmarks, declared units/frame, and geometry/topology reports. Keep this
+   output unrigged and unskinned; no armature, bones, skin weights, or animation
+   are prerequisites for mesh review. Texture, material, hair, and fine-surface
+   detail are not prerequisites here either.
 5. **Mesh review and iteration.** Show an interactive Blender preview with
    reference overlays, front/side/back views when available, measurements,
    connected-component diagnostics, and T-pose landmarks. The creator accepts
@@ -607,7 +612,7 @@ implemented.
 | Front-image measurement | Tool implemented, no retained image data | Use only sources with documented rights; a single view cannot infer depth or production surface detail. |
 | Licensed Troll calibration | Not retained | Stale calibration tied to an unavailable source was removed; CC-BY Troll Mauler remains an authoring reference only. |
 | Base review gate | Implemented, human-led | Requires sculpt and T-pose attestations; approval unlocks rig work only. |
-| Stone Troll geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. Texturing is a later stage. |
+| Stone Troll unrigged geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. No armature or skinning is required for this first approval; rigging follows later. |
 | Recipe compiler | Implemented | Applies authored profile/grammar data; does not learn from a dataset. |
 | Cross-category model recipe schema | Contract groundwork | Captures build detail and provenance; builder/compiler integration is not implemented. |
 | AI request-to-recipe drafting | Planned | AI may draft structured proposals; deterministic validation and build execution remain required. |
@@ -777,8 +782,9 @@ mesh is registered at present.
   images are no longer retained. The pinned CC-BY Troll Mauler and CC0 Blender
   human-base bundle are authoring references only, not the target mesh.
 - The base-mesh milestone is geometry-first: a reviewed, design-matched T-pose
-  sculpt. It is not a textured or runtime-ready character; surface detail work
-  follows geometry acceptance.
+  sculpt, deliberately unrigged and unskinned. It is not a textured or
+  runtime-ready character; surface detail and later marker-driven rigging
+  follow geometry acceptance.
 - The intended creator pipeline is request -> structured recipe proposal ->
   deterministic recipe validation/build plan -> Blender mesh -> creator geometry
   approval -> texture/material build and approval -> Mixamo-style visual marker
@@ -965,3 +971,9 @@ do not describe a planned stage as working software.
   deformation, and rig-approval checks.
 - This is design only: the existing add-on supports manual marker editing and
   export; the dedicated UI and skeleton generator are not implemented.
+
+### 2026-10-03 — Initial mesh is explicitly unrigged
+
+- Clarified that the first accepted T-pose geometry is an unrigged, unskinned
+  mesh. It requires no armature, bones, weights, or animation to pass mesh
+  review; those stages follow the later visual-marker workflow.
