@@ -1,5 +1,17 @@
 # Contributor and AI orientation
 
+## Concurrent AI work coordination (required)
+
+Before editing Project Atlas, read `/srv/current_status/README.md` and
+`/srv/current_status/project-atlas.json`. Register the task's exact file paths
+and semantic contract IDs with `/srv/current_status/atlas_coord.py claim`.
+Contract claims cover shared data models, APIs, events, persistence formats,
+and invariants, including changes made in files owned by another task. If a
+file or contract overlap is reported, wait or narrow the task to independent
+work. Update scopes, status, context, and next action as they change; heartbeat
+active or waiting work. Release claims when the handoff is complete. Follow
+the coordination guide for Git, documentation ownership, and quality rules.
+
 Read `README.md` first. Use the focused references below before changing a
 subsystem; do not infer production readiness from a generated preview.
 

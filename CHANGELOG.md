@@ -1,5 +1,25 @@
 # Project Atlas Change History
 
+### 2026-10-03 — Shared-work coordination and contract ownership
+
+- Added the workspace-local coordination protocol and CLI for timestamped task
+  claims, file scopes, semantic contract scopes, waits, resumes, and handoffs.
+- Added contract conflict detection for exact namespaced IDs and namespace
+  scopes, plus conservative unknown-contract claims. Scope edits and resumes
+  recheck both file and contract ownership before work becomes active.
+- Fixed task argument handling for heartbeat, wait, resume, update, and finish;
+  waiting work can heartbeat, manual waits clear obsolete conflict detail, and
+  completion releases claims and adds a bounded summary to recent completed
+  work. Stale-claim output now explains why a timestamp is considered stale.
+- Added required entry guidance to `AGENTS.md` and
+  `.github/copilot-instructions.md`; linked the local coordination protocol
+  from `MASTER_FILE.md`. The live task state and event history remain outside
+  Git and are not project implementation status.
+- Verified Python syntax, coordination-state JSON parsing, CLI help, diff
+  formatting, and an isolated end-to-end CLI flow covering contract overlap,
+  namespace wildcard overlap, waiting heartbeats, resume, finish, scope-update
+  conflict detection, and stale conflict clearing. No full test suite was run.
+
 ## Notes maintenance
 
 Whenever work changes this plan, update the relevant status and decision above,

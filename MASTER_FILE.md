@@ -12,6 +12,10 @@ own contracts and workflows.
   current prototype.
 - [`AGENTS.md`](AGENTS.md) — contributor guidance, repository map, and change
   rules.
+- `.github/copilot-instructions.md` and `/srv/current_status/README.md` —
+  assistant-specific guidance and the local live coordination protocol for
+  shared file and contract ownership. The latter is outside Git and is not a
+  project source-of-truth document.
 - [`VISION.md`](VISION.md) — intended player experience, core gameplay loop,
   project goals, principles, and system map.
 - [`ARCHITECTURE.md`](ARCHITECTURE.md) — subsystem design and how the planned
@@ -80,6 +84,7 @@ Each subject has one authoritative home:
 | Detailed behavior, schema, and workflow | The relevant file in [`specs/`](specs/) or subsystem documentation | A contract or workflow changes. Keep examples and validators aligned with actual implementation. |
 | Character pipeline tasks | [`to_do.md`](to_do.md) | Character authoring work is added, completed, or re-sequenced. |
 | Setup and run instructions | [`README.md`](README.md) | A user-facing command, dependency, or entry point changes. |
+| Live parallel-work claims and handoffs | `/srv/current_status/project-atlas.json` (local, outside Git) | An AI/human task starts, changes scope/status, waits, resumes, or completes. The CLI and protocol are in `/srv/current_status/README.md`; task records are not committed. |
 
 When a change affects multiple subjects, update each owning document and add
 cross-links. Do not maintain competing copies of the same detailed contract.
