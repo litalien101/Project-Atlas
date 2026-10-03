@@ -69,7 +69,7 @@ npm run build
 python3 -m atlas_server
 ```
 
-Open <http://127.0.0.1:8765>. The local server and world APIs run, but the prior female character model and its visually connected appearance controls were removed because their rights were undocumented. The client is awaiting a reviewed, licensed replacement model; appearance profile persistence remains a data prototype.
+Open <http://127.0.0.1:8765>. The local server and world APIs run, but no licensed character model is registered. The browser still displays appearance controls and saves profile data to the local traveler record; without a loaded model, those values do not change the character's appearance. Treat this as profile persistence prototype behavior, not supported avatar customization.
 
 To reset the save, stop the server and remove `data/world.sqlite3`.
 
@@ -95,7 +95,7 @@ world.add(scene);
 
 No character GLB or animation clips are currently registered. The raw Mixamo files were removed because the project does not need standalone animation source files before a licensed character mesh is available. See `web/assets/manifest.yaml` and [`specs/asset-provenance.md`](specs/asset-provenance.md).
 
-Clothing authoring is paused until a licensed, reviewed base mesh and rig are available. The old female-base clothing tools depended on the removed asset and are not a usable current workflow.
+Clothing authoring is paused until a licensed, reviewed base mesh and rig are available. The source-dependent female-base and clothing scripts have been removed; no clothing preparation or registration workflow is currently available.
 
 ### Text-to-character generation
 
@@ -103,7 +103,7 @@ The creator workflow uses a compact, validated [`atlas-character-design-profile/
 
 Run `npm run assets:check` to validate registered asset paths and SHA-256 checksums, plus GLB skin structure when a manifest entry declares its skeleton contract. `npm run assets:release-check` also requires every registered asset to have `redistribution_status: cleared`; do not clear that field without documenting the applicable redistribution terms. Automated checks do not replace visual review.
 
-The previous female-base region map, derived vest, and source workspaces were removed. The generic clothing preparation code needs a new licensed base/rig contract before it can be used safely.
+The previous female-base region map, derived vest, and source workspaces were removed. Any future clothing workflow needs a reviewed replacement base/rig contract and new stage-specific tools.
 
 The character sandbox uses a level 40×14 walkable area with no static scenery colliders.
 

@@ -1,5 +1,19 @@
 # Project Atlas Change History
 
+### 2026-10-03 — Remove retired character and clothing tools
+
+- Deleted six source-dependent character/clothing scripts tied to the removed
+  female base, humanoid rig, and body-region map. No current code imports them;
+  removed the stale npm registration command; Git history preserves the former
+  implementations.
+- Removed the stale tool inventory and updated the character pipeline audit to
+  record the retirement. Clarified that the appearance-save schema remains an
+  active local persistence contract with no registered model to consume its
+  values, and corrected the README's claim that the visible appearance
+  controls had been removed.
+- No application tests were run for this documentation and retired-tool
+  cleanup. Repository status and references were reviewed before handoff.
+
 ### 2026-10-03 — Shared-work coordination and contract ownership
 
 - Added the workspace-local coordination protocol and CLI for timestamped task

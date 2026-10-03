@@ -108,9 +108,12 @@ documents if local seat capacity changes.
 ### [`specs/atlas-character-technical-spec-v1.md`](../../specs/atlas-character-technical-spec-v1.md)
 
 - **P2 — Keep no-current-runtime-asset status explicit.** This spec accurately
-  notes that there is no registered character model. Keep old runtime base,
-  female-base profile fields, and removed Mixamo clips from being presented as
-  working current assets.
+  notes that there is no registered character model. The appearance-save
+  contract remains active for local persistence and retains body/equipment
+  fields from the former female-base prototype; those fields are not backed by
+  a currently registered model. Keep them labelled saved-only until a reviewed
+  replacement model and versioned profile migration exist. Removed Mixamo
+  clips must not be presented as current assets.
   **Accept when:** all runtime claims resolve to exact manifest entries and
   hashes, or are labelled removed/planned.
 - **P2 — Tie each stage's approval to exact inputs.** Define scope-limited
@@ -122,11 +125,11 @@ documents if local seat capacity changes.
 ### [`specs/atlas-clothing-authoring.md`](../../specs/atlas-clothing-authoring.md)
 
 - **P2 — Keep clothing explicitly paused until a replacement base is approved.**
-  The specification already marks this work paused; preserve that status in
-  runnable instructions and ensure referenced scripts do not imply current
-  compatibility with a retired base/rig.
-  **Accept when:** clothing work either rejects stale base hashes or the docs
-  clearly mark legacy tools as retired.
+  The source-dependent preparation and registration scripts have been removed.
+  Preserve the paused status and build new tools only for a reviewed base/rig
+  contract.
+  **Accept when:** no current workflow implies clothing tools are available;
+  any replacement rejects stale base hashes and uses the approved rig contract.
 
 ### Observation, recipe, profile, and landmark contracts under [`specs/`](../../specs/)
 

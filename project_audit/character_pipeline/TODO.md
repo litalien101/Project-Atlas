@@ -47,29 +47,18 @@ duplicate task state.
   **Accept when:** unsupported fields are explicitly preserved-only/planned;
   accepted build artifacts have exact input/tool hashes and stage-specific
   validation.
-- **Defer porting stale downstream tools.** Several scripts require the
-  removed female base and rig; clothing, skeleton/weights, texture, and
-  animation stages are not complete. For the first geometry milestone, label
-  stale paths as retired/paused so they cannot be mistaken for runnable tools;
-  port them only when those downstream stages are scheduled.
-  **Accept when:** current workflow documentation does not direct creators to
-  stale tools, and future downstream work targets a reviewed replacement
-  contract.
+- **Resolved (2026-10-03) — Remove unusable retired character tools.** The
+  female-base builder, humanoid rig builder, region-map builder, vest generator,
+  clothing preparation tool, and clothing registration tool have been deleted.
+  No current workflow depends on them. Their former implementations remain in
+  Git history; any future replacement must target a reviewed, rights-cleared
+  base and active stage contracts.
 
 ## Tools — `tools/characters/*.py`
 
 - [`atlas_marker_placement_addon.py`](../../tools/characters/atlas_marker_placement_addon.py)
   — Keep manual placement gated. Verify the active Blender file hash against
   the reviewed source before allowing edits.
-- [`build_atlas_female_base_v1.py`](../../tools/characters/build_atlas_female_base_v1.py)
-  — Retire clearly or port. It expects removed female-base and underwear
-  inputs; do not present it as runnable current workflow.
-- [`build_atlas_humanoid_v1.py`](../../tools/characters/build_atlas_humanoid_v1.py)
-  — Retire clearly or port. It depends on the removed female runtime GLB as rig
-  source.
-- [`build_body_region_schema.py`](../../tools/characters/build_body_region_schema.py)
-  — Retire clearly or port. It depends on removed base, rig, and region
-  artifacts.
 - [`calibrate_character_reference.py`](../../tools/characters/calibrate_character_reference.py)
   — Conditional third-party-input gate: require and retain source URL,
   rights/allowed-use evidence, attribution, and lineage before measuring an
@@ -122,17 +111,10 @@ duplicate task state.
   screening report, and unknown-by-default observation draft; they do not
   verify license claims, judge visual quality, or infer anatomy. Remaining
   work is archetype-specific visual review assistance and lineage review.
-- [`generate_wayfarer_vest_seed.py`](../../tools/characters/generate_wayfarer_vest_seed.py)
-  — **Retired in the current workflow.** It remains as a historical reference
-  and refuses direct execution because it depends on removed female-base and
-  region files. Port only against a reviewed replacement base and contract.
 - [`model_recipe_pipeline.py`](../../tools/characters/model_recipe_pipeline.py)
   — Contract validation/planning only. Tighten semantic validation of
   constraints, ranges, coordinate frames, rights, and release evidence;
   unknown rights must not satisfy release.
-- [`prepare_clothing_asset.py`](../../tools/characters/prepare_clothing_asset.py)
-  — Paused/stale: hard-coded to retired body, rig, and region schema. Port only
-  after a reviewed replacement base/rig exists.
 - [`recipe_studio_server.py`](../../tools/characters/recipe_studio_server.py)
   — UUID draft/build paths and preview lookup agree in the current code; the
   earlier shared-output overwrite finding is resolved. If changed, verify that
@@ -141,9 +123,6 @@ duplicate task state.
   — No specific invalidation defect found. Preserve review invalidation on
   refresh and retain earlier review outcomes as history rather than
   overwriting them.
-- [`register_clothing_asset.py`](../../tools/characters/register_clothing_asset.py)
-  — Paused/stale: tied to `ATLAS_HUMANOID_V1`. Port only with a reviewed
-  replacement rig and matching asset contract.
 - [`review_character_base.py`](../../tools/characters/review_character_base.py)
   — Preserve the limited human gate; attestations are not automated proof of
   sculpt quality. Make review history append-only and candidate-revision-bound.
@@ -179,8 +158,10 @@ duplicate task state.
   — New first-pass dossier and anatomy-region contracts. Expand only when
   review or reconstruction comparisons show which missing data matters.
 - [`atlas-character-profile-v1.schema.json`](../../specs/atlas-character-profile-v1.schema.json)
-  — Legacy runtime/save contract. Keep separate from creator profiles and
-  version/migrate female-base-specific fields before new variants connect.
+  — Active local appearance-save contract. It retains body and equipment fields
+  from the former female-base prototype, but no compatible character mesh is
+  registered. Keep current behavior labelled saved-only; define and migrate a
+  versioned profile before a reviewed replacement model consumes these fields.
 - [`atlas-character-recipe-v1.schema.json`](../../specs/atlas-character-recipe-v1.schema.json)
   — Add typed body fields, relationships, pose/evidence semantics, and
   cross-reference validation.

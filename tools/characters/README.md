@@ -23,22 +23,16 @@ See [`../../art/characters/recipe_observations/README.md`](../../art/characters/
 and [`../../specs/source-model-intake-lifecycle.md`](../../specs/source-model-intake-lifecycle.md)
 for the acquisition-to-observation handoff.
 
-## Legacy scripts retained for reference
+## Retired clothing and humanoid tools
 
-The following scripts depend on a female base, rig, or region map that was
-removed during the rights audit. They are **retired and unsupported**; do not
-run them as part of current character authoring:
+The old female-base builder, humanoid rig builder, region-map builder, vest
+generator, clothing preparation tool, and clothing registration tool were
+removed. They depended on a base mesh, rig, or region map that is no longer
+retained and cannot be used in the current workflow. Their removal is recorded
+in [`../../CHANGELOG.md`](../../CHANGELOG.md); Git history preserves the former
+implementation.
 
-- `build_atlas_female_base_v1.py`
-- `build_atlas_humanoid_v1.py`
-- `build_body_region_schema.py`
-- `generate_wayfarer_vest_seed.py`
-- `prepare_clothing_asset.py`
-
-They remain in the repository as historical implementation references. Any
-replacement must target a newly reviewed, rights-cleared base and rig, with
-updated contracts and explicit validation before being called active.
-
-`register_clothing_asset.py` is a separate manifest/release utility, but no
-current character mesh is registered for it to admit. It is not part of the
-active intake or geometry-review workflow.
+There is currently no clothing preparation or registration workflow. Resume
+that work only after a licensed replacement base and rig pass review and the
+new tools implement the active stage contracts. The current geometry workflow
+and source-intake tools above remain available.

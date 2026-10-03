@@ -8,7 +8,6 @@
     "build": "esbuild web/app.js --bundle --minify --format=esm --legal-comments=external --outfile=web/game.js",
     "assets:check": "python3 tools/characters/validate_character_assets.py",
     "assets:release-check": "python3 tools/characters/validate_character_assets.py --release",
-    "assets:register-clothing": "python3 tools/characters/register_clothing_asset.py",
     "characters:profile-check": "python3 tools/characters/validate_character_design_profile.py",
     "test": "node --test web/tests/*.test.mjs",
     "test:stress": "node --test web/tests/network.test.mjs",

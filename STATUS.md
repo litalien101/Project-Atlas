@@ -69,11 +69,13 @@
   currently registered. The previous female model, model-derived humanoid rig,
   vest, and raw Mixamo FBXs were removed because their source rights did not
   support retaining those files in the public project repository.
-- **Clothing and runtime assets:** Clothing preparation code remains, but its
-  former base mesh and body-region map were removed. It is not a usable workflow
-  until a licensed replacement mesh and rig pass review. The asset validator
-  checks registered paths and checksums, plus GLB skinning when a manifest entry
-  supplies its skeleton contract.
+- **Clothing and runtime assets:** The source-dependent female-base and
+  clothing preparation/registration scripts were removed with their retired
+  base mesh and body-region map. No clothing authoring or registration workflow
+  is currently available. Any replacement requires a licensed, reviewed base
+  mesh and rig. The general asset validator checks registered paths and
+  checksums, plus GLB skinning when a manifest entry supplies its skeleton
+  contract.
 - **Appearance persistence:** browser controls can save a validated traveler
   appearance profile through the local server into SQLite. With the prior model
   removed, the profile currently has no registered character mesh to affect;
