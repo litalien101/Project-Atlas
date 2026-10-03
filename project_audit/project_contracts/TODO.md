@@ -7,10 +7,14 @@ or missing gates explicitly.
 
 ## Vision, claims, and project onboarding
 
-### [`MASTER_FILE.md`](../../MASTER_FILE.md)
+### Project vision and status documents
+
+See [`MASTER_FILE.md`](../../MASTER_FILE.md) for the documentation index,
+[`VISION.md`](../../VISION.md) for project intent, and
+[`STATUS.md`](../../STATUS.md) for implementation claims.
 
 - **P2 — Keep implementation status evidence-linked.** The overall vision is
-  directionally aligned with the project, and the file candidly identifies
+  directionally aligned with the project, and the status document identifies
   important unimplemented systems. Continue separating implemented prototype,
   candidate-only, and planned work; link each claimed capability to its active
   contract and test/evidence.

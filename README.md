@@ -4,9 +4,19 @@ The Reach is Atlas's playable reference world. The browser movement/world protot
 
 ## Start here
 
-For orientation, read this file and [`MASTER_FILE.md`](MASTER_FILE.md), the current project vision, architecture, status, and roadmap. [`AGENTS.md`](AGENTS.md) is the short contributor and AI guide. Read [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the character workflow and [`specs/asset-provenance.md`](specs/asset-provenance.md) for rights and release rules. The local game entry point is `atlas_server`; browser sources are in `web/`; character tools are in `tools/characters/`; runtime assets and checksums are under `web/assets/` and `web/assets/manifest.yaml`.
+For orientation, read this file and [`MASTER_FILE.md`](MASTER_FILE.md), the documentation index. The focused project documents are [`VISION.md`](VISION.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`STATUS.md`](STATUS.md), [`ROADMAP.md`](ROADMAP.md), [`DECISIONS.md`](DECISIONS.md), and [`CHANGELOG.md`](CHANGELOG.md). [`AGENTS.md`](AGENTS.md) is the contributor guide. Read [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for the character workflow and [`specs/asset-provenance.md`](specs/asset-provenance.md) for rights and release rules. The local game entry point is `atlas_server`; browser sources are in `web/`; character tools are in `tools/characters/`; runtime assets and checksums are under `web/assets/` and `web/assets/manifest.yaml`.
 
 The detailed staged character-authoring checklist is in [`to_do.md`](to_do.md). The preferred design is deterministic recipe compilation and Blender execution for supported inputs, with optional AI assistance only for ambiguous or unsupported creator descriptions.
+
+### Intended player experience
+
+Atlas is intended to let players inhabit a persistent place, learn about it
+through exploration and relationships, act on needs and opportunities, and see
+traceable consequences in the shared world. The recurring loop is discover,
+investigate, choose and commit, resolve through world rules, observe the
+consequences, then pursue a new goal. Progression and reward mechanics still
+need playtesting; the current browser prototype does not implement this full
+loop. See [the player experience and core loop](VISION.md#intended-player-experience-and-core-gameplay-loop).
 
 ### Recipe Studio
 

@@ -122,7 +122,7 @@ Details: [`project_contracts/TODO.md`](project_contracts/TODO.md),
 
 ## Completion criteria across tracks
 
-- [ ] Every current capability claim in `MASTER_FILE.md` matches implemented
+- [ ] Every current capability claim in `../STATUS.md` matches implemented
   behavior and evidence.
 - [ ] Game actions do not trust client-supplied server-only context, and event
   projection rebuild is deterministic and idempotent.

@@ -1,8 +1,9 @@
 # Project Atlas Engineering Audit
 
 This folder contains a read-only, implementation-grounded TODO audit of the
-current Project Atlas worktree, compared with [`../MASTER_FILE.md`](../MASTER_FILE.md),
-the authored specifications, and the root [`../to_do.md`](../to_do.md).
+current Project Atlas worktree, compared with the project documents indexed in
+[`../MASTER_FILE.md`](../MASTER_FILE.md), the authored specifications, and the
+root [`../to_do.md`](../to_do.md).
 
 ## Reports
 
@@ -59,5 +60,6 @@ Treat priorities as sequencing guidance, not permission to bypass review gates.
 Do not mark an item complete until its stated acceptance criteria are met and
 the relevant evidence is recorded. A passing unit test, topology check, recipe
 validation, local session, or candidate build is not equivalent to asset
-approval or production release. Update `MASTER_FILE.md`, the relevant spec,
-and these TODOs when implementation status changes.
+approval or production release. Update `STATUS.md`, the relevant specification,
+and these TODOs when implementation status changes; use the documentation index
+for ownership and navigation.

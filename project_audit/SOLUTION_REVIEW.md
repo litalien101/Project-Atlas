@@ -2,8 +2,9 @@
 
 ## Short answer
 
-The proposed fixes are mostly technically sound and align with
-[`../MASTER_FILE.md`](../MASTER_FILE.md): deterministic local generation,
+The proposed fixes are mostly technically sound and align with the project's
+[`../ARCHITECTURE.md`](../ARCHITECTURE.md) and
+[`../STATUS.md`](../STATUS.md): deterministic local generation,
 separate evidence and recipes, revision-bound review, replayable world state,
 and honest capability claims. They are not all equally urgent for your
 immediate objective, however. The audit's priority labels combine gameplay
@@ -114,8 +115,8 @@ variants is not evidence that the system has learned anatomy.
 | [`character_pipeline/TODO.md`](character_pipeline/TODO.md) | Strongest match to your goal: it correctly calls the output blockout, keeps prompt interpretation constrained, and separates mesh review from later stages. | Promote target definition, CPU benchmark, immutable output, and silhouette iteration. Keep expensive mesh QA and downstream stage contracts incremental. Use an approved/manual exemplar to define fidelity, not to replace generator work. |
 | [`server/TODO.md`](server/TODO.md) | Confirmed correctness issues and relevant gameplay safeguards. | Forged internal action context and replay rebuild are the only immediate confirmed P1 fixes for current behavior. Session-origin protection is appropriate for the local server; creator/reviewer identity and public-network controls are deployment gates, not requirements for the offline mesh pipeline. |
 | [`web/TODO.md`](web/TODO.md) | Findings help avoid misleading or broken interfaces. | Fix Recipe Studio integration/output identity if it affects model builds. Remote-traveler rendering, general accessibility, touch controls, and the separate `web/studio.html` client are not prerequisites for first accepted geometry; prioritize according to active gameplay/UI goals. |
-| [`project_contracts/TODO.md`](project_contracts/TODO.md) | Vision, licensing, contract, and release suggestions generally support the master file. | Correct factual/documentation mismatches when touched. Defer general release operations and full downstream contracts until deployment or those stages are in scope. Do not create policy/schema machinery without a current tool that consumes it. |
-| [`README.md`](README.md) | Properly states the audit scope and evidence limitations. | Keep as provenance for the audit; subsystem reports are TODO guidance, not a replacement for `MASTER_FILE.md` or the existing root character TODO. |
+| [`project_contracts/TODO.md`](project_contracts/TODO.md) | Vision, licensing, contract, and release suggestions generally support the project documentation. | Correct factual/documentation mismatches when touched. Defer general release operations and full downstream contracts until deployment or those stages are in scope. Do not create policy/schema machinery without a current tool that consumes it. |
+| [`README.md`](README.md) | Properly states the audit scope and evidence limitations. | Keep as provenance for the audit; subsystem reports are TODO guidance, not a replacement for the indexed project documents or the existing root character TODO. |
 
 ## Tighten these recommendations before implementation
 

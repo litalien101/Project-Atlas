@@ -34,11 +34,13 @@ The runtime appearance save profile is distinct from the creator design
 profile. Begin with `specs/atlas-character-generation.md` and follow its
 commands and review gates.
 
-Read `MASTER_FILE.md` for the current project architecture, implemented versus
-planned features, and decisions. Update it with each substantial pipeline or
-world-system implementation: revise status/roadmap entries and add a dated note
-listing the change and verification performed. Keep it factual; do not mark a
-planned capability as implemented.
+Read `MASTER_FILE.md` as the documentation index. Use `VISION.md` for the
+intended player experience, `ARCHITECTURE.md` for system design, `STATUS.md`
+for implemented versus planned capabilities, `ROADMAP.md` for work sequencing,
+`DECISIONS.md` for durable choices, and `CHANGELOG.md` for dated history. Update
+each document according to the ownership rules in the index when making a
+substantial pipeline or world-system change. Keep implementation claims factual;
+do not mark a planned capability as implemented.
 
 The former `stone_troll` calibration was removed during the rights audit; do
 not restore or use that source as troll geometry. Procedural generation creates

@@ -1,10 +1,11 @@
 # Project Atlas To Do
 
 This is the actionable work list for the character asset-authoring pipeline.
-It complements [`MASTER_FILE.md`](MASTER_FILE.md), which remains the architecture
-and implementation source of truth. Check an item only when the code or asset
-exists and its stated review gate has been met. A generated candidate is not an
-approved asset.
+It complements the documentation set indexed in [`MASTER_FILE.md`](MASTER_FILE.md):
+see [`ARCHITECTURE.md`](ARCHITECTURE.md) for system design and
+[`STATUS.md`](STATUS.md) for implementation state. Check an item only when the
+code or asset exists and its stated review gate has been met. A generated
+candidate is not an approved asset.
 
 ## P0 — Produce and review the first Stone Troll geometry candidate
 
@@ -104,6 +105,12 @@ approved asset.
 - [x] Add an intake command that inspects a GLB/GLTF/Blend source and
   emits a draft observation and mesh QA dossier without claiming license
   validity or design approval.
+- [ ] Add an explainable, archetype-specific intake screening report with
+  triage outcomes such as `technical concern`, `needs human review`, and
+  `technically promising`. Screen mesh integrity, pose and feature visibility,
+  intended archetype/observation fit, and possible duplicate lineage. Keep
+  rights clearance, source lineage decisions, and learning approval as separate
+  gates; a positive screen must not automatically create an approved example.
 - [x] Report source mesh counts, dimensions, transforms, connected components,
   boundary/non-manifold edges, normals, material slots, armature presence, and
   available mesh attributes in a deterministic machine-readable record.
@@ -234,7 +241,8 @@ The profile/character-recipe compiler, geometry build-plan adapter, procedural
 Blender blockout builder, narrow shoulder-connectivity check, preview refresh,
 manual base review, manual marker handoff, and first-pass Blender source intake
 tool exist. Intake emits technical summaries and unknown-by-default observation
-drafts; it has not produced approved observations. The full model-recipe
+drafts; it has not produced approved observations or an automated quality
+screening report. The full model-recipe
 contract is not executed. The current builder remains a low-detail blockout
 generator. Deeper semantic extraction and review UX, a reviewed observation
 dataset, a target-matching Stone Troll mesh, texture generation, Mixamo-style
