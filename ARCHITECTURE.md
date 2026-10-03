@@ -191,6 +191,18 @@ Troll Mauler has a different crouched design and pose, while the Blender source
 is human anatomy; neither has been adopted as the Stone Troll output. The
 target's high-quality T-pose geometry remains to be authored and reviewed.
 
+#### Generated candidate review
+
+Recipe Studio keeps each successful build in a unique directory under
+`art/characters/pending_models/recipe_studio/<draft-id>/<build-id>/`. Its
+Generated Model Review gallery lists those builds, loads each available GLB
+for local 3D inspection, and shows build metadata. A **kept for reference**
+decision is a local review status, not geometry acceptance or runtime approval.
+The confirmed delete action removes only the selected build directory after
+server-side identifier, expected-record, and path-containment checks. This UI
+does not scan or modify source libraries, other pending-model folders, or
+runtime assets.
+
 ### 4a. Creator-to-runtime gated character workflow
 
 The intended creator experience starts with a plain-language request from the

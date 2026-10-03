@@ -11,6 +11,7 @@ import shutil
 import subprocess
 import sys
 import uuid
+from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -18,6 +19,7 @@ from urllib.parse import parse_qs, urlsplit
 ROOT = Path(__file__).resolve().parents[2]
 UI_ROOT = Path(__file__).resolve().parent / "recipe_studio"
 DRAFT_ROOT = ROOT / "data/recipe_studio/drafts"
+CANDIDATE_ROOT = ROOT / "art/characters/pending_models/recipe_studio"
 MAX_BODY = 24_000
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from character_design_profile import validate_profile  # noqa: E402
@@ -44,6 +46,8 @@ class Handler(BaseHTTPRequestHandler):
                 "ai_service": False,
                 "blender_available": bool(shutil.which(os.environ.get("BLENDER_BIN", "blender"))),
             })
+        if path == "/api/candidates":
+            return self._json(200, {"candidates": self._list_candidates()})
         if path == "/api/candidate/preview":
             query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
             if set(query) != {"draft_id", "build_id"} or any(len(values) != 1 for values in query.values()):
@@ -129,6 +133,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._compile_plan(content)
             if path == "/api/build":
                 return self._build_candidate(content)
+            if path == "/api/candidate/review":
+                return self._review_candidate(content)
             return self._json(404, {"error": "API endpoint not found."})
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
             return self._json(422, {"error": str(error)})
@@ -191,7 +197,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(503, {"error": "Blender was not found. Install Blender 4.x or newer or set BLENDER_BIN."})
         generator = ROOT / "tools/characters/generate_character_base.py"
         build_id = str(uuid.uuid4())
-        output_root = ROOT / "art/characters/pending_models/recipe_studio" / draft_id / build_id
+        output_root = CANDIDATE_ROOT / draft_id / build_id
         result = subprocess.run(
             [
                 blender, "--background", "--python", str(generator), "--",
@@ -228,6 +234,113 @@ class Handler(BaseHTTPRequestHandler):
             "polygon_count": record["mesh"]["polygon_count"],
             "stdout": result.stdout.strip()[-2500:],
         })
+
+    @staticmethod
+    def _valid_id(value: object) -> bool:
+        if not isinstance(value, str):
+            return False
+        try:
+            return str(uuid.UUID(value)) == value
+        except ValueError:
+            return False
+
+    def _candidate_directory(self, draft_id: object, build_id: object) -> Path | None:
+        if not self._valid_id(draft_id) or not self._valid_id(build_id):
+            return None
+        if CANDIDATE_ROOT.is_symlink():
+            return None
+        draft_path = CANDIDATE_ROOT / draft_id
+        candidate_path = draft_path / build_id
+        if draft_path.is_symlink() or candidate_path.is_symlink():
+            return None
+        root = CANDIDATE_ROOT.resolve()
+        draft = draft_path.resolve()
+        candidate = candidate_path.resolve()
+        if draft.parent != root or candidate.parent != draft or not candidate.is_dir():
+            return None
+        # The expected record makes this a Recipe Studio build, not an arbitrary
+        # directory that happens to be beneath the candidate root.
+        if not (candidate / "stone_troll" / "character.json").is_file():
+            return None
+        return candidate
+
+    def _list_candidates(self) -> list[dict]:
+        candidates: list[dict] = []
+        if not CANDIDATE_ROOT.is_dir():
+            return candidates
+        for draft in CANDIDATE_ROOT.iterdir():
+            if draft.is_symlink() or not draft.is_dir() or not self._valid_id(draft.name):
+                continue
+            for build in draft.iterdir():
+                if build.is_symlink() or not build.is_dir() or not self._valid_id(build.name):
+                    continue
+                candidate_dir = self._candidate_directory(draft.name, build.name)
+                if candidate_dir is None:
+                    continue
+                model_dir = candidate_dir / "stone_troll"
+                try:
+                    record = json.loads((model_dir / "character.json").read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                review_path = candidate_dir / "review.json"
+                try:
+                    review = json.loads(review_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    review = {"status": "review_required"}
+                preview = model_dir / record.get("files", {}).get("preview_glb", "character_base_preview.glb")
+                try:
+                    built_at = datetime.fromtimestamp(model_dir.stat().st_mtime, timezone.utc).isoformat()
+                except OSError:
+                    built_at = None
+                candidates.append({
+                    "draft_id": draft.name,
+                    "build_id": build.name,
+                    "character_id": record.get("character_id", "stone_troll"),
+                    "quality_tier": record.get("generation_quality", {}).get("tier", "unknown"),
+                    "production_ready": bool(record.get("generation_quality", {}).get("production_ready", False)),
+                    "vertex_count": record.get("mesh", {}).get("vertex_count"),
+                    "polygon_count": record.get("mesh", {}).get("polygon_count"),
+                    "review_status": review.get("status", "review_required"),
+                    "reviewed_at": review.get("reviewed_at"),
+                    "built_at": built_at,
+                    "has_preview": preview.is_file(),
+                    "preview_url": f"/api/candidate/preview?draft_id={draft.name}&build_id={build.name}",
+                    "candidate_directory": str(candidate_dir.relative_to(ROOT)),
+                })
+        candidates.sort(key=lambda item: item["built_at"] or "", reverse=True)
+        return candidates
+
+    def _review_candidate(self, content: dict) -> None:
+        if set(content) != {"draft_id", "build_id", "action"}:
+            return self._json(422, {"error": "Provide draft_id, build_id, and action."})
+        candidate = self._candidate_directory(content["draft_id"], content["build_id"])
+        if candidate is None:
+            return self._json(404, {"error": "Generated candidate was not found."})
+        action = content["action"]
+        if action == "keep":
+            review = {
+                "schema": "atlas-character-candidate-review/v1",
+                "status": "kept_for_reference",
+                "draft_id": content["draft_id"],
+                "build_id": content["build_id"],
+                "reviewed_at": datetime.now(timezone.utc).isoformat(),
+            }
+            review_path = candidate / "review.json"
+            temporary_path = candidate / f".review.{uuid.uuid4().hex}.tmp"
+            with temporary_path.open("x", encoding="utf-8") as stream:
+                stream.write(json.dumps(review, indent=2) + "\n")
+            temporary_path.replace(review_path)
+            return self._json(200, {"status": review["status"], "reviewed_at": review["reviewed_at"]})
+        if action == "delete":
+            # Resolve and recheck immediately before removal. This endpoint only
+            # accepts complete Recipe Studio builds and cannot address source,
+            # other pending-model folders, or runtime assets.
+            candidate = self._candidate_directory(content["draft_id"], content["build_id"])
+            if candidate is None or candidate.parent.parent != CANDIDATE_ROOT.resolve():
+                return self._json(404, {"error": "Generated candidate could not be safely located."})
+            shutil.rmtree(candidate)
+            return self._json(200, {"status": "deleted"})
+        return self._json(422, {"error": "Action must be 'keep' or 'delete'."})
 
     def _json(self, status: int, value: object) -> None:
         body = json.dumps(value, ensure_ascii=False).encode("utf-8")

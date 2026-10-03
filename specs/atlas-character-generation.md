@@ -187,6 +187,16 @@ hash-bound geometry build plan, then can launch Blender to create a
 `blockout_only` candidate. Blender and the local `three` package installed by
 `npm ci` are needed for generation and the interactive GLB preview.
 
+The Generated Model Review gallery lists prior successful Recipe Studio builds
+from `art/characters/pending_models/recipe_studio/`. Select a candidate to load
+its GLB preview and inspect build metadata. **Keep for reference** writes a
+review status to that build; it does not certify geometry, rights, learning
+eligibility, rigging readiness, or runtime approval. **Delete generated
+build** requires browser confirmation and removes only the selected Recipe
+Studio build directory. The server validates its draft/build IDs, expected
+candidate record, and directory containment before removal. Source assets,
+other pending-model folders, and runtime assets are outside this UI's scope.
+
 This is a Stone Troll workbench, not a general natural-language character
 understander. If a description says “massive arms,” it will not choose a
 percentage for the user. Enter an explicit percentage or keep the phrase only

@@ -79,6 +79,9 @@ candidate is not an approved asset.
   blockout builder and inspect its local preview. UI build attempts receive
   unique trial directories so a later attempt does not overwrite an earlier
   candidate.
+- [x] Add a generated-candidate gallery to browse and preview prior Recipe
+  Studio builds, mark candidates kept for reference, or delete one selected
+  generated build with a scoped server-side path check and confirmation.
 - [ ] Add versioned phrase/alias tables and fixture examples for the supported
   deterministic vocabulary.
 - [ ] Add explicit template selection only after each archetype has its own

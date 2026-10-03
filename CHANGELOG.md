@@ -7,6 +7,21 @@ then add a dated note with the implemented files and verification performed.
 Keep notes factual: mark ideas as proposed, planned, implemented, or blocked;
 do not describe a planned stage as working software.
 
+### 2026-10-03 — Generated model review gallery
+
+- Added a Recipe Studio gallery that lists previous generated Stone Troll
+  candidates, loads each available GLB for orbitable inspection, and displays
+  build metadata and review state.
+- Added a persistent “kept for reference” review record and a confirmed delete
+  action scoped to the selected Recipe Studio build directory. Kept candidates
+  remain unapproved and are not registered as runtime assets.
+- Updated the Recipe Studio run guide, character-generation workflow, status,
+  architecture, task list, and character tools index with the gallery's scope.
+- Checked Python and JavaScript syntax and diff formatting; exercised loopback
+  health, page, and empty-candidate catalog endpoints. No generated candidate was
+  present in this checkout for visual or review-action inspection; no test suite
+  was run.
+
 ### 2026-10-03 — Generation quality guard
 
 - Added an explicit `--allow-blockout` opt-in and clear default refusal when no

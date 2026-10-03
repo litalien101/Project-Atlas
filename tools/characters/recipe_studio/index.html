@@ -86,12 +86,6 @@
           <p class="action-caption" id="action-caption">A human review is required. This stage creates no rig, weights, animation, or final materials.</p>
         </section>
 
-        <section class="preview-card" id="preview-card" hidden>
-          <div class="preview-head"><div><div class="section-kicker"><span>02</span> CANDIDATE PREVIEW</div><b>Unrigged T-pose blockout</b></div><span class="review-badge">REVIEW REQUIRED</span></div>
-          <div class="preview-stage" id="preview-stage"><canvas id="preview-canvas" aria-label="Rotatable 3D preview of the generated Stone Troll blockout"></canvas><div class="preview-hint" id="preview-hint">Drag to orbit <i>·</i> scroll to zoom</div><div class="preview-loading" id="preview-loading" hidden>Loading preview…</div></div>
-          <div class="preview-meta" id="preview-meta"></div>
-        </section>
-
         <section class="pipeline-card">
           <div class="section-kicker"><span>03</span> WHAT HAPPENS NEXT</div>
           <ol class="pipeline-list">
@@ -103,6 +97,25 @@
         </section>
       </aside>
     </div>
+
+    <section class="candidate-browser" aria-labelledby="candidate-browser-title">
+      <div class="browser-heading">
+        <div><div class="section-kicker"><span>04</span> GENERATED MODEL REVIEW</div><h2 id="candidate-browser-title">Candidate library</h2><p>Browse Recipe Studio builds, inspect them in 3D, then keep one for reference or delete that generated build.</p></div>
+        <div class="browser-tools"><label for="candidate-filter">Show</label><select id="candidate-filter"><option value="all">All candidates</option><option value="review_required">Needs review</option><option value="kept_for_reference">Kept for reference</option></select><button class="quiet-button" id="refresh-candidates" type="button">REFRESH</button></div>
+      </div>
+      <div class="candidate-browser-grid">
+        <div class="candidate-list-panel"><div class="candidate-list-summary" id="candidate-list-summary">Loading generated candidates…</div><div class="candidate-list" id="candidate-list" aria-live="polite"></div></div>
+        <section class="preview-card candidate-inspector" id="preview-card" aria-label="Selected candidate inspection" hidden>
+          <div class="preview-head"><div><div class="section-kicker"><span>05</span> SELECTED CANDIDATE</div><b id="selected-candidate-title">Unrigged T-pose blockout</b></div><span class="review-badge" id="selected-review-badge">REVIEW REQUIRED</span></div>
+          <div class="preview-stage" id="preview-stage"><canvas id="preview-canvas" aria-label="Rotatable 3D preview of the selected generated candidate"></canvas><div class="preview-hint" id="preview-hint">Drag to orbit · scroll to zoom</div><div class="preview-loading" id="preview-loading" hidden>Loading preview…</div></div>
+          <div class="preview-meta" id="preview-meta"></div>
+          <div class="candidate-path" id="candidate-path"></div>
+          <div class="candidate-review-actions"><button class="keep-button" id="keep-candidate" type="button">Keep for reference</button><button class="delete-button" id="delete-candidate" type="button">Delete generated build</button></div>
+          <p class="candidate-review-note">Keeping records your review decision only. It does not approve the model or add it to runtime assets. Deleting permanently removes this selected Recipe Studio build folder.</p>
+        </section>
+        <div class="candidate-empty" id="candidate-empty" hidden><b>No candidates match this view.</b><span>Build a candidate above or change the filter.</span></div>
+      </div>
+    </section>
 
     <footer class="footer"><span>PROJECT ATLAS <i>·</i> CHARACTER PIPELINE</span><span>PROFILE + RECIPE + REVIEWABLE BUILD PLAN</span></footer>
     <div class="toast" id="toast" role="status" hidden></div>

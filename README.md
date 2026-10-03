@@ -34,7 +34,12 @@ plan and ask Blender to generate an unrigged blockout for review. It does not
 call an AI service and does not create a production-ready mesh. Each UI build
 attempt gets a unique directory under
 `art/characters/pending_models/recipe_studio/` so revisions remain available
-for comparison.
+for comparison. The **Generated Model Review** gallery below the workbench
+loads earlier builds from that folder, previews the selected GLB in the
+browser, and records **Keep for reference** or deletes the selected Recipe
+Studio build after confirmation. Keeping is a review note only; it does not
+approve or publish the candidate. Deletion is limited to that generated build
+folder and does not address source libraries or runtime assets.
 
 The character pipeline has a design-profile contract and deterministic Blender tools. It can create either an explicitly requested procedural blockout or a draft adapted from a separately calibrated, human-approved source mesh. It does not create a finished production mesh, call an AI service, or generate a rig. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
 

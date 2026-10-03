@@ -5,6 +5,11 @@ workflows and contracts are linked from [`../../MASTER_FILE.md`](../../MASTER_FI
 
 ## Current intake workflow
 
+Run the local Recipe Studio and its generated-model review gallery with the
+instructions in the [project README](../../README.md#recipe-studio). The gallery
+is limited to successful Recipe Studio builds; it does not browse source
+downloads or other pending-model collections.
+
 - `inspect_character_source.py` creates a source dossier, technical screening
   report, and unknown-by-default observation draft for humanoid `.blend`,
   `.glb`, and `.gltf` sources.

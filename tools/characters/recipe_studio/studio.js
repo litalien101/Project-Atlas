@@ -32,6 +32,8 @@ let previewScene = null;
 let previewCamera = null;
 let previewControls = null;
 let previewFrame = 0;
+let candidates = [];
+let selectedCandidate = null;
 
 function showToast(message) {
   toast.textContent = message;
@@ -137,7 +139,6 @@ function addCompilerOutcome(result) {
   ackCheckbox.checked = false;
   compilePlanButton.textContent = "Compile build plan →";
   buildButton.disabled = true;
-  $("#preview-card").hidden = true;
   updatePlanAvailability();
 }
 
@@ -222,7 +223,10 @@ async function buildCandidate() {
       `Candidate record: ${result.record_path}.`,
       "No armature, skin weights, or animation were generated.",
     ]);
-    await loadPreview(result.draft_id, result.build_id);
+    await refreshCandidates().catch((error) => showToast(error.message));
+    const built = candidates.find((item) => item.draft_id === result.draft_id && item.build_id === result.build_id);
+    if (built) await selectCandidate(built, false);
+    else await loadPreview(result.draft_id, result.build_id);
     $("#preview-card").scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch (error) {
     buildButton.textContent = "Build blockout candidate ↗";
@@ -231,6 +235,125 @@ async function buildCandidate() {
     showToast(error.message);
     appendMessage("error", "BLENDER BUILDER", error.message);
   }
+}
+
+function formatDate(value) {
+  if (!value) return "Build date unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Build date unavailable" : new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function renderCandidateList() {
+  const filter = $("#candidate-filter").value;
+  const visible = candidates.filter((item) => filter === "all" || item.review_status === filter);
+  const list = $("#candidate-list");
+  list.replaceChildren();
+  $("#candidate-list-summary").textContent = `${visible.length} shown · ${candidates.length} total generated candidate${candidates.length === 1 ? "" : "s"}`;
+  $("#candidate-empty").hidden = visible.length > 0;
+  for (const candidate of visible) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `candidate-item${selectedCandidate?.build_id === candidate.build_id && selectedCandidate?.draft_id === candidate.draft_id ? " is-selected" : ""}`;
+    button.setAttribute("aria-pressed", String(selectedCandidate?.build_id === candidate.build_id && selectedCandidate?.draft_id === candidate.draft_id));
+    const title = document.createElement("b");
+    title.textContent = "Stone Troll blockout";
+    const state = document.createElement("span");
+    state.className = `candidate-state${candidate.review_status === "kept_for_reference" ? " is-kept" : ""}`;
+    state.textContent = candidate.review_status === "kept_for_reference" ? "KEPT FOR REFERENCE" : "REVIEW REQUIRED";
+    const detail = document.createElement("small");
+    const vertices = Number.isInteger(candidate.vertex_count) ? `${candidate.vertex_count.toLocaleString()} vertices` : "geometry details unavailable";
+    detail.textContent = `${formatDate(candidate.built_at)} · ${vertices}`;
+    const previewState = document.createElement("small");
+    previewState.textContent = candidate.has_preview ? "3D preview available" : "Preview file missing";
+    button.append(title, state, detail, previewState);
+    button.addEventListener("click", () => selectCandidate(candidate));
+    list.append(button);
+  }
+}
+
+async function refreshCandidates() {
+  const response = await fetch("/api/candidates");
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Could not load generated candidates.");
+  candidates = data.candidates || [];
+  renderCandidateList();
+  if (selectedCandidate) {
+    const updated = candidates.find((item) => item.draft_id === selectedCandidate.draft_id && item.build_id === selectedCandidate.build_id);
+    if (updated) {
+      selectedCandidate = updated;
+      updateCandidateInspector(updated);
+      renderCandidateList();
+    }
+  }
+}
+
+function updateCandidateInspector(candidate) {
+  $("#preview-card").hidden = false;
+  $("#selected-candidate-title").textContent = "Stone Troll · unrigged T-pose blockout";
+  $("#selected-review-badge").textContent = candidate.review_status === "kept_for_reference" ? "KEPT FOR REFERENCE" : "REVIEW REQUIRED";
+  $("#keep-candidate").disabled = candidate.review_status === "kept_for_reference";
+  $("#keep-candidate").textContent = candidate.review_status === "kept_for_reference" ? "Kept for reference ✓" : "Keep for reference";
+  const meta = $("#preview-meta");
+  meta.replaceChildren();
+  const stats = [
+    ["QUALITY TIER", candidate.quality_tier || "unknown"],
+    ["SURFACE", `${Number(candidate.vertex_count || 0).toLocaleString()} vertices · ${Number(candidate.polygon_count || 0).toLocaleString()} polygons`],
+    ["BUILT", formatDate(candidate.built_at)],
+    ["PRODUCTION", candidate.production_ready ? "Marked production ready" : "Not production ready"],
+  ];
+  for (const [label, value] of stats) {
+    const item = document.createElement("div");
+    const bold = document.createElement("b");
+    bold.textContent = `${label}  `;
+    item.append(bold, document.createTextNode(value));
+    meta.append(item);
+  }
+  $("#candidate-path").textContent = `Generated folder: ${candidate.candidate_directory}`;
+}
+
+async function selectCandidate(candidate, shouldScroll = true) {
+  selectedCandidate = candidate;
+  renderCandidateList();
+  updateCandidateInspector(candidate);
+  if (candidate.has_preview) {
+    await loadPreview(candidate.draft_id, candidate.build_id);
+  } else {
+    clearPreviewModel();
+    $("#preview-hint").textContent = "No preview GLB is available for this candidate.";
+  }
+  if (shouldScroll) $("#preview-card").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function updateCandidateReview(action) {
+  if (!selectedCandidate) return;
+  if (action === "delete") {
+    const label = `Stone Troll build ${selectedCandidate.build_id.slice(0, 8)}`;
+    if (!window.confirm(`Permanently delete ${label} and its generated files? This does not affect source or runtime assets.`)) return;
+  }
+  try {
+    await postJson("/api/candidate/review", {
+      draft_id: selectedCandidate.draft_id,
+      build_id: selectedCandidate.build_id,
+      action,
+    });
+    if (action === "delete") {
+      clearPreviewModel();
+      selectedCandidate = null;
+      $("#preview-card").hidden = true;
+      showToast("Selected generated build deleted.");
+    } else {
+      showToast("Candidate marked kept for reference. It remains unapproved.");
+    }
+    await refreshCandidates();
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+function clearPreviewModel() {
+  if (!previewScene) return;
+  const model = previewScene.children.find((child) => child.userData.atlasModel);
+  if (model) previewScene.remove(model);
 }
 
 async function loadPreview(draftId, buildId) {
@@ -284,9 +407,7 @@ async function loadPreview(draftId, buildId) {
       };
       animate();
     }
-    while (previewScene.children.some((child) => child.userData.atlasModel)) {
-      previewScene.remove(previewScene.children.find((child) => child.userData.atlasModel));
-    }
+    clearPreviewModel();
     const previewUrl = `/api/candidate/preview?draft_id=${encodeURIComponent(draftId)}&build_id=${encodeURIComponent(buildId)}`;
     const model = await new GLTFLoader().loadAsync(previewUrl);
     const object = model.scene;
@@ -341,6 +462,10 @@ document.querySelectorAll("[data-prompt]").forEach((button) => {
 ackCheckbox.addEventListener("change", updatePlanAvailability);
 compilePlanButton.addEventListener("click", () => void compilePlan());
 buildButton.addEventListener("click", () => void buildCandidate());
+$("#candidate-filter").addEventListener("change", renderCandidateList);
+$("#refresh-candidates").addEventListener("click", () => void refreshCandidates().catch((error) => showToast(error.message)));
+$("#keep-candidate").addEventListener("click", () => void updateCandidateReview("keep"));
+$("#delete-candidate").addEventListener("click", () => void updateCandidateReview("delete"));
 $("#clear-chat").addEventListener("click", () => window.location.reload());
 
 fetch("/api/health").then((response) => response.json()).then((health) => {
@@ -348,3 +473,8 @@ fetch("/api/health").then((response) => response.json()).then((health) => {
     $("#action-caption").textContent = "Blender was not found. Parsing and plan compilation still work; set BLENDER_BIN to enable local candidate builds.";
   }
 }).catch(() => showToast("The local recipe service is not responding."));
+
+refreshCandidates().catch((error) => {
+  $("#candidate-list-summary").textContent = "Could not load generated candidates.";
+  showToast(error.message);
+});
