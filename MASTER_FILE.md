@@ -324,21 +324,27 @@ approved artifact.
    color space, source/license, seed or parameters, and hash. Texture review is
    separate from geometry approval; a texture failure does not rewrite the
    accepted mesh.
-7. **Visual landmark placement.** After appearance review, open the model in a
-   marker-placement view. Required anchors can include root/pelvis, spine,
-   neck, crown/chin, eyes, shoulders, elbows, wrists, hand roots/fingertips,
-   hips, knees, ankles, and feet. A future AI assistant may propose initial
-   surface positions by mesh analysis and the recipe, with per-marker confidence
-   and provenance. The creator must be able to inspect, drag, and approve every
-   marker; a low-confidence or occluded landmark remains a human placement.
-   Store marker coordinates in a declared model frame, linked to the exact
-   approved mesh hash.
-8. **Skeleton and skinning.** A deterministic rig builder maps approved
-   landmarks to a versioned skeleton definition, checks bone names/hierarchy,
-   rest pose, scale, orientation, and joint limits, then generates or transfers
-   skin weights. Validate normalized weights, max influences, empty/unweighted
-   vertices, and deformation at representative shoulder, elbow, wrist, finger,
-   hip, and knee poses. A mesh/marker change invalidates downstream rig review.
+7. **Visual landmark placement.** After appearance review, open a Mixamo-style
+   interactive rigging UI that overlays draggable visual marker handles on the
+   mesh. The creator can inspect the model from multiple views, place and adjust
+   required anchors, mirror paired limbs as a starting point, and approve each
+   marker. Anchors include root/pelvis, spine, neck, crown/chin, eyes, shoulders,
+   elbows, wrists, hand roots/fingertips, hips, knees, ankles, and feet. A
+   future AI assistant may suggest initial positions from mesh analysis and the
+   recipe, with per-marker confidence and provenance; creator placement and
+   approval remain available for every anchor. Store coordinates in the model
+   frame and link the marker artifact to the exact approved mesh hash.
+8. **Skeleton generation and skinning.** A deterministic Blender rig builder
+   consumes the approved marker artifact and a versioned skeleton template to
+   create the armature: bone hierarchy, names, joint positions/orientations,
+   and rest pose. It validates scale, axes, joint limits, and required bones
+   before producing a rig candidate. Generate or transfer skin weights as a
+   separate operation; validate normalization, maximum influences, unweighted
+   vertices, and deformation at shoulders, elbows, wrists, fingers, hips, and
+   knees. The creator reviews the generated skeleton and deformations before
+   rig approval. Markers can seed a rig, but do not alone certify professional
+   deformation quality. A mesh or marker change invalidates downstream rig
+   review.
 9. **Animation.** With an approved rig, retarget licensed clips or build
    authored/procedural clips. Record source/license, rig and retargeter hashes,
    root-motion policy, and clip metadata. Preview contact, balance, clipping,
@@ -606,8 +612,9 @@ implemented.
 | Cross-category model recipe schema | Contract groundwork | Captures build detail and provenance; builder/compiler integration is not implemented. |
 | AI request-to-recipe drafting | Planned | AI may draft structured proposals; deterministic validation and build execution remain required. |
 | Geometry-to-texture approval workflow | Planned | Geometry-first order is documented; no general stage-state service or procedural texture builder exists. |
-| AI-assisted landmark proposal | Planned | Current Blender add-on supports human placement; suggestions, confidence, and provenance are not implemented. |
-| Stone Troll rig and animation pipeline | Not implemented | No character rig or animation clips are currently registered. |
+| Marker placement UI and skeleton generation | Planned | Blender add-on supports manual marker edits/exports only; the Mixamo-style visual workflow and marker-driven armature builder are not implemented. |
+| AI-assisted landmark proposal | Planned | Suggestions, per-marker confidence, and provenance are not implemented. |
+| Stone Troll rig and animation pipeline | Not implemented | No character rig or animation clips are registered; rig generation must follow approved visual markers. |
 | Structured observation dataset | Contract groundwork | Observation schema and intake guidance are defined; no reviewed dataset has been collected. |
 | Relationship discovery/miner | Planned | Recipe curation can run alongside geometry work; do not claim mined findings until the vocabulary and independent licensed dataset support them. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |
@@ -680,6 +687,10 @@ mesh is registered at present.
   and source rights before acceptance.
 - Add repeatable deformation previews for shoulders, elbows, wrists, hips, and
   knees once a valid rig is available.
+- Build a creator-facing, multi-view marker UI with draggable Mixamo-style
+  anchors, then generate the skeleton from the reviewed marker artifact using a
+  versioned rig template. Keep skin weights and deformation review as separate
+  gates.
 - Record visual-review cases, target device budgets, and why a candidate passes
   or fails.
 - Generalize shared asset intake, recipe/version records, provenance, QA, and
@@ -770,10 +781,10 @@ mesh is registered at present.
   follows geometry acceptance.
 - The intended creator pipeline is request -> structured recipe proposal ->
   deterministic recipe validation/build plan -> Blender mesh -> creator geometry
-  approval -> texture/material build and approval -> landmark placement and
-  approval -> skeleton/skinning -> deformation approval -> animation -> runtime
-  packaging. AI can propose recipes and landmark positions but cannot approve
-  assets or bypass deterministic checks.
+  approval -> texture/material build and approval -> Mixamo-style visual marker
+  placement and approval -> deterministic marker-driven skeleton generation ->
+  skinning/deformation review -> animation -> runtime packaging. AI can propose
+  recipes and landmarks but cannot approve assets or bypass deterministic checks.
 - A free model's license does not make it design-compatible or Atlas-rig
   compatible; downloaded models remain references until independently reviewed.
 - A front image is a measurement guide, not a complete 3D asset. Width fitting
@@ -944,3 +955,13 @@ do not describe a planned stage as working software.
   collection remains an active parallel task and must use rights-cleared,
   independent examples; the authored Stone Troll profile is a target recipe,
   not learned evidence.
+
+### 2026-10-03 — Marker-driven skeleton workflow planned
+
+- Specified a Mixamo-style multi-view UI where creators place, adjust, and
+  approve visible joint markers on an accepted character mesh.
+- Specified deterministic Blender armature generation from the approved marker
+  artifact and a versioned skeleton template, followed by separate skinning,
+  deformation, and rig-approval checks.
+- This is design only: the existing add-on supports manual marker editing and
+  export; the dedicated UI and skeleton generator are not implemented.
