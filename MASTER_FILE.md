@@ -51,6 +51,20 @@ when implementation state changes and `CHANGELOG.md` with a dated summary.
 - [`art/characters/sources/README.md`](art/characters/sources/README.md) —
   character reference sources, checksums, licenses, and limitations.
 
+## Workspace asset references outside this repository
+
+These inventories are local workspace material, not Git-tracked project
+contracts. They document candidate sources; Project Atlas's indexed workflows
+and release rules remain authoritative for use in the application.
+
+- `/srv/source_models/README.md` and `/srv/source_models/AUDIT.md` — local
+  source-model catalog, quality dispositions, and dated review. These paths
+  exist in the workspace and are outside this Git repository; they are not
+  repository-relative links on GitHub.
+- `/srv/projects/Reference_Assets/README.md` — retained reference assets and
+  planning archive. Its planning material is explicitly non-authoritative for
+  current implementation status and is maintained outside this repository.
+
 ## Document ownership and update rules
 
 Each subject has one authoritative home:

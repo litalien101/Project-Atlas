@@ -285,3 +285,25 @@ do not describe a planned stage as working software.
 - Deferred a wrapper class or CLI now: the existing tools are still evolving,
   and a premature facade would create another interface to maintain without
   removing the underlying commands.
+
+### 2026-10-03 — Workspace documentation consistency audit
+
+- Clarified document ownership and workspace boundaries in the workspace map,
+  Project Atlas index, and Reference Assets indexes. The source-model library
+  and Reference Assets are outside this Git repository; their inventories do
+  not grant runtime or learning approval.
+- Corrected the dated source-model audit to reflect the downloaded but still
+  unpromoted Female Low-Poly candidate and the current technical screening
+  report. Updated engineering audit entries to reflect verified Recipe Studio
+  output isolation without claiming immutable storage, and marked retired
+  source-dependent tools accordingly. Audit recommendations now distinguish
+  implemented technical triage from remaining visual, archetype, and lineage
+  review.
+- Marked supplementary Atlas planning and product-vision documents as
+  aspirational reference material, clarified that MakeHuman GLB exports are
+  not active runtime registrations, normalized the product-vision index to
+  `README.md`, and removed copied UI debris from that long-form reference.
+- Verified 93 Markdown/text documents for broken relative links (none found),
+  parsed all 23 JSON documents and validated all 9 JSON Schema contracts,
+  parsed all 19 YAML documents, and reconciled source-catalog counts. Checked
+  diff formatting; no application tests were run.

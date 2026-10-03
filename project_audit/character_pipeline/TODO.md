@@ -113,14 +113,19 @@ duplicate task state.
   schema. This is downstream of first-mesh approval.
 - [`generate_character_base.py`](../../tools/characters/generate_character_base.py)
   — Keep blockout label; target mesh is missing. Add reviewed authored/sculpted
-  intake, enforce reference rights, and emit immutable candidate outputs.
+  intake and enforce reference rights. Recipe Studio outputs are isolated by
+  draft/build IDs, but files are not protected against later manual mutation;
+  do not call them immutable.
 - [`inspect_character_source.py`](../../tools/characters/inspect_character_source.py)
-  — First-pass technical intake implemented for `.blend`, `.glb`, and `.gltf`.
-  It emits a hash-pinned dossier and unknown-by-default observation draft;
-  it does not verify license claims or infer anatomy. Refine measurements and
-  semantic annotation only against reviewed build/reproduction failures.
+  — First-pass technical intake and humanoid screening are implemented for
+  `.blend`, `.glb`, and `.gltf`. They emit a hash-pinned dossier, technical
+  screening report, and unknown-by-default observation draft; they do not
+  verify license claims, judge visual quality, or infer anatomy. Remaining
+  work is archetype-specific visual review assistance and lineage review.
 - [`generate_wayfarer_vest_seed.py`](../../tools/characters/generate_wayfarer_vest_seed.py)
-  — Retire or port; hard-coded to removed female-base and region files.
+  — **Retired in the current workflow.** It remains as a historical reference
+  and refuses direct execution because it depends on removed female-base and
+  region files. Port only against a reviewed replacement base and contract.
 - [`model_recipe_pipeline.py`](../../tools/characters/model_recipe_pipeline.py)
   — Contract validation/planning only. Tighten semantic validation of
   constraints, ranges, coordinate frames, rights, and release evidence;
