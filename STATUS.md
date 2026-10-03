@@ -34,8 +34,11 @@
   reader extracts a silhouette with local pixel operations and fits width by
   height; it does not infer unseen depth or surface details. The first-pass
   `inspect_character_source.py` intake records hash-pinned geometry/rig
-  inventories and writes unknown-by-default observation drafts; unresolved or
-  invalid mesh drivers make evaluated geometry summaries explicitly unreliable.
+  inventories, a technical triage report, and unknown-by-default observation
+  drafts. The first screening profile flags measurable geometry/topology issues
+  but does not judge visual quality, pose, archetype fit, source lineage, or
+  rights. Unresolved or invalid mesh drivers make evaluated geometry summaries
+  explicitly unreliable.
 - **Mesh generation and review:** `generate_character_base.py` builds a
   deterministic parametric blockout, semantic body regions, and landmark
   guides. `character_topology.py` analyzes components/boundaries and gates the

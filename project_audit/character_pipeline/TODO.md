@@ -31,11 +31,10 @@ duplicate task state.
   attribution, and checksum; analysis, derivative, dataset, and redistribution
   permissions remain distinct; unknown/incompatible rights block dataset
   promotion and redistribution.
-- **First-mesh reliability blocker — Isolate candidate artifacts.** Recipe Studio writes to a shared fixed
-  candidate directory, so later builds can overwrite earlier candidates and
-  previews.
-  **Accept when:** every build gets an immutable candidate ID/directory; its
-  API response, preview, record, and hashes all point to that exact revision.
+- **Resolved finding — Isolate candidate artifacts.** Current Recipe Studio
+  code assigns a UUID build ID, writes each build under a distinct directory,
+  and constructs the preview endpoint from both draft and build IDs. The old
+  shared-output claim is stale. Path isolation does not prevent manual edits.
 - **P1 before marker editing/export — Verify marker source identity.** Marker
   export checks a preview hash but does not verify that the supplied Blender
   file is the reviewed source. This is a necessary downstream gate, not a
@@ -130,10 +129,9 @@ duplicate task state.
   — Paused/stale: hard-coded to retired body, rig, and region schema. Port only
   after a reviewed replacement base/rig exists.
 - [`recipe_studio_server.py`](../../tools/characters/recipe_studio_server.py)
-  — P0 shared-output overwrite risk. The root TODO already records unique UI
-  trial directories; keep that behavior and fix the actual Blender
-  candidate/preview output path so every build has an immutable candidate ID
-  and the response serves that candidate's exact preview.
+  — UUID draft/build paths and preview lookup agree in the current code; the
+  earlier shared-output overwrite finding is resolved. If changed, verify that
+  response IDs, candidate record, and preview URL identify the same build.
 - [`refresh_character_base_preview.py`](../../tools/characters/refresh_character_base_preview.py)
   — No specific invalidation defect found. Preserve review invalidation on
   refresh and retain earlier review outcomes as history rather than
@@ -225,9 +223,9 @@ duplicate task state.
 
 The local [`recipe_studio/`](../../tools/characters/recipe_studio/) interface
 is limited to deterministic Stone Troll authoring. Keep its “no AI” and
-blockout-only messaging accurate; wire all build/preview actions to immutable,
-revision-specific candidate IDs. Never expose a successful candidate response
-when Blender failed or the returned record/hash cannot be verified.
+blockout-only messaging accurate. Build and preview actions use
+revision-specific IDs; never expose a successful candidate response when
+Blender failed or the returned record cannot be verified.
 
 ## Planned downstream stages
 

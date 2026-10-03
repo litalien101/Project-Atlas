@@ -1,4 +1,8 @@
-"""Prepare the supplied female Mixamo base as an Atlas underwear character."""
+"""RETIRED: depends on removed, rights-unverified female base/underwear sources.
+
+See tools/characters/README.md. This script is retained for historical review
+and refuses direct execution.
+"""
 
 from __future__ import annotations
 
@@ -539,4 +543,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Retired: required source assets were removed. See tools/characters/README.md.")

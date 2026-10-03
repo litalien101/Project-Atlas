@@ -1,7 +1,9 @@
-"""Generate a torso and shoulder vest seed for artist shaping and pipeline review.
+"""RETIRED: generate a vest seed fitted to the removed female base/region map.
 
 This creates a fitted surface starting point. It is not a finished outfit and
 is deliberately written to the workspaces directory, never to runtime assets.
+See tools/characters/README.md. This script is retained for historical review
+and refuses direct execution.
 """
 
 from __future__ import annotations
@@ -150,4 +152,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Retired: required source assets were removed. See tools/characters/README.md.")

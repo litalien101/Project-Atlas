@@ -51,11 +51,12 @@ not as a substitute for the eventual recipe-driven generator.
   brief, show parsed/unparsed text and field origins, ask for clarification on
   conflicts, and require acknowledgement before build. Never let an adjective
   silently change geometry.
-- Make Blender candidate output immutable per build. The root TODO says UI
-  attempts get unique trial directories, while the audit found the build
-  server's output path is shared. Preserve the existing draft/trial behavior
-  and fix the specific Blender output/preview endpoint path so one build cannot
-  replace another build's candidate.
+- **Resolved in current code (2026-10-03):** the Recipe Studio creates a UUID
+  `build_id` for each build and writes beneath
+  `art/characters/pending_models/recipe_studio/<draft_id>/<build_id>/`. The
+  preview endpoint requires both IDs and resolves the preview beneath the same
+  build-specific path. The audit's shared-output-path finding is stale; retain
+  this per-build isolation when changing the endpoint.
 - Record a repeatability and performance baseline on the intended CPU machine:
   identical inputs/tool version produce equivalent geometry and hashes; record
   wall-clock time, peak memory, mesh counts, and build failure. Set numeric
@@ -123,9 +124,11 @@ variants is not evidence that the system has learned anatomy.
 1. **Priorities:** P0/P1 labels identify seriousness, not work order across
    unrelated tracks. The geometry candidate and gameplay integrity fixes can
    proceed independently.
-2. **Candidate isolation:** There are two scopes: draft/trial directories and
-   the actual Blender candidate/preview output. Preserve already-unique UI
-   trials and fix only the shared build/output path.
+2. **Candidate isolation:** Drafts and Blender builds have separate UUIDs.
+   Each response and preview URL carries its draft/build IDs, and each build
+   writes to its own directory. The earlier shared-output finding is resolved
+   in the current implementation; keep the response, record, and preview bound
+   to the same pair of IDs.
 3. **Rights:** Require evidence and human attestation, not a claim of automated
    legal verification. Scope hard blocks to third-party-source use, dataset
    eligibility, and redistribution.

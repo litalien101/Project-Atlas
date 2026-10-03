@@ -67,7 +67,7 @@
         "type": "object", "additionalProperties": false,
         "required": ["role", "path", "sha256"],
         "properties": {
-          "role": { "enum": ["source_inspection", "screenshot", "annotation"] },
+          "role": { "enum": ["source_inspection", "source_screening", "screenshot", "annotation"] },
           "path": { "type": "string", "minLength": 1, "maxLength": 1000 },
           "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
         }

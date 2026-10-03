@@ -19,10 +19,12 @@ source lineage, rights, and review status. A collection of 100 recipes should
 be 100 traceable observations, not 100 derivatives counted as independent
 evidence from one source.
 
-The first-pass Blender intake tool now writes a technical dossier and a
-separate, unknown-by-default observation draft for `.blend`, `.glb`, or `.gltf`
-sources. It does not infer semantic anatomy, verify rights, or produce a recipe.
-No approved observation dataset or miner exists.
+The first-pass Blender intake tool writes a technical dossier, a separate
+technical triage report, and an unknown-by-default observation draft for
+`.blend`, `.glb`, or `.gltf` humanoid sources. The screen is limited to
+measurable geometry signals; it does not infer semantic anatomy, decide visual
+quality or archetype fit, verify rights, or produce a recipe. No approved
+observation dataset or miner exists.
 
 The planned local analysis flow is:
 

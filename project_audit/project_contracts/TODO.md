@@ -21,38 +21,29 @@ See [`MASTER_FILE.md`](../../MASTER_FILE.md) for the documentation index,
   **Accept when:** a reader can distinguish a working local prototype from
   persistent autonomous NPCs, a connected economy, complete character
   production, and public deployment without inferring these exist.
-- **P2 — Reconcile scope statements when web/network behavior changes.**
-  The current local-multiplayer spec has a two-seat flow while at least one
-  project statement still describes a one-player scope.
-  **Accept when:** supported local-player count, seat policy, and deployment
-  boundary agree across the master, README, specs, UI, and tests.
+- **Resolved (2026-10-03) — Reconcile local player scope.** The world-model
+  specification now describes the current two-player local session and keeps
+  public shared-world concurrency out of scope.
 
 ### [`README.md`](../../README.md)
 
-- **P2 — Correct licensing language.** The README currently states MIT applies
-  to dependencies, not Atlas source code. State the actual application license
-  accurately and distinguish it from dependency licenses, authored content
-  rights, and model/data redistribution rights.
-  **Accept when:** project and dependency licensing are unambiguous and link to
-  applicable notices.
-- **P2 — Repair and verify referenced documentation.** The README references
-  `specs/atlas-truth-model.yaml`, which was not present in the audited tree.
-  Reconcile this with available contracts and align policy-evaluation claims
-  with the policy contract.
-  **Accept when:** no active documentation points to a missing truth model,
-  policy claims match enforceable contract fields, and onboarding commands
-  match the current checkout.
+- **Resolved (2026-10-03) — Correct licensing language.** README now
+  distinguishes third-party dependency notices from Atlas source licensing and
+  asset-specific rights. Atlas source remains without a project license grant.
+- **Resolved (2026-10-03) — Remove unsupported truth-model enforcement claim.**
+  Active README/world-model documentation now states that derived-claim
+  confidence validation is not implemented. The supplementary truth/confidence
+  YAML under `Reference_Assets/` remains planning material and is not treated as
+  an active executable contract.
 
 ## World, policy, and decision contracts
 
-### Truth-model reference
+### Historical truth-model reference finding — resolved
 
-- **P2 — Resolve documentation/schema absence.** README documentation points
-  to `specs/atlas-truth-model.yaml`, but the file was not found in the audited
-  worktree. Determine whether the YAML is intended as a source-of-truth
-  contract; if so, add and validate it, otherwise remove the stale reference
-  and name the active contract.
-  **Accept when:** no active documentation points to a missing truth model.
+The active README and world-model specification no longer claim that the
+supplementary truth/confidence YAML is an enforced contract. The ontology's
+`TruthRecord` entry is only a type declaration; no truth-model evaluator is
+implemented. Revisit this only when derived-claim behavior enters active scope.
 
 ### Policy YAML/schema and policy prose
 
@@ -84,11 +75,8 @@ See [`MASTER_FILE.md`](../../MASTER_FILE.md) for the documentation index,
 
 ### [`specs/reach-world-model.md`](../../specs/reach-world-model.md)
 
-- **P2 — Reconcile local player scope.** It says “one local player,” while
-  [`specs/local-multiplayer.md`](../../specs/local-multiplayer.md) documents
-  two local travelers.
-  **Accept when:** supported local player count is consistent across world
-  scope, multiplayer contract, master, README, UI, and tests.
+The scope now matches the two-seat local session contract. Recheck both
+documents if local seat capacity changes.
 
 ### [`specs/atlas-decision-engine.yaml`](../../specs/atlas/specs/atlas-decision-engine.yaml)
 

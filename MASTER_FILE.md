@@ -38,6 +38,9 @@ when implementation state changes and `CHANGELOG.md` with a dated summary.
 - [`specs/atlas-character-observation-v1.schema.json`](specs/atlas-character-observation-v1.schema.json)
   and [`art/characters/recipe_observations/README.md`](art/characters/recipe_observations/README.md)
   — observation evidence and review workflow.
+- [`specs/source-model-intake-lifecycle.md`](specs/source-model-intake-lifecycle.md)
+  — handoff from source acquisition and rights review through intake, observation,
+  learning, build, and runtime release.
 - [`specs/atlas-character-technical-spec-v1.md`](specs/atlas-character-technical-spec-v1.md)
   — runtime character, rig, customization, and equipment contracts.
 - [`specs/reach-world-model.md`](specs/reach-world-model.md) — world entities,

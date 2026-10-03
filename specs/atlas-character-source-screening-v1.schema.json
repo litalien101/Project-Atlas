@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Character Source Screening v1",
+  "description": "Explainable technical triage for a humanoid source dossier. It is not a visual-quality, rights, lineage, or learning-eligibility approval.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "tool", "screening_profile", "source", "triage", "technical_checks", "human_review", "eligibility", "limitations"],
+  "properties": {
+    "schema": { "const": "atlas-character-source-screening/v1" },
+    "tool": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version"],
+      "properties": {
+        "name": { "const": "character_source_screening.py" },
+        "version": { "const": "1.0.0" }
+      }
+    },
+    "screening_profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_id", "archetype_id", "intended_use"],
+      "properties": {
+        "profile_id": { "const": "humanoid-anatomy-reference-v1" },
+        "archetype_id": { "const": "humanoid" },
+        "intended_use": { "const": "general_humanoid_anatomy_reference" }
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "triage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["outcome", "rationale"],
+      "properties": {
+        "outcome": { "enum": ["technical_concern", "needs_human_review", "technically_promising"] },
+        "rationale": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "technical_checks": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["check_id", "reason_code", "status", "severity", "summary", "evidence"],
+        "properties": {
+          "check_id": { "type": "string", "minLength": 1 },
+          "reason_code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+          "status": { "enum": ["clear", "flag", "unknown", "concern"] },
+          "severity": { "enum": ["info", "warning", "concern", "blocking"] },
+          "summary": { "type": "string", "minLength": 1 },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                { "type": ["string", "number", "integer", "boolean", "null"] },
+                { "type": "array", "items": { "type": ["string", "number", "integer", "boolean", "null"] } }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "human_review": {
+      "type": "object", "additionalProperties": false,
+      "required": ["required", "unresolved_gates"],
+      "properties": {
+        "required": { "const": true },
+        "unresolved_gates": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "eligibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["learning", "rights", "runtime"],
+      "properties": {
+        "learning": { "const": "not_approved" },
+        "rights": { "const": "review_required" },
+        "runtime": { "const": "not_approved" }
+      }
+    },
+    "limitations": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } }
+  }
+}

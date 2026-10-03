@@ -16,6 +16,17 @@ do not describe a planned stage as working software.
 - Historical note: the Stone Troll calibration was reverted to measurement-only
   and stale generated previews removed. A later rights audit removed the
   unavailable calibration and unverified reference images entirely.
+- Procedural output is opt-in and labeled `blockout_only`; acceptance requires
+  explicit sculpt and T-pose review, and marker placement/export requires a
+  checksum-matched review scoped only to rig work.
+- Removed the unsuitable Sketchfab Troll calibration, unlicensed Bing reference
+  images, derived measurements, and rejected procedural previews from active
+  pending-model folders. Pinned the CC-BY Troll Mauler and CC0 Blender human
+  base as references; neither matches the Stone Troll target.
+- Generated a recipe-driven `blockout_only` Stone Troll candidate in
+  `art/characters/pending_models/stone_troll/`. It still needs visual review
+  against rights-cleared design references; generation and the sampled shoulder
+  test do not establish that the target mesh has been achieved.
 - Checked the profile validator, Python syntax compilation, and diff formatting;
   no full test suite was run.
 
@@ -242,20 +253,32 @@ do not describe a planned stage as working software.
 - Verification: checked local Markdown links and diff formatting. No tests were
   run.
 
-- Done: procedural output is opt-in and labeled `blockout_only`.
-- Done: acceptance fails closed without explicit sculpt and T-pose review; marker
-  placement/export requires a checksum-matched review scoped only to rig work.
-- Done: the unsuitable Sketchfab Troll calibration, unlicensed Bing reference
-  images, and derived measurements were removed; rejected procedural previews
-  are removed from active pending-model folders.
-- Available for evaluation: pinned CC-BY Troll Mauler and CC0 Blender human
-  base references; neither is a target-matching, T-pose Atlas mesh.
-- Remaining: build a new Stone Troll geometry source from licensed references
-  or original authorship, ensure both hands connect through the wrists and arms,
-  pose it to the required T-pose,
-  and review proportions/topology before texture/detail authoring.
-- Done: generated a recipe-driven `blockout_only` Stone Troll candidate in
-  `art/characters/pending_models/stone_troll/`.
-- Remaining: visually inspect and iterate on that candidate against
-  rights-cleared design references. Generation and the sampled shoulder test
-  do not establish that the target mesh has been achieved.
+### 2026-10-03 — Humanoid source technical screening
+
+- Extended the Blender humanoid intake to emit a separate screening report
+  alongside the hash-pinned technical dossier and unknown-by-default
+  observation draft. Added a versioned report schema with stable reason codes,
+  severity, and structured evidence values.
+- Kept the first profile limited to measurable technical checks. It does not
+  infer visual quality, anatomy, archetype fit, source lineage, or rights, and
+  it never approves learning, geometry-seed, or runtime eligibility.
+- Added a documented acquisition-to-runtime lifecycle and clarified that
+  intake drafts belong in ignored local working data until human review.
+- Marked source-dependent build scripts as retired so the active tool surface
+  is clear, corrected stale audit findings and documentation conflicts, and
+  retained unresolved gameplay-integrity issues on the roadmap.
+- Verified the intake on the Blender Studio realistic male source: it produced
+  `technically_promising` with no reported topology flags, while rights and
+  learning/runtime eligibility remained unapproved. Validated the dossier,
+  screening report, and observation draft against their schemas and ran the
+  observation validator. A targeted Recipe Studio endpoint exercise also
+  confirmed two builds receive separate directories and previews (HTTP 200).
+  Checked Python syntax and diff formatting; no full test suite was run.
+
+### 2026-10-03 — Character CLI consolidation deferred
+
+- Recorded a future usability task to consider one `atlas character` command
+  surface after the stage contracts and workflows stabilize.
+- Deferred a wrapper class or CLI now: the existing tools are still evolving,
+  and a premature facade would create another interface to maintain without
+  removing the underlying commands.

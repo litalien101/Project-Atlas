@@ -1,5 +1,10 @@
 # Project Atlas Engineering Audit
 
+**Snapshot date:** 2026-10-03. **Status:** historical audit snapshot; individual
+findings can become stale as the worktree changes. The project `STATUS.md` and
+the owning subsystem checklist are the current references. Recheck any audit
+item against current code before treating it as open work.
+
 This folder contains a read-only, implementation-grounded TODO audit of the
 current Project Atlas worktree, compared with the project documents indexed in
 [`../MASTER_FILE.md`](../MASTER_FILE.md), the authored specifications, and the
@@ -38,9 +43,11 @@ gameplay fixes and deployment-stage work.
 - This is a static and targeted implementation audit, not a certification,
   penetration test, accessibility audit, production readiness review, or
   formal verification.
-- The worktree already contained modified, deleted, and untracked files before
-  these reports were created. Those changes were preserved; findings describe
-  the observed working tree, not a clean commit baseline. In particular,
+- At the audit snapshot, the worktree already contained modified, deleted, and
+  untracked files before these reports were created. Those changes were
+  preserved; findings describe the observed working tree, not a clean commit
+  baseline. This records the audit-time state, not the current worktree state.
+  In particular,
   [`../to_do.md`](../to_do.md) already existed and is referenced rather than
   replaced.
 - `node_modules/`, `.git/`, Python bytecode caches, generated bundles, local

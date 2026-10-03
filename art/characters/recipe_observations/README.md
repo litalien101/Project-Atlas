@@ -5,6 +5,8 @@ rights-reviewed character source. Files must conform to
 [`atlas-character-observation-v1.schema.json`](../../../specs/atlas-character-observation-v1.schema.json).
 Technical source dossiers use
 [`atlas-character-source-inspection-v1.schema.json`](../../../specs/atlas-character-source-inspection-v1.schema.json).
+Every new intake also emits a hash-pinned technical screening report using
+[`atlas-character-source-screening-v1.schema.json`](../../../specs/atlas-character-source-screening-v1.schema.json).
 The initial feature terms are listed in
 [`atlas-character-observation-vocabulary-v1.json`](../../../specs/atlas-character-observation-vocabulary-v1.json).
 
@@ -33,7 +35,7 @@ blender --background --python tools/characters/inspect_character_source.py -- \
   --source-author 'Blender Studio and community contributors' \
   --source-license 'CC0 1.0' \
   --source-url 'https://www.blender.org/download/demo-files/' \
-  --output-dir /path/to/intake-draft
+  --output-dir data/source_intake/human-base/<source-id>
 python3 tools/characters/validate_character_observation.py \
   /path/to/intake-draft/observation.draft.json
 ```
@@ -42,7 +44,8 @@ The first-pass vocabulary and normalization support upright humanoid sources
 only; quadruped, dragon, and other archetype vocabularies/reference dimensions
 must be defined before those assets are extracted as observations. The tool
 supports `.blend`, `.glb`, and `.gltf`, hashes the source file, and
-creates `source_inspection.json` plus `observation.draft.json`. The dossier
+creates `source_inspection.json`, `screening_report.json`, and
+`observation.draft.json`. The dossier
 reports objects, transforms, bounds, mesh counts, connected components,
 boundary/non-manifold/wire edges, zero-area polygons, modifier/UV/color/custom
 attribute/material summaries, vertex groups, armature bones, actions, and
@@ -68,6 +71,16 @@ rights evidence, geometry, labels, and measurements are reviewed. Never change
 the observation review status to `reviewed` until a named reviewer, UTC time,
 and rationale are recorded. Validate edited observations with the command
 above. Do not feed drafts to a miner.
+
+The screening report checks whether a focus mesh is present and measurable, and
+flags boundary/non-manifold/wire edges, zero-area faces, multiple connected
+components, and unreliable evaluated geometry for contextual review. It uses
+no universal polygon-count threshold. `technically_promising` means only that
+the measurable technical checks found no blocking concern; visual quality,
+pose, feature visibility, archetype fit, lineage, and rights remain human
+review gates. The report always leaves learning eligibility `not_approved`.
+Its first profile applies only to general humanoid anatomy references; it does
+not establish fitness for a troll-specific learning question.
 
 Only reviewed observations with `rights_status: cleared_for_analysis` should
 contribute to recipe-mining statistics. Do not count multiple poses, renders,

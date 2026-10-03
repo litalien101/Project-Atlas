@@ -105,12 +105,18 @@ candidate is not an approved asset.
 - [x] Add an intake command that inspects a GLB/GLTF/Blend source and
   emits a draft observation and mesh QA dossier without claiming license
   validity or design approval.
-- [ ] Add an explainable, archetype-specific intake screening report with
-  triage outcomes such as `technical concern`, `needs human review`, and
-  `technically promising`. Screen mesh integrity, pose and feature visibility,
-  intended archetype/observation fit, and possible duplicate lineage. Keep
-  rights clearance, source lineage decisions, and learning approval as separate
-  gates; a positive screen must not automatically create an approved example.
+- [x] Emit a hash-pinned, explainable humanoid technical-screening report with
+  `technical_concern`, `needs_human_review`, and `technically_promising`
+  outcomes. Report measurable mesh/bounds/topology/driver findings, use no
+  polygon-count quality threshold, and keep rights, learning, and runtime
+  eligibility unapproved.
+- [ ] Add visual, archetype-specific screening assistance for pose, anatomy
+  visibility, clothing/occlusion, and fit to a stated observation question.
+  Keep outputs as reviewer prompts; do not infer semantic labels or approve
+  quality automatically.
+- [ ] Add source-lineage review support that flags possible duplicate variants
+  or derivatives from catalog metadata and hashes. A reviewer must resolve
+  lineage; byte hashes alone do not establish independent authorship.
 - [x] Report source mesh counts, dimensions, transforms, connected components,
   boundary/non-manifold edges, normals, material slots, armature presence, and
   available mesh attributes in a deterministic machine-readable record.

@@ -2,6 +2,21 @@
 
 ## Roadmap
 
+## Parallel current gameplay integrity work
+
+These confirmed findings were identified in the implementation audit and do
+not block offline geometry work. Keep them visible while the first character
+target is reviewed:
+
+- [ ] Reject client-forged server-only action context and prove rejected
+  requests do not mutate state or events.
+- [ ] Make event projection rebuilds idempotent from declared clean baselines.
+- [ ] Apply the intended loopback origin/host checks to local session creation.
+
+The detailed findings and acceptance notes remain in
+[`project_audit/server/TODO.md`](project_audit/server/TODO.md). The audit is a
+dated snapshot; verify each issue against current code before implementation.
+
 ### Phase A — Stop bad outputs being treated as finished
 
 **Status: safeguards, a recipe-driven blockout path, and a reviewed-source
@@ -31,6 +46,11 @@ mesh is registered.
   validators appropriate to their geometry and use.
 - Define an evidence-backed feedback loop for failed and successful asset
   trials, with review before learned changes alter an approved recipe.
+- After the character stage contracts and command behavior stabilize, evaluate
+  a unified `atlas character` CLI for inspect, screen, compile, build, review,
+  and export. Keep the current Python tools as the implementation layer unless
+  a tested facade provides clear workflow value; do not add a wrapper class
+  solely to reduce the visible script count.
 
 ### Phase C — Collect normalized recipe evidence
 

@@ -1,4 +1,4 @@
-"""Prepare one modeled garment for the Atlas humanoid rig in Blender.
+"""PAUSED: prepare a modeled garment against the removed female base and rig.
 
 Run from the project root with:
   blender --background --python tools/characters/prepare_clothing_asset.py -- \
@@ -7,6 +7,9 @@ Run from the project root with:
 
 The working file must contain ATLAS_FEMALE_BODY_V1, the Atlas armature, and the
 artist-modeled garment mesh. The source file is not overwritten.
+
+See tools/characters/README.md. This legacy workflow is unsupported until a new
+licensed, reviewed base and rig contract exists; direct execution is disabled.
 """
 
 from __future__ import annotations
@@ -344,4 +347,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Paused: this workflow requires a newly reviewed base and rig. See tools/characters/README.md.")

@@ -47,8 +47,8 @@ The local authoring endpoints are `POST /api/entities` and `POST /api/relationsh
 
 `GET /api/analytics` computes deterministic counts from a cursor-bounded page of world events: event and actor activity, daily activity, resource flow, social interactions, progression milestones, and combat results. It reports observed counts only. The reference world has no durable account identity, so it cannot measure retention; the analytics output also makes no root-cause or causal claims.
 
-`GET /api/reasoning?event=<uuid>` provides a provenance trace of one immutable event and its related entities/relationship. It reports the author's rationale and stored result as evidence; it does not assign inferred confidence or assert causality. Derived `TruthRecord` claims remain subject to the separate two-source, 0.80-confidence validation gate.
+`GET /api/reasoning?event=<uuid>` provides a provenance trace of one immutable event and its related entities/relationship. It reports the author's rationale and stored result as authored provenance; it does not assign inferred confidence or assert causality. Although `TruthRecord` is present in the ontology, this repository has no implemented derived-claim evidence/confidence workflow or active truth-model contract. Do not treat the ontology entry as an executable gate.
 
 ## Scope
 
-This mapping covers one local player in one fixed region. It does not define account identity, shared-world concurrency, combat, inventory item entities, claim confidence, or AI-authored facts. Add concepts to the canonical ontology and registry before introducing them into the game server.
+This mapping covers two local players in one fixed region, matching the current two-seat local session prototype. It does not define account identity, public shared-world concurrency, combat, inventory item entities, claim confidence, or AI-authored facts. Add concepts to the canonical ontology and registry before introducing them into the game server.

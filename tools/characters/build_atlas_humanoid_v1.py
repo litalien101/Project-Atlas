@@ -1,4 +1,8 @@
-"""Build a Blender rigging reference from Atlas's working Mixamo-compatible GLB."""
+"""RETIRED: depends on the removed female-base runtime GLB.
+
+See tools/characters/README.md. This script is retained for historical review
+and refuses direct execution.
+"""
 
 from __future__ import annotations
 
@@ -174,4 +178,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Retired: required source asset was removed. See tools/characters/README.md.")

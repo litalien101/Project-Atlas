@@ -1,10 +1,13 @@
-"""Build a rig-weighted semantic surface map for Atlas's female base mesh.
+"""RETIRED: build a rig-weighted region map for the removed female base.
 
 Run from the project root with the repository's pinned Blender version:
   blender --background --python tools/characters/build_body_region_schema.py
 
 The resulting polygon indices are valid only for the recorded source GLB hash.
 Small placement landmarks such as eyebrow outlines still require authored data.
+
+See tools/characters/README.md. This script is retained for historical review
+and refuses direct execution.
 """
 
 from __future__ import annotations
@@ -124,4 +127,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit("Retired: required source assets were removed. See tools/characters/README.md.")

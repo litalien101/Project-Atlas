@@ -36,22 +36,23 @@ attempt gets a unique directory under
 `art/characters/pending_models/recipe_studio/` so revisions remain available
 for comparison.
 
-The character pipeline has a design-profile contract and deterministic Blender tools. It can create either an explicitly requested procedural blockout or a draft adapted from a separately calibrated, human-approved source mesh. It does not create a finished production mesh, call an AI service, or generate a rig. Only assets with documented usable rights are retained. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
+The character pipeline has a design-profile contract and deterministic Blender tools. It can create either an explicitly requested procedural blockout or a draft adapted from a separately calibrated, human-approved source mesh. It does not create a finished production mesh, call an AI service, or generate a rig. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
 
 For source evidence intake, `tools/characters/inspect_character_source.py`
-creates a hash-pinned technical dossier and an unreviewed observation draft
-from upright humanoid `.blend`, `.glb`, or `.gltf` sources. Its height-to-one
-shape normalization is virtual; original files and scale metadata are kept.
-It inventories geometry but does not infer anatomy, recreate a full mesh, or
-validate rights. See the [observation intake workflow](art/characters/recipe_observations/README.md)
-and its schemas before using the output; only human-reviewed records belong in
-the observation dataset.
+creates a hash-pinned technical dossier, explainable technical screening
+report, and unreviewed observation draft from upright humanoid `.blend`,
+`.glb`, or `.gltf` sources. Its height-to-one shape normalization is virtual;
+original files and scale metadata are kept. The report can flag measurable
+technical issues but cannot judge visual quality, anatomy, archetype fit,
+source independence, or rights. Learning eligibility always remains
+unapproved until human review. See the [observation intake workflow](art/characters/recipe_observations/README.md)
+and the [source-model lifecycle](specs/source-model-intake-lifecycle.md).
 
 The first character quality target is the geometry-only mesh in the approved T-pose. Textures and fine surface details are later stages; passing the mesh gate is not production or runtime approval. Optional free modeling references and their exact licenses are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
 
 ## Run locally
 
-Requires Python 3.11 or newer and Node.js 20+. The Python server uses PyYAML to validate Atlas's YAML contracts; the browser client uses Three.js for rendering. Both projects use the permissive MIT license. Third-party software notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md); external art-source credits and licenses are in [`ASSET_ATTRIBUTIONS.md`](ASSET_ATTRIBUTIONS.md).
+Requires Python 3.11 or newer and Node.js 20+. The Python server uses PyYAML to validate Atlas's YAML contracts; the browser client uses Three.js for rendering. Third-party dependency notices are in [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md). The Atlas application source has no project license grant yet; its external art sources have separate terms recorded in [`ASSET_ATTRIBUTIONS.md`](ASSET_ATTRIBUTIONS.md) and their source records.
 
 ```bash
 cd Project_Atlas
@@ -153,7 +154,7 @@ Send that body to `POST /api/entities`. Then establish an ontology-declared edge
 
 Record a human choice with `POST /api/decisions/<decision_uuid>/review`, sending `{"action":"approve","rationale":"Reviewed the evidence and accept this proposal."}`. Supported actions are `approve`, `reject`, `delay`, and `escalate`; each decision accepts one review with a required rationale. Approval changes the decision to `approved_pending_deployment`, while the response still confirms `world_change_applied: false`. Deployment remains a distinct capability and is not yet implemented.
 
-`GET /api/reasoning?event=<uuid>` returns the authored rationale, recorded result, involved entities, and any relationship written by that event. This provenance trace carries no inferred confidence and does not create a `TruthRecord`. Derived claims remain gated by two distinct evidence references, validation, and confidence of at least 0.80 under `atlas-truth-model.yaml`; creator/player-authored event rationales are never treated as inferred causes.
+`GET /api/reasoning?event=<uuid>` returns the authored rationale, recorded result, involved entities, and any relationship written by that event. This provenance trace carries no inferred confidence and does not create a `TruthRecord`. A derived-claim confidence and evidence-validation workflow is not implemented in this repository; creator/player-authored event rationales are never treated as inferred causes.
 
 ## Architecture
 

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Create a technical source dossier and an explicitly unreviewed observation draft.
+"""Create a technical source dossier, screening report, and observation draft.
 
 Run with Blender 4.x+:
   blender --background --python tools/characters/inspect_character_source.py -- \
     --source /path/model.glb --archetype-id humanoid --independent-source-id creator:model \
     --output-dir art/characters/recipe_observations/drafts/model
 
-This script inventories geometry. It does not infer anatomy or approve rights/quality.
+The report triages technical signals only. It does not infer anatomy or approve
+visual quality, rights, archetype fit, source lineage, or learning eligibility.
 """
 from __future__ import annotations
 
@@ -20,8 +21,10 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from character_source_screening import screen_inspection
 
 
 def sha256(path: Path) -> str:
@@ -290,6 +293,9 @@ def main():
     }
     inspection_path = output / "source_inspection.json"
     inspection_path.write_text(json.dumps(dossier, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    screening = screen_inspection(dossier)
+    screening_path = output / "screening_report.json"
+    screening_path.write_text(json.dumps(screening, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     vocab_path = ROOT / "specs/atlas-character-observation-vocabulary-v1.json"
     vocab = json.loads(vocab_path.read_text(encoding="utf-8"))
     ids = [x["concept_id"] for x in vocab["concepts"]]
@@ -318,12 +324,17 @@ def main():
         "review": {"status": "draft"},
         "features": {"present": [], "absent": [], "unknown": ids, "not_applicable": []},
         "measurements": measurements, "relationships": [],
-        "evidence_files": [{"role": "source_inspection", "path": inspection_path.name, "sha256": sha256(inspection_path)}],
+        "evidence_files": [
+            {"role": "source_inspection", "path": inspection_path.name, "sha256": sha256(inspection_path)},
+            {"role": "source_screening", "path": screening_path.name, "sha256": sha256(screening_path)},
+        ],
         "notes": "Machine-generated intake draft. Human review is required for anatomy labels, measurements, source lineage, and rights evidence.",
     }
     observation_path = output / "observation.draft.json"
     observation_path.write_text(json.dumps(observation, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"source_inspection": str(inspection_path), "observation_draft": str(observation_path),
+    print(json.dumps({"source_inspection": str(inspection_path), "screening_report": str(screening_path),
+                      "screening_outcome": screening["triage"]["outcome"],
+                      "observation_draft": str(observation_path),
                       "source_sha256": source_hash, "focus_object": dossier["focus_object"]}, indent=2))
 
 

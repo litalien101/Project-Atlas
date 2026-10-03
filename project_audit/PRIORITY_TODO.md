@@ -25,12 +25,14 @@ generation.
 
 ### A1 — Preserve candidates and measure the actual CPU path
 
-- [ ] Fix the Blender build/output and preview path so every build attempt
-  retains its own immutable candidate, record, recipe, plan, preview, and
-  hashes. The root TODO already specifies unique UI trial directories; preserve
-  that behavior and fix the shared candidate destination identified by audit.
-  **Done when:** building twice retains both revisions and every response
-  displays only its own exact preview.
+- [x] Isolate Blender build outputs by UUID and bind each preview request to its
+  `draft_id` and `build_id`. Code review confirms separate output directories;
+  the previous shared-destination finding is resolved. This is path isolation,
+  not protection against manual modification of generated files.
+- [x] Targeted local endpoint exercise completed (2026-10-03): two builds
+  returned distinct build IDs and output paths; both build-specific preview
+  URLs returned their own nonempty GLB with HTTP 200. This verifies endpoint
+  binding and path separation, not immutable storage or deterministic geometry.
 - [ ] Measure deterministic repeatability, wall-clock time, peak memory, mesh
   counts, and failure behavior on the intended CPU machine. Set performance
   budgets from measurements rather than guessed thresholds.
