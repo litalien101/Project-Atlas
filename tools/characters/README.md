@@ -50,16 +50,18 @@ slots. The prototype recipe uses garments from MakeHuman Community's CC0
 before building. Each garment is a separate object, allowing independent
 selection and replacement. Check the license on every asset from other packs;
 community contributions can have different terms. Armor, ears, eyes, and
-attachment compatibility are future work. Generated
-assets remain pending until visual, license, animation, clothing-fit, and
-runtime review is recorded. The GLB exporter reports that some meshes have
-more than four joint influences and truncates to four; inspect deformation
-before accepting the export. The prototype's eight PNG maps decode to about
-134 MiB as RGBA8 textures, or about 179 MiB with a full mip chain, despite a
-22.9 MB GLB download. This is a measured prototype warning, not a target budget.
-Before runtime use, set per-character texture budgets, pack suitable maps, use
-GPU-compressed KTX2 textures where supported, and add distance-based mesh/texture
-levels. File compression alone does not guarantee lower GPU memory.
+attachment compatibility are future work. Generated assets remain pending
+until visual, license, animation, clothing-fit, and runtime review is recorded.
+The editable `.blend` keeps the source-resolution maps. The exported GLB caps
+textures at 1024 pixels per longest edge and marks meshes double-sided for
+viewer compatibility. The regenerated sample is 9 MiB; its eight maps estimate
+26 MiB decoded as RGBA8 or 34.7 MiB with a full mip chain. This is still a
+prototype measurement, not a final device budget. The GLB exporter also warns
+that some meshes have more than four joint influences and truncates to four;
+inspect deformation before accepting the export. For runtime, measure on target
+hardware, use GPU-compressed KTX2 textures where supported, and add distance-
+based mesh and texture levels. File compression alone does not guarantee lower
+GPU memory.
 
 The 53-bone rig is simply MPFB's current game-engine preset. No Atlas rig
 contract or animation list has been chosen, so do not treat this count as a

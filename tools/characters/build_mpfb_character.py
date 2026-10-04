@@ -23,6 +23,7 @@ from pathlib import Path
 import bpy
 
 ROOT = Path(__file__).resolve().parents[2]
+MAX_RUNTIME_TEXTURE_DIMENSION = 1024
 
 
 def mpfb_symbol(module_suffix: str, symbol: str):
@@ -130,6 +131,11 @@ def build(recipe: dict, output_dir: Path) -> None:
         if obj not in character_objects:
             bpy.data.objects.remove(obj, do_unlink=True)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Some MakeHuman face and detail surfaces have inconsistent winding or are
+    # intentionally open shells. Export them double-sided so front views do
+    # not lose polygons to backface culling.
+    for material in bpy.data.materials:
+        material.use_backface_culling = False
     bpy.ops.file.pack_all()
     blend_path = output_dir / f"{recipe['character_id']}.blend"
     glb_path = output_dir / f"{recipe['character_id']}.glb"
@@ -140,6 +146,18 @@ def build(recipe: dict, output_dir: Path) -> None:
     ExportService.bake_modifiers_remove_helpers(
         export_body, bake_masks=True, bake_subdiv=True, remove_helpers=True, also_proxy=True
     )
+    # Keep the editable .blend at source resolution, but limit the standalone
+    # runtime GLB's texture decode, GPU upload, and memory costs.
+    for image in bpy.data.images:
+        if image.source != "FILE" or not image.size[0] or not image.size[1]:
+            continue
+        width, height = image.size
+        longest_edge = max(width, height)
+        if longest_edge <= MAX_RUNTIME_TEXTURE_DIMENSION:
+            continue
+        scale = MAX_RUNTIME_TEXTURE_DIMENSION / longest_edge
+        image.scale(max(1, round(width * scale)), max(1, round(height * scale)))
+        image.pack()
     bpy.ops.object.select_all(action="DESELECT")
     selected = [export_root] + ObjectService.get_list_of_children(export_root)
     for obj in selected:
@@ -176,6 +194,7 @@ def build(recipe: dict, output_dir: Path) -> None:
             "unique_image_count": len(texture_images),
             "decoded_rgba_mib": round(decoded_texture_bytes / (1024 ** 2), 2),
             "with_full_mip_chain_mib": round(decoded_texture_bytes * 4 / 3 / (1024 ** 2), 2),
+            "runtime_max_dimension": MAX_RUNTIME_TEXTURE_DIMENSION,
             "images": [
                 {"name": image.name, "width": image.size[0], "height": image.size[1], "format": image.file_format}
                 for image in texture_images
