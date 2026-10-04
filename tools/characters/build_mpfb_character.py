@@ -21,6 +21,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import bpy
+import bmesh
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_RUNTIME_TEXTURE_DIMENSION = 1024
@@ -87,6 +90,117 @@ def clear_scene() -> None:
     bpy.ops.object.delete(use_global=False)
 
 
+def hide_body_under_clothing(body, garments, distance_threshold: float = 0.025) -> dict:
+    """Mask base-body vertices near clothing surfaces to prevent poke-through."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    body_points = [body.matrix_world @ vertex.co for vertex in body.data.vertices]
+    covered_vertices: set[int] = set()
+    measured_garments = []
+
+    for garment in garments:
+        evaluated = garment.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        try:
+            vertices = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
+            polygons = [list(polygon.vertices) for polygon in mesh.polygons]
+            if not vertices or not polygons:
+                continue
+            tree = BVHTree.FromPolygons(vertices, polygons, all_triangles=False)
+            garment_coverage = set()
+            for index, point in enumerate(body_points):
+                nearest = tree.find_nearest(point)
+                if nearest and nearest[3] <= distance_threshold:
+                    garment_coverage.add(index)
+            covered_vertices.update(garment_coverage)
+            measured_garments.append({"object": garment.name, "near_body_vertices": len(garment_coverage)})
+        finally:
+            evaluated.to_mesh_clear()
+
+    # Keep any base face that only partly overlaps a garment. This avoids
+    # creating ragged one-vertex holes at sleeve, hem, and waistband edges.
+    boundary_vertices = set()
+    for polygon in body.data.polygons:
+        indices = set(polygon.vertices)
+        overlap = indices & covered_vertices
+        if overlap and overlap != indices:
+            boundary_vertices.update(overlap)
+    covered_vertices.difference_update(boundary_vertices)
+
+    group_name = "Atlas.HideBodyUnderClothing"
+    group = body.vertex_groups.get(group_name) or body.vertex_groups.new(name=group_name)
+    if covered_vertices:
+        group.add(sorted(covered_vertices), 1.0, "REPLACE")
+    modifier_name = "Atlas Clothing Occlusion"
+    modifier = body.modifiers.get(modifier_name) or body.modifiers.new(modifier_name, "MASK")
+    modifier.vertex_group = group.name
+    modifier.invert_vertex_group = True
+    return {
+        "distance_threshold_m": distance_threshold,
+        "body_vertices_hidden": len(covered_vertices),
+        "garments": measured_garments,
+        "boundary_policy": "retain body faces unless all vertices are covered",
+    }
+
+
+def make_mesh_material_opaque(mesh_objects) -> None:
+    """Do not alpha-blend solid skin and clothing against other character meshes."""
+    seen = set()
+    for obj in mesh_objects:
+        for material in obj.data.materials:
+            if not material or material.as_pointer() in seen or not material.use_nodes:
+                continue
+            seen.add(material.as_pointer())
+            shader = next((node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"), None)
+            if not shader:
+                continue
+            alpha = shader.inputs.get("Alpha")
+            if not alpha:
+                continue
+            for link in tuple(alpha.links):
+                material.node_tree.links.remove(link)
+            alpha.default_value = 1.0
+
+
+def trim_pants_under_sweater(recipe: dict, garments) -> dict | None:
+    """Lower the pants top beneath the sweater hem for this known asset pair."""
+    if recipe.get("shirt") != "toigo_fisherman_sweater" or recipe.get("pants") != "toigo_wool_pants":
+        return None
+    shirt = next((obj for obj in garments if recipe["shirt"] in obj.name), None)
+    pants = next((obj for obj in garments if recipe["pants"] in obj.name), None)
+    if shirt is None or pants is None:
+        raise RuntimeError("Expected sweater/pants objects were not created by MPFB")
+
+    # Find the sweater's torso hem while excluding its low sleeves, then overlap
+    # the pants top 5 mm inside the sweater. This keeps the waistband concealed
+    # without opening a visible gap between the two garments.
+    torso_hem = [
+        (shirt.matrix_world @ vertex.co).z
+        for vertex in shirt.data.vertices
+        if abs((shirt.matrix_world @ vertex.co).x) < 0.12
+    ]
+    if not torso_hem:
+        raise RuntimeError("Could not locate the sweater torso hem")
+    cutoff_z = min(torso_hem) + 0.005
+    inverse = pants.matrix_world.inverted()
+    local_co = inverse @ Vector((0.0, 0.0, cutoff_z))
+    local_no = (pants.matrix_world.to_3x3().transposed() @ Vector((0.0, 0.0, 1.0))).normalized()
+    mesh = bmesh.new()
+    mesh.from_mesh(pants.data)
+    bmesh.ops.bisect_plane(
+        mesh,
+        geom=list(mesh.verts) + list(mesh.edges) + list(mesh.faces),
+        plane_co=local_co,
+        plane_no=local_no,
+        dist=1e-6,
+        clear_outer=True,
+        clear_inner=False,
+    )
+    mesh.to_mesh(pants.data)
+    mesh.free()
+    pants.data.update()
+    return {"pants": pants.name, "cutoff_world_z_m": round(cutoff_z, 4), "method": "overlapped 5mm inside sweater torso hem"}
+
+
 def build(recipe: dict, output_dir: Path) -> None:
     HumanService = mpfb_symbol("mpfb.services.humanservice", "HumanService")
     AssetService = mpfb_symbol("mpfb.services.assetservice", "AssetService")
@@ -112,6 +226,7 @@ def build(recipe: dict, output_dir: Path) -> None:
             bone.name = "root"
             break
 
+    garments = []
     for subdir, filename, asset_type in (
         ("eyes", "low-poly.mhclo", "Eyes"),
         ("eyebrows", "eyebrow001.mhclo", "Eyebrows"),
@@ -124,7 +239,15 @@ def build(recipe: dict, output_dir: Path) -> None:
         path = AssetService.find_asset_absolute_path(filename, asset_subdir=subdir)
         if not path:
             raise RuntimeError(f"MPFB asset not found: {subdir}/{filename}")
-        HumanService.add_mhclo_asset(path, body, asset_type=asset_type, material_type="GAMEENGINE")
+        added_asset = HumanService.add_mhclo_asset(
+            path, body, asset_type=asset_type, material_type="GAMEENGINE"
+        )
+        if subdir == "clothes":
+            garments.append(added_asset)
+
+    garment_fit_adjustment = trim_pants_under_sweater(recipe, garments)
+    clothing_occlusion = hide_body_under_clothing(body, garments)
+    make_mesh_material_opaque([body, *garments])
 
     character_objects = {armature, body} | set(ObjectService.get_list_of_children(armature))
     for obj in tuple(bpy.context.scene.objects):
@@ -155,7 +278,10 @@ def build(recipe: dict, output_dir: Path) -> None:
         longest_edge = max(width, height)
         if longest_edge <= MAX_RUNTIME_TEXTURE_DIMENSION:
             continue
-        scale = MAX_RUNTIME_TEXTURE_DIMENSION / longest_edge
+        # Hairline alpha needs the source 2K texture to avoid visible stair
+        # steps at close range. Keep other maps capped at 1K for memory.
+        texture_limit = 2048 if "ponytail" in image.name.lower() else MAX_RUNTIME_TEXTURE_DIMENSION
+        scale = texture_limit / longest_edge
         image.scale(max(1, round(width * scale)), max(1, round(height * scale)))
         image.pack()
     bpy.ops.object.select_all(action="DESELECT")
@@ -195,12 +321,15 @@ def build(recipe: dict, output_dir: Path) -> None:
             "decoded_rgba_mib": round(decoded_texture_bytes / (1024 ** 2), 2),
             "with_full_mip_chain_mib": round(decoded_texture_bytes * 4 / 3 / (1024 ** 2), 2),
             "runtime_max_dimension": MAX_RUNTIME_TEXTURE_DIMENSION,
+            "high_detail_texture_exceptions": {"ponytail": 2048},
             "images": [
                 {"name": image.name, "width": image.size[0], "height": image.size[1], "format": image.file_format}
                 for image in texture_images
             ],
             "caveat": "Estimate assumes RGBA8 GPU textures; actual usage depends on the target GPU and texture format.",
         },
+        "clothing_occlusion": clothing_occlusion,
+        "garment_fit_adjustment": garment_fit_adjustment,
         "outputs": {
             "blend": {"path": blend_path.name, "sha256": hashlib.sha256(blend_path.read_bytes()).hexdigest()},
             "glb": {"path": glb_path.name, "sha256": hashlib.sha256(glb_path.read_bytes()).hexdigest()},

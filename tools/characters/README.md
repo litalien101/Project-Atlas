@@ -55,15 +55,25 @@ community contributions can have different terms. Armor, ears, eyes, and
 attachment compatibility are future work. Generated assets remain pending
 until visual, license, animation, clothing-fit, and runtime review is recorded.
 The editable `.blend` keeps the source-resolution maps. The exported GLB caps
-textures at 1024 pixels per longest edge and marks meshes double-sided for
-viewer compatibility. The regenerated sample is 9 MiB; its eight maps estimate
-26 MiB decoded as RGBA8 or 34.7 MiB with a full mip chain. This is still a
-prototype measurement, not a final device budget. The GLB exporter also warns
-that some meshes have more than four joint influences and truncates to four;
-inspect deformation before accepting the export. For runtime, measure on target
+most textures at 1024 pixels per longest edge and keeps the ponytail's 2048 map
+to preserve its hairline. Solid skin and clothing materials export opaque, and
+the builder masks base-body vertices under clothing. The known fisherman
+sweater/wool-pants pair also overlaps the pants top inside the sweater hem. These
+steps address alpha sorting, body poke-through, and the exposed pants waistband
+in this prototype; inspect other garment combinations individually. The
+builder records texture dimensions and an estimated decoded RGBA8 and mip-chain
+cost in `build.json`; read the current manifest for the actual regenerated
+sample measurement. This estimate is not a final device budget. The GLB
+exporter may truncate meshes with more than four joint influences; inspect
+deformation before accepting the export. For runtime, measure on target
 hardware, use GPU-compressed KTX2 textures where supported, and add distance-
 based mesh and texture levels. File compression alone does not guarantee lower
 GPU memory.
+
+Eyebrows and eyelashes currently come from low-detail MPFB system assets. The
+builder preserves those assets and does not claim they look like groomed 3D
+hair; replace them with higher-quality licensed geometry/cards in a separate
+asset-quality pass.
 
 GLB does not store Blender's armature viewport "In Front" setting, and Blender
 enables it when importing a rigged GLB. The build automatically creates

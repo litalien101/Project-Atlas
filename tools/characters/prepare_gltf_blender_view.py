@@ -61,7 +61,8 @@ def prepare_view(input_path: Path, output_path: Path) -> None:
                 continue
             space = area.spaces.active
             space.region_3d.view_location = center
-            space.region_3d.view_rotation = (Vector((0, -1, 0))).to_track_quat("-Z", "Y")
+            # Imported MakeHuman characters face toward negative Y.
+            space.region_3d.view_rotation = Vector((0, 1, 0)).to_track_quat("-Z", "Y")
             space.region_3d.view_distance = max(height * 2.8, 2.5)
             space.region_3d.view_perspective = "ORTHO"
             space.shading.type = "MATERIAL"

@@ -383,9 +383,9 @@ async function loadPreview(draftId, buildId) {
       previewScene.add(grid);
       previewCamera = new THREE.PerspectiveCamera(34, 1, 0.01, 100);
       previewCamera.up.set(0, 0, 1);
-      // Character front is +Y; start on that side so the initial preview shows
+      // Character front is -Y; start on that side so the initial preview shows
       // the face rather than looking at the back of the head.
-      previewCamera.position.set(3, 5, 2.5);
+      previewCamera.position.set(3, -5, 2.5);
       previewControls = new OrbitControls(previewCamera, renderer.domElement);
       previewControls.enableDamping = true;
       previewControls.target.set(0, 0, 1.1);
@@ -416,7 +416,7 @@ async function loadPreview(draftId, buildId) {
     const center = bounds.getCenter(new THREE.Vector3());
     const size = bounds.getSize(new THREE.Vector3());
     previewControls.target.copy(center);
-    previewCamera.position.copy(center).add(new THREE.Vector3(Math.max(size.x * 1.65, 2.2), Math.max(size.z * 2.5, 4), Math.max(size.z * 0.8, 1.4)));
+    previewCamera.position.copy(center).add(new THREE.Vector3(Math.max(size.x * 1.65, 2.2), -Math.max(size.z * 2.5, 4), Math.max(size.z * 0.8, 1.4)));
     previewCamera.near = Math.max(size.z / 1000, 0.005);
     previewCamera.far = Math.max(size.z * 20, 50);
     previewCamera.updateProjectionMatrix();
