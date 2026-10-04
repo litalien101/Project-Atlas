@@ -723,5 +723,12 @@
       "failure_code": "armature_draws_through_mesh",
       "guardrail": "The recipe builder sets the Blender armature show_in_front option to false."
     }
+  ],
+  "viewer_findings": [
+    {
+      "failure_code": "blender_glb_import_armature_overlay",
+      "evidence": "Blender 5.2.2 imported the current GLB as Human.rig_export with show_in_front=True, even though the source Blender build has this option disabled. GLB does not carry Blender viewport display preferences.",
+      "guardrail": "Use tools/characters/prepare_gltf_blender_view.py to create a Blender inspection file with the imported armature's show_in_front option disabled."
+    }
   ]
 }

@@ -11,7 +11,9 @@ Records are negative evidence, not approved assets or automatic training data.
 Promote a lesson into a generator guardrail only when the failure has a
 reproducible cause. The MPFB prototype's current guardrails reject combined
 outfit fields, cap runtime texture dimensions, and hide the armature behind the
-mesh. Keep new failure codes specific and tie each rule to recorded evidence.
+mesh. Blender's GLB importer independently defaults imported armatures to
+"In Front"; the dedicated inspection-file tool disables that Blender-only
+overlay. Keep new failure codes specific and tie each rule to recorded evidence.
 
 See [`mpfb_prototype_attempts.json`](mpfb_prototype_attempts.json) for the
 initial cleanup record. The current candidate remains under

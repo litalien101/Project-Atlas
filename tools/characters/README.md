@@ -63,6 +63,20 @@ hardware, use GPU-compressed KTX2 textures where supported, and add distance-
 based mesh and texture levels. File compression alone does not guarantee lower
 GPU memory.
 
+GLB does not store Blender's armature viewport "In Front" setting, and Blender
+enables it when importing a rigged GLB. To inspect the model in Blender without
+rig controls drawing over the face and body, create and open the companion view
+file:
+
+```sh
+blender --background --python tools/characters/prepare_gltf_blender_view.py -- \
+  --input art/characters/pending_models/mpfb_prototype/<build-id>/mpfb_female_prototype.glb
+```
+
+The script saves `*_blender_view.blend` beside the GLB, hides the in-front rig
+overlay, and records the view file hash in `build.json`. For another GLB viewer,
+the model mesh itself is unchanged; this is a Blender viewport display setting.
+
 The 53-bone rig is simply MPFB's current game-engine preset. No Atlas rig
 contract or animation list has been chosen, so do not treat this count as a
 final requirement. Choose animation needs first, then verify retargeting,
