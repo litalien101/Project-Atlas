@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def validate_recipe(recipe: dict) -> None:
-    allowed = {"schema", "character_id", "macro", "skin", "hair", "clothes"}
+    allowed = {"schema", "character_id", "macro", "skin", "hair", "shirt", "pants"}
     if set(recipe) - allowed:
         raise ValueError(f"Unsupported recipe keys: {sorted(set(recipe) - allowed)}")
     if recipe.get("schema") != "atlas-mpfb-character-recipe/v1":
@@ -78,7 +78,7 @@ def validate_recipe(recipe: dict) -> None:
             values = (value,)
         if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not 0 <= v <= 1 for v in values):
             raise ValueError(f"macro.{name} values must be between 0 and 1")
-    for field in ("skin", "hair", "clothes"):
+    for field in ("skin", "hair", "shirt", "pants"):
         value = recipe.get(field)
         if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}", value):
             raise ValueError(f"{field} must be an asset name from its MPFB category")
@@ -117,7 +117,8 @@ def build(recipe: dict, output_dir: Path) -> None:
         ("eyelashes", "eyelashes01.mhclo", "Eyelashes"),
         ("teeth", "teeth_base.mhclo", "Teeth"),
         ("hair", recipe["hair"] + ".mhclo", "Hair"),
-        ("clothes", recipe["clothes"] + ".mhclo", "Clothes"),
+        ("clothes", recipe["pants"] + ".mhclo", "Clothes"),
+        ("clothes", recipe["shirt"] + ".mhclo", "Clothes"),
     ):
         path = AssetService.find_asset_absolute_path(filename, asset_subdir=subdir)
         if not path:

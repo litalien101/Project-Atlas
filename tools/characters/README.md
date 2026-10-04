@@ -38,14 +38,19 @@ blender --background --python tools/characters/build_mpfb_character.py -- \
 The build writes an editable `.blend`, a skinned `.glb`, and a `build.json`
 manifest under the ignored `art/characters/pending_models/mpfb_prototype/`
 directory. Supply `--output-dir` to choose another location. Change numeric
-macro controls and the skin, hair, and clothes asset names in the recipe to
+macro controls and the skin, hair, shirt, and pants asset names in the recipe to
 generate variations without editing the mesh in Blender.
 
 This prototype uses MPFB's supported macro controls (gender, age, muscle,
 weight, proportions, height, and related controls) plus replaceable system
 assets. It intentionally rejects unrecognized fields and free-form anatomy
-descriptions. Categorical modules currently cover hair and one clothing slot;
-armor, ears, eyes, and attachment compatibility are future work. Generated
+descriptions. Categorical modules cover hair and independent shirt and pants
+slots. The prototype recipe uses garments from MakeHuman Community's CC0
+`pants01` and `shirts01` packs; install those packs in MPFB's asset library
+before building. Each garment is a separate object, allowing independent
+selection and replacement. Check the license on every asset from other packs;
+community contributions can have different terms. Armor, ears, eyes, and
+attachment compatibility are future work. Generated
 assets remain pending until visual, license, animation, clothing-fit, and
 runtime review is recorded. The GLB exporter reports that some meshes have
 more than four joint influences and truncates to four; inspect deformation
