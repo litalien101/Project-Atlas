@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/atlas-panels.css">
   <script type="module" src="/game.js"></script>
 </head>
-<body class="character-preview-screen">
+<body>
   <main class="game-screen">
     <div class="world-view"><canvas id="world" aria-label="Explore the 3D valley of the Reach"></canvas></div>
 
@@ -21,12 +21,10 @@
       </a>
       <div class="world-location"><i></i><span><b>THE REACH</b><small id="region-label">CONNECTING TRAVELER</small></span></div>
       <div class="hud-actions">
-        <span class="world-live"><i></i> WORLD MODEL LIVE</span>
+        <span class="world-live"><i></i> SHARED REALM · LOCAL</span>
         <a class="view-toggle studio-link" href="/studio">STUDIO</a>
-        <button class="view-toggle" id="view-toggle" type="button" aria-expanded="false" aria-controls="view-settings">VIEW</button>
-        <button class="icon-toggle" id="satchel-toggle" type="button" aria-label="Open inventory" aria-expanded="false" aria-controls="memory-drawer"><span>▱</span><b id="inventory-badge">0</b></button>
+        <button class="view-toggle" id="view-toggle" type="button" aria-expanded="false" aria-controls="view-settings">Camera</button>
         <button class="audio-toggle" id="audio-toggle" type="button" aria-label="Toggle ambient sound" aria-pressed="true">♫</button>
-        <button class="memory-toggle" id="memory-toggle" type="button" aria-expanded="false" aria-controls="memory-drawer">WORLD MEMORY <span id="note-count">01</span></button>
       </div>
     </header>
     <button class="atlas-guide-toggle" id="ai-chat-toggle" type="button" aria-expanded="false" aria-controls="ai-chat-panel"><span>✧</span> ATLAS GUIDE</button>
@@ -40,27 +38,29 @@
     </aside>
 
     <section class="character-panel hud-panel" aria-label="Character status">
-      <div class="character-heading"><div class="character-avatar">✦</div><div class="character-identity"><b id="player-name">WAYFARER</b><span>WORLD WALKER <i>·</i> LEVEL 01</span></div><button id="character-menu" type="button" aria-label="Open inventory" title="Inventory">⋯</button></div>
-      <div class="character-resource"><div><span>VITALITY</span><b id="vitality">100 <em>/ 100</em></b></div><div class="resource-track"><i id="vitality-meter" style="width:100%"></i></div></div>
+      <div class="character-heading"><div class="character-avatar">✦</div><div class="character-identity"><b id="player-name">WAYFARER</b><span>TRAVELER <i>·</i> THE REACH</span></div></div>
+      <div class="character-resource"><div><span>VITALITY</span><b id="vitality">100 <em>/ 100</em></b></div><div class="resource-track"><i id="vitality-meter"></i></div></div>
       <div class="character-footer"><span>REGION <b>WESTERN REACH</b></span><span id="coords">X 03 · Y 10</span></div>
     </section>
 
     <section class="quest-panel hud-panel" aria-live="polite">
-      <div class="panel-eyebrow"><span class="quest-glyph">✧</span> ACTIVE THREAD <i></i> 01</div>
-      <b id="objective">Clean character test ground</b>
-      <small>Follow the signal. Let the world remember.</small>
+      <div class="panel-eyebrow"><span class="quest-glyph">✧</span> NEXT STEP <i></i> THE REACH</div>
+      <b id="objective">Find Mara along the western path</b>
+      <small id="objective-hint">Speak with Mara to learn about the Listening Beacon.</small>
     </section>
 
-    <aside class="world-awareness hud-panel" aria-label="Atlas world awareness">
-      <div class="panel-title"><span>WORLD AWARENESS</span><i class="live-dot"></i></div>
-      <div class="awareness-stat"><span>TRAVELERS PRESENT</span><b id="traveler-count">—</b></div>
-      <div class="awareness-stat"><span>RECORDED CHANGES</span><b id="world-memory-count">—</b></div>
-      <div class="awareness-divider"></div>
-      <div class="awareness-latest"><small>LATEST WORLD CHANGE</small><b id="world-last-change">Listening for the world…</b><span id="world-last-source">Events are recorded with their source and rationale.</span></div>
-      <button class="memory-open" id="memory-open" type="button">INSPECT WORLD MEMORY <span>↗</span></button>
-    </aside>
+    <details class="world-awareness hud-panel" aria-label="World pulse">
+      <summary class="panel-title pulse-summary">
+        <span class="pulse-title">WORLD PULSE</span>
+        <span class="pulse-travelers"><i class="live-dot"></i><b id="traveler-count">—</b> travelers</span>
+        <span class="pulse-chevron" aria-hidden="true">⌄</span>
+      </summary>
+      <div class="pulse-details">
+        <div class="awareness-stat"><span>EVENTS RECORDED</span><b id="world-memory-count">—</b></div>
+      </div>
+    </details>
 
-    <section class="world-feed" aria-label="Recent world events"><div class="feed-heading"><i></i> WORLD FEED</div><div id="world-feed"><span class="feed-empty">Your world is beginning to take shape.</span></div></section>
+    <section class="world-feed" aria-label="Recent world events"><div class="feed-heading"><i></i> RECENT EVENTS</div><div id="world-feed"><span class="feed-empty">Your discoveries and choices will appear here.</span></div></section>
 
     <div class="toast" id="toast" role="status"></div>
     <section class="connection-overlay" id="connection-overlay" role="alertdialog" aria-modal="true" aria-labelledby="connection-title" hidden>
@@ -69,19 +69,19 @@
     <aside class="network-debug" id="network-debug" aria-live="off" hidden></aside>
     <section class="combat-actions atlas-actionbar" id="combat-actions" aria-label="Action bar">
       <div class="combat-options">
-        <button id="satchel-action" type="button" aria-label="Open inventory"><kbd>I</kbd><span class="action-icon">▱</span><b>Inventory</b></button>
-        <button id="skills-action" type="button" aria-label="Open skills"><kbd>K</kbd><span class="action-icon">✧</span><b>Skills</b></button>
-        <button id="magic-action" type="button" aria-label="Open magic"><kbd>J</kbd><span class="action-icon">⌘</span><b>Magic</b></button>
-        <button id="memory-action" type="button" aria-label="Open world memory"><kbd>M</kbd><span class="action-icon">◷</span><b>Memory</b></button>
+        <button id="satchel-action" type="button" aria-label="Open inventory" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="satchel"><kbd>I</kbd><span class="action-icon">▱</span><b>Inventory</b></button>
+        <button id="skills-action" type="button" aria-label="Open skills" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="skills"><kbd>K</kbd><span class="action-icon">✧</span><b>Skills</b></button>
+        <button id="magic-action" type="button" aria-label="Open magic" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="magic"><kbd>J</kbd><span class="action-icon">⌘</span><b>Magic</b></button>
+        <button id="memory-action" type="button" aria-label="Open world memory" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="notes"><kbd>M</kbd><span class="action-icon">◷</span><b>Memory</b><span class="action-count" id="note-count">01</span></button>
       </div>
     </section>
 
     <button class="beacon-action" id="beacon-action" type="button">Attune the Listening Beacon <span>↗</span></button>
     <div class="travel-hint"><span>W A S D</span> MOVE <span>SHIFT</span> RUN <span>SPACE</span> JUMP <i></i> RIGHT-DRAG LOOK</div>
 
-    <aside class="memory-drawer" id="memory-drawer" data-section="appearance" aria-label="Character appearance controls">
+    <aside class="memory-drawer" id="memory-drawer" data-section="appearance" aria-label="Game panels" hidden>
       <div class="drawer-heading"><div><small>ATLAS · THE REACH</small><h2 id="drawer-title">World memory</h2></div><button id="close-memory" type="button" aria-label="Close panel">×</button></div>
-      <nav class="drawer-tabs" aria-label="Character panels">
+      <nav class="drawer-tabs" aria-label="Game panels">
         <button type="button" data-drawer-tab="satchel">Inventory</button><button type="button" data-drawer-tab="appearance">Appearance</button><button type="button" data-drawer-tab="skills">Skills</button><button type="button" data-drawer-tab="magic">Magic</button><button type="button" data-drawer-tab="notes">World memory</button>
       </nav>
       <section id="satchel-content" class="inventory-panel" hidden>
@@ -93,7 +93,7 @@
         <small class="panel-prototype-note">Items and equipment will become persistent world entities.</small>
       </section>
       <section id="appearance-content" class="appearance-panel">
-        <div class="progression-intro"><b>CHARACTER APPEARANCE</b><span>Visual changes on the shared character rig.</span></div>
+        <div class="progression-intro"><b>TRAVELER PROFILE</b><span>Saved locally · appearance controls are not connected to the prototype traveler.</span></div>
         <label class="appearance-item" for="appearance-skin"><span class="appearance-icon">◉</span><span><b>Skin color</b><small>Color tone</small></span><input id="appearance-skin" type="color" value="#b17c5e"></label>
         <label class="appearance-item" for="appearance-height"><span class="appearance-icon">↕</span><span><b>Height <small id="appearance-height-value">168 cm</small></b><input id="appearance-height" type="range" min="150" max="190" step="1" value="168"></span></label>
         <label class="appearance-item" for="appearance-weight"><span class="appearance-icon">◉</span><span><b>Weight <small id="appearance-weight-value">70 kg</small></b><input id="appearance-weight" type="range" min="45" max="120" step="1" value="70"></span></label>
@@ -106,7 +106,7 @@
         <label class="appearance-item" for="underwear-bottom-toggle"><span class="appearance-icon">◇</span><span><b>Underwear bottom</b><small>Separate equipment · visual only</small></span><input id="underwear-bottom-toggle" type="checkbox"></label>
         <label class="appearance-item" for="shoulder-guard-toggle"><span class="appearance-icon">◈</span><span><b>Bronze shoulder guards</b><small>Shoulders · visual only</small></span><input id="shoulder-guard-toggle" type="checkbox"></label>
         <small id="appearance-save-status" class="appearance-save-status" role="status" aria-live="polite">Appearance is saved to this local traveler profile.</small>
-        <small class="panel-prototype-note">Appearance is cosmetic. Clothing choices do not affect gameplay stats.</small>
+        <small class="panel-prototype-note">These values are saved profile data only and do not change the current in-world traveler. Clothing choices are not active equipment.</small>
       </section>
       <section id="skills-content" class="skills-panel" hidden>
         <div class="progression-intro"><b>YOUR PRACTICE SHAPES THE WORLD</b><span>Skill growth is designed to be earned through play.</span></div>

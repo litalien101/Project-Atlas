@@ -27,12 +27,29 @@ function loadTravelerAnimations() {
 const canvas = document.querySelector('#world');
 const $ = (selector) => document.querySelector(selector);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#b9c1c3');
+function makeSkyTexture() {
+  const sky = document.createElement('canvas');
+  sky.width = 2;
+  sky.height = 512;
+  const context = sky.getContext('2d');
+  const gradient = context.createLinearGradient(0, 0, 0, sky.height);
+  gradient.addColorStop(0, '#91a8ac');
+  gradient.addColorStop(.48, '#c2c7b8');
+  gradient.addColorStop(.78, '#e2c99e');
+  gradient.addColorStop(1, '#d5bd91');
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, sky.width, sky.height);
+  const texture = new THREE.CanvasTexture(sky);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return texture;
+}
+scene.background = makeSkyTexture();
+scene.fog = new THREE.Fog('#c5c4ad', 25, 66);
 
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.08;
@@ -41,9 +58,9 @@ const camera = new THREE.PerspectiveCamera(56, 1, 0.1, 140);
 camera.zoom = 1;
 camera.updateProjectionMatrix();
 
-scene.add(new THREE.HemisphereLight('#f0dfbd', '#314c43', 1.75));
-const sun = new THREE.DirectionalLight('#ffd9a1', 3.35);
-sun.position.set(-10, 12, 8);
+scene.add(new THREE.HemisphereLight('#e4e9d4', '#34483a', 1.55));
+const sun = new THREE.DirectionalLight('#ffe0ad', 2.65);
+sun.position.set(-12, 16, 10);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.left = -22; sun.shadow.camera.right = 22;
@@ -120,11 +137,58 @@ function buildLandscape(state) {
 }
 
 function buildGround(state) {
+  const textureCanvas = document.createElement('canvas');
+  textureCanvas.width = 1024;
+  textureCanvas.height = 512;
+  const context = textureCanvas.getContext('2d');
+  context.fillStyle = '#65725f';
+  context.fillRect(0, 0, textureCanvas.width, textureCanvas.height);
+
+  let seed = 1847;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let index = 0; index < 360; index += 1) {
+    const x = random() * textureCanvas.width;
+    const y = random() * textureCanvas.height;
+    const radius = 10 + random() * 62;
+    const shade = random() > .52 ? '105, 116, 88' : '43, 66, 54';
+    const opacity = .04 + random() * .08;
+    for (const offsetX of [-textureCanvas.width, 0, textureCanvas.width]) {
+      for (const offsetY of [-textureCanvas.height, 0, textureCanvas.height]) {
+        const patchX = x + offsetX;
+        const patchY = y + offsetY;
+        const patch = context.createRadialGradient(patchX, patchY, 0, patchX, patchY, radius);
+        patch.addColorStop(0, `rgba(${shade}, ${opacity})`);
+        patch.addColorStop(1, `rgba(${shade}, 0)`);
+        context.fillStyle = patch;
+        context.fillRect(patchX - radius, patchY - radius, radius * 2, radius * 2);
+      }
+    }
+  }
+  for (let index = 0; index < 15000; index += 1) {
+    const shade = random() > .5 ? '235, 222, 177' : '21, 39, 31';
+    context.fillStyle = `rgba(${shade}, ${.015 + random() * .025})`;
+    context.fillRect(2 + random() * (textureCanvas.width - 4), 2 + random() * (textureCanvas.height - 4), 1, 1);
+  }
+  const groundTexture = new THREE.CanvasTexture(textureCanvas);
+  groundTexture.colorSpace = THREE.SRGBColorSpace;
+  groundTexture.wrapS = THREE.RepeatWrapping;
+  groundTexture.wrapT = THREE.RepeatWrapping;
+  groundTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const extentTiles = size => {
+    const count = Math.ceil(240 / size);
+    return count % 2 === 0 ? count + 1 : count;
+  };
+  const tilesAcross = extentTiles(state.width);
+  const tilesDeep = extentTiles(state.height);
+  groundTexture.repeat.set(tilesAcross, tilesDeep);
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(state.width, state.height),
-    new THREE.MeshStandardMaterial({ color: '#697263', roughness: 1 }),
+    new THREE.PlaneGeometry(state.width * tilesAcross, state.height * tilesDeep),
+    new THREE.MeshStandardMaterial({ map: groundTexture, color: '#b4b6a0', roughness: 1 }),
   );
-  ground.name = 'clean flat ground';
+  ground.name = 'Reach grassland';
   ground.rotation.x = -Math.PI / 2;
   ground.position.set((state.width - 1) / 2, 0, (state.height - 1) / 2);
   ground.receiveShadow = true;
@@ -145,6 +209,7 @@ function makeCharacter(kind) {
   const color = kind === 'npc' ? '#e7c78b' : kind === 'player2' ? '#e3c7f2' : '#d3e1cb';
   group.userData.nameplate = makeNameplate(label, color, playerCharacter ? 1.78 : 1.82);
   group.add(group.userData.nameplate);
+  addFallbackTraveler(group, kind);
   group.userData.appearance = {
     heightCm: 168,
     weightKg: 70,
@@ -159,6 +224,32 @@ function makeCharacter(kind) {
   };
   group.userData.displayName = label === 'WAYFARER' ? 'Wayfarer' : label;
   return group;
+}
+
+function addFallbackTraveler(group, kind) {
+  const palette = kind === 'npc'
+    ? { cloth: '#786044', trim: '#c49457', skin: '#bd866b', hair: '#40352c' }
+    : kind === 'player2'
+      ? { cloth: '#514d69', trim: '#a399c3', skin: '#bd9277', hair: '#40352c' }
+      : { cloth: '#3d5e55', trim: '#bb9662', skin: '#ad795e', hair: '#302d29' };
+  const cloth = material(palette.cloth, .92);
+  const trim = material(palette.trim, .84, { metalness: .08 });
+  const skin = material(palette.skin, .9);
+  const hair = material(palette.hair, 1);
+  const dark = material('#302f2a', 1);
+  const add = (geometry, mat, position, options) => addMesh(group, geometry, mat, position, options);
+
+  add(new THREE.CylinderGeometry(.29, .4, .9, 8), cloth, [0, .77, 0]);
+  add(new THREE.CylinderGeometry(.28, .37, .17, 8), trim, [0, 1.16, 0]);
+  add(new THREE.TorusGeometry(.3, .025, 6, 10), trim, [0, .52, 0], { rotation: [Math.PI / 2, 0, 0] });
+  for (const side of [-1, 1]) {
+    add(new THREE.CylinderGeometry(.07, .09, .28, 7), dark, [side * .13, .2, 0]);
+    add(new THREE.BoxGeometry(.17, .13, .28), dark, [side * .13, .075, -.045]);
+    add(new THREE.CylinderGeometry(.065, .085, .5, 7), cloth, [side * .35, .88, 0], { rotation: [0, 0, side * -.14] });
+    add(new THREE.SphereGeometry(.075, 8, 6), skin, [side * .36, .61, -.015]);
+  }
+  add(new THREE.SphereGeometry(.145, 10, 8), skin, [0, 1.46, 0]);
+  add(new THREE.SphereGeometry(.155, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), hair, [0, 1.49, 0]);
 }
 
 async function installTravelerModel(group, outfit) {
@@ -453,14 +544,18 @@ function applyState(state) {
 function renderHud(){
   $('#player-name').textContent=(game.active_player?.name||'Wayfarer').toUpperCase();
   $('#inventory').textContent=game.inventory.lumen_reed;
-  $('#inventory-badge').textContent=game.inventory.lumen_reed;
   $('#reed-count').textContent=String(game.inventory.lumen_reed).padStart(2,'0');
   $('#coords').innerHTML=`X ${String(Math.round(game.player.x)).padStart(2,'0')} <span>·</span> Y ${String(Math.round(game.player.y)).padStart(2,'0')}`;
   $('#vitality').innerHTML=`${game.player_health} <em>/ 100</em>`;
   $('#vitality-meter').style.width=`${game.player_health}%`;
   $('#attunement').innerHTML=`${game.beacon_awake?1:0} <em>/ 1</em>`;
   $('#attune-meter').style.width=game.beacon_awake?'100%':'0%';
-  $('#objective').textContent='Clean character test ground';
+  $('#objective').textContent=game.beacon_awake?'A signal answers beyond the valley':game.mara_met?'Wake the Listening Beacon':'Find Mara along the western path';
+  $('#objective-hint').textContent=game.beacon_awake
+    ? 'A new signal has reached the valley.'
+    : game.mara_met
+      ? 'Bring the Listening Beacon to life.'
+      : 'Speak with Mara to learn about the Listening Beacon.';
   $('#journal').innerHTML=game.journal.map((entry,i)=>`<div class="journal-entry"><i>${String(i+1).padStart(2,'0')}</i><span>${escapeHtml(entry)}</span></div>`).join('');
   $('#note-count').textContent=String(game.journal.length).padStart(2,'0');
   $('#beacon-state').textContent=game.beacon_awake?'SIGNAL RETURNED':'DORMANT';
@@ -469,17 +564,17 @@ function renderHud(){
   $('#beacon-action').disabled=game.beacon_awake;
   $('#beacon-action').innerHTML=game.beacon_awake?'The beacon is awake <span>✦</span>':'Wake the beacon <span>→</span>';
   $('#events').innerHTML=game.events.length?game.events.map(e=>`<button class="world-event" type="button" data-world-event="${escapeHtml(e.event_id)}" aria-label="Inspect ${escapeHtml(eventName(e.type))}"><time>#${String(e.sequence).padStart(3,'0')}</time><b>${escapeHtml(eventName(e.type))}</b><br>${escapeHtml(e.rationale)} · ${escapeHtml(e.source.kind)}</button>`).join(''):'<div class="empty-event">Your actions will leave a trace here.</div>';
-  const latestEvent=game.events.at(-1);
   $('#traveler-count').textContent=String(game.players?.length||1).padStart(2,'0');
   $('#world-memory-count').textContent=String(game.events.length).padStart(2,'0');
-  $('#world-last-change').textContent=latestEvent?eventName(latestEvent.type):'No changes recorded yet';
-  $('#world-last-source').textContent=latestEvent?`${latestEvent.source.kind} · ${latestEvent.rationale}`:'Actions and their sources will be remembered here.';
-  const recent=game.events.slice(-3).reverse();
-  $('#world-feed').innerHTML=recent.length?recent.map(event=>`<div class="feed-entry"><time>#${String(event.sequence).padStart(3,'0')}</time><b>${escapeHtml(eventName(event.type))}</b></div>`).join(''):'<span class="feed-empty">Your world is beginning to take shape.</span>';
+  const recent=game.events
+    .filter(event=>!['PlayerMoved','PlayerSessionReleased'].includes(event.type))
+    .slice(-2)
+    .reverse();
+  $('#world-feed').innerHTML=recent.length?recent.map(event=>`<div class="feed-entry"><time>#${String(event.sequence).padStart(3,'0')}</time><b>${escapeHtml(eventName(event.type))}</b></div>`).join(''):'<span class="feed-empty">Your discoveries and choices will appear here.</span>';
 }
 
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function eventName(type){return ({PlayerMoved:'Trail walked',ResourceGathered:'Lumen reed gathered',NPCSpokenTo:'Mara was heard',BeaconAwakened:'Beacon awakened',CreatureDamaged:'Mossling encounter',PlayerGuarded:'Guard raised',PlayerDodged:'Attack evaded',CreatureReawakened:'Mossling returned',EntityCreated:'World entity added',RelationshipEstablished:'World relationship added'})[type]||type;}
+function eventName(type){return ({PlayerMoved:'Trail walked',PlayerSessionReleased:'Traveler paused',ResourceGathered:'Lumen reed gathered',NPCSpokenTo:'Mara was heard',BeaconAwakened:'Beacon awakened',CreatureDamaged:'Mossling encounter',PlayerGuarded:'Guard raised',PlayerDodged:'Attack evaded',CreatureReawakened:'Mossling returned',EntityCreated:'World entity added',RelationshipEstablished:'World relationship added'})[type]||type;}
 const WALK_START_SPEED=.12;
 const WALK_STOP_SPEED=.06;
 const RUN_START_SPEED=3.05;
@@ -772,11 +867,11 @@ function openDrawer(section){
   drawer.dataset.section=section;drawer.hidden=!opening;
   for(const [key,[id]] of Object.entries(drawerPanels))$('#'+id).hidden=!opening||section!==key;
   $('#drawer-title').textContent=drawerPanels[section]?.[1]||'World memory';
-  $('#satchel-toggle').setAttribute('aria-expanded',String(opening&&section==='satchel'));
-  $('#memory-toggle').setAttribute('aria-expanded',String(opening&&section==='notes'));
+  document.querySelectorAll('[data-drawer-section]').forEach(trigger=>{
+    trigger.setAttribute('aria-expanded',String(opening&&trigger.dataset.drawerSection===section));
+  });
   document.querySelectorAll('[data-drawer-tab]').forEach(tab=>tab.setAttribute('aria-current',String(tab.dataset.drawerTab===section&&opening)));
 }
-$('#satchel-toggle').addEventListener('click',()=>openDrawer('satchel'));
 const appearanceHeight=$('#appearance-height');
 const appearanceWeight=$('#appearance-weight');
 appearanceHeight.addEventListener('input',event=>{
@@ -805,13 +900,10 @@ $('#shoulder-guard-toggle').addEventListener('change',event=>{
   queueAppearanceSave();
   showToast(event.currentTarget.checked?'Shoulder guards equipped':'Shoulder guards removed');
 });
-$('#memory-toggle').addEventListener('click',()=>openDrawer('notes'));
-$('#character-menu').addEventListener('click',()=>openDrawer('satchel'));
 $('#satchel-action').addEventListener('click',()=>openDrawer('satchel'));
 $('#skills-action').addEventListener('click',()=>openDrawer('skills'));
 $('#magic-action').addEventListener('click',()=>openDrawer('magic'));
 $('#memory-action').addEventListener('click',()=>openDrawer('notes'));
-$('#memory-open').addEventListener('click',()=>openDrawer('notes'));
 document.querySelectorAll('[data-drawer-tab]').forEach(tab=>tab.addEventListener('click',()=>openDrawer(tab.dataset.drawerTab)));
 $('#ai-chat-toggle').addEventListener('click',()=>{const panel=$('#ai-chat-panel'),opening=panel.hidden;panel.hidden=!opening;$('#ai-chat-toggle').setAttribute('aria-expanded',String(opening));});
 $('#ai-chat-close').addEventListener('click',()=>{$('#ai-chat-panel').hidden=true;$('#ai-chat-toggle').setAttribute('aria-expanded','false');});
@@ -820,7 +912,11 @@ $('#events').addEventListener('click',event=>{
   if(entry)loadEventExplanation(entry.dataset.worldEvent);
 });
 $('#close-event-explanation').addEventListener('click',()=>{$('#event-explanation').hidden=true;});
-$('#close-memory').addEventListener('click',()=>{const drawer=$('#memory-drawer');drawer.hidden=true;$('#satchel-toggle').setAttribute('aria-expanded','false');$('#memory-toggle').setAttribute('aria-expanded','false');document.querySelectorAll('[data-drawer-tab]').forEach(tab=>tab.setAttribute('aria-current','false'));});
+$('#close-memory').addEventListener('click',()=>{
+  $('#memory-drawer').hidden=true;
+  document.querySelectorAll('[data-drawer-section]').forEach(trigger=>trigger.setAttribute('aria-expanded','false'));
+  document.querySelectorAll('[data-drawer-tab]').forEach(tab=>tab.setAttribute('aria-current','false'));
+});
 $('#audio-toggle').addEventListener('click',()=>{startAmbient();setAmbientEnabled(!ambientEnabled);});
 
 async function loadEventExplanation(eventId){
