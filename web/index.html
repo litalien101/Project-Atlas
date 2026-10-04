@@ -30,13 +30,23 @@
     </header>
     <aside class="hud-layout-panel" id="hud-layout-panel" aria-label="HUD layout" hidden>
       <div class="hud-layout-heading"><div><small>YOUR INTERFACE</small><b>Arrange the HUD</b></div><button id="hud-layout-reset" type="button">Reset</button></div>
-      <p>Drag a dotted grip to move a panel. Hide or fold anything you do not need. Close the side panel when you are done.</p>
+      <p>Drag, hide, or fold panels. Choose a dock edge; hover the panels dock to open it, or lock it open.</p>
       <div class="hud-layout-options">
         <label><input type="checkbox" data-hud-visibility="character" checked> Traveler status</label>
         <label><input type="checkbox" data-hud-visibility="quest" checked> Next step</label>
         <label><input type="checkbox" data-hud-visibility="pulse" checked> World pulse</label>
         <label><input type="checkbox" data-hud-visibility="events" checked> Recent events</label>
-        <label><input type="checkbox" data-hud-visibility="fieldkit" checked> Field kit</label>
+        <label><input type="checkbox" data-hud-visibility="fieldkit" checked> Panels dock</label>
+      </div>
+      <div class="hud-dock-settings">
+        <label for="fieldkit-dock-edge">Panels dock</label>
+        <select id="fieldkit-dock-edge">
+          <option value="left">Left edge</option>
+          <option value="right">Right edge</option>
+          <option value="top">Top edge</option>
+          <option value="bottom">Bottom edge</option>
+        </select>
+        <label class="hud-dock-lock"><input id="fieldkit-dock-lock" type="checkbox"> Keep panels open</label>
       </div>
       <span id="hud-layout-status" class="hud-layout-status" role="status" aria-live="polite">Changes save in this browser.</span>
     </aside>
@@ -60,7 +70,21 @@
 
     <section class="quest-panel hud-panel hud-widget" data-hud-widget="quest" aria-live="polite">
       <div class="quest-widget-heading hud-widget-heading"><div class="panel-eyebrow"><span class="quest-glyph">✧</span> NEXT STEP <i></i> THE REACH</div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="quest" aria-label="Move next step panel" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="quest" aria-label="Fold next step" aria-expanded="true" aria-controls="quest-widget-body">⌃</button></div></div>
-      <div class="hud-widget-body" id="quest-widget-body"><b id="objective">Find Mara along the western path</b><small id="objective-hint">Speak with Mara to learn about the Listening Beacon.</small></div>
+      <div class="hud-widget-body" id="quest-widget-body">
+        <div class="journey-copy"><b id="objective">Find Mara along the western path</b><small id="objective-hint">Speak with Mara to learn about the Listening Beacon.</small></div>
+        <div class="journey-readout"><span><i></i><b id="journey-target">MARA</b></span><b id="journey-distance">—</b></div>
+        <details class="journey-details">
+          <summary><span>JOURNEY</span><b id="journey-completed">0 / 3</b></summary>
+          <div class="journey-details-body">
+            <div class="journey-progress" role="progressbar" aria-label="Journey milestones" aria-valuemin="0" aria-valuemax="3" aria-valuenow="0" aria-valuetext="0 of 3 milestones complete"><i id="journey-progress-fill"></i></div>
+            <ol class="journey-steps" aria-label="Journey milestones">
+              <li data-journey-step="mara"><i>01</i><span>Meet Mara</span></li>
+              <li data-journey-step="reeds"><i>02</i><span>Gather Lumen reeds <b id="journey-reed-count">0 / 3</b></span></li>
+              <li data-journey-step="beacon"><i>03</i><span>Wake the Listening Beacon</span></li>
+            </ol>
+          </div>
+        </details>
+      </div>
     </section>
 
     <section class="world-awareness hud-panel hud-widget" data-hud-widget="pulse" aria-label="World pulse">
@@ -81,18 +105,18 @@
       <div><span class="connection-sigil">✦</span><h1 id="connection-title">The world is waiting</h1><p id="connection-message">Connecting to your traveler...</p><button id="connection-retry" type="button">Reconnect</button></div>
     </section>
     <aside class="network-debug" id="network-debug" aria-live="off" hidden></aside>
-    <section class="combat-actions atlas-actionbar hud-widget" id="combat-actions" data-hud-widget="fieldkit" aria-label="Field kit">
-      <div class="fieldkit-heading hud-widget-heading"><span>FIELD KIT</span><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="fieldkit" aria-label="Move field kit" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="fieldkit" aria-label="Fold field kit" aria-expanded="true" aria-controls="fieldkit-widget-body">⌃</button></div></div>
-      <div class="combat-options hud-widget-body" id="fieldkit-widget-body">
+    <section class="combat-actions atlas-actionbar hud-widget" id="combat-actions" data-hud-widget="fieldkit" data-hud-collapsed="true" aria-label="Panels dock">
+      <div class="fieldkit-heading hud-widget-heading"><span>✧ <b>PANELS</b></span><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="fieldkit" aria-label="Move panels control" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-lock" type="button" data-hud-lock="fieldkit" aria-label="Lock panels open" aria-pressed="false">◇</button><button class="hud-collapse" type="button" data-hud-collapse="fieldkit" aria-label="Expand panels" aria-expanded="false" aria-controls="fieldkit-widget-body">⌃</button></div></div>
+      <nav class="combat-options hud-widget-body" id="fieldkit-widget-body" aria-label="World panels" aria-hidden="true" inert>
         <button id="satchel-action" type="button" aria-label="Open inventory" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="satchel"><kbd>I</kbd><span class="action-icon">▱</span><b>Inventory</b></button>
         <button id="skills-action" type="button" aria-label="Open skills" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="skills"><kbd>K</kbd><span class="action-icon">✧</span><b>Skills</b></button>
         <button id="magic-action" type="button" aria-label="Open magic" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="magic"><kbd>J</kbd><span class="action-icon">⌘</span><b>Magic</b></button>
         <button id="memory-action" type="button" aria-label="Open world memory" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="notes"><kbd>M</kbd><span class="action-icon">◷</span><b>Memory</b><span class="action-count" id="note-count">01</span></button>
-      </div>
+      </nav>
     </section>
 
     <button class="beacon-action" id="beacon-action" type="button">Attune the Listening Beacon <span>↗</span></button>
-    <div class="travel-hint"><span>W A S D</span> MOVE <span>SHIFT</span> RUN <span>SPACE</span> JUMP <i></i> RIGHT-DRAG LOOK</div>
+    <div class="travel-hint" aria-label="Travel controls"><span>W A S D</span> MOVE <span>SHIFT</span> RUN <span>SPACE</span> JUMP <i></i> RIGHT-DRAG LOOK</div>
 
     <aside class="memory-drawer" id="memory-drawer" data-section="appearance" aria-label="Game panels" hidden>
       <div class="drawer-heading"><div><small>ATLAS · THE REACH</small><h2 id="drawer-title">World memory</h2></div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="drawer" aria-label="Move side panel" title="Drag to move · use arrow keys to nudge">⠿</button><button id="close-memory" type="button" aria-label="Close panel">×</button></div></div>

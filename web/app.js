@@ -6,6 +6,7 @@ import { CharacterAnimationController } from './animation/character_animation_co
 import { loadMixamoAnimationSet } from './animation/mixamo_animation_loader.js';
 import { retargetAnimationClips } from './animation/retarget.js';
 import { ModelAssetLoader } from './model_loader.js';
+import { getJourneyHudState } from './journey.js';
 
 const modelAssetLoader = new ModelAssetLoader();
 // No licensed Atlas runtime character is currently registered. Keep the
@@ -542,6 +543,7 @@ function applyState(state) {
 }
 
 function renderHud(){
+  const journey=getJourneyHudState(game);
   $('#player-name').textContent=(game.active_player?.name||'Wayfarer').toUpperCase();
   $('#inventory').textContent=game.inventory.lumen_reed;
   $('#reed-count').textContent=String(game.inventory.lumen_reed).padStart(2,'0');
@@ -550,12 +552,23 @@ function renderHud(){
   $('#vitality-meter').style.width=`${game.player_health}%`;
   $('#attunement').innerHTML=`${game.beacon_awake?1:0} <em>/ 1</em>`;
   $('#attune-meter').style.width=game.beacon_awake?'100%':'0%';
-  $('#objective').textContent=game.beacon_awake?'A signal answers beyond the valley':game.mara_met?'Wake the Listening Beacon':'Find Mara along the western path';
-  $('#objective-hint').textContent=game.beacon_awake
-    ? 'A new signal has reached the valley.'
-    : game.mara_met
-      ? 'Bring the Listening Beacon to life.'
-      : 'Speak with Mara to learn about the Listening Beacon.';
+  $('#objective').textContent=journey.objective;
+  $('#objective-hint').textContent=journey.hint;
+  const journeySteps=[...document.querySelectorAll('[data-journey-step]')];
+  journeySteps.forEach((step,index)=>{
+    step.classList.toggle('is-complete',index<journey.completedMilestones);
+    step.classList.toggle('is-current',index===journey.currentStep);
+    if(index===journey.currentStep)step.setAttribute('aria-current','step');
+    else step.removeAttribute('aria-current');
+  });
+  const progress=$('.journey-progress');
+  progress.setAttribute('aria-valuenow',String(journey.completedMilestones));
+  progress.setAttribute('aria-valuetext',`${journey.completedMilestones} of 3 milestones complete`);
+  $('#journey-completed').textContent=`${journey.completedMilestones} / 3`;
+  $('#journey-progress-fill').style.width=`${journey.progressPercent}%`;
+  $('#journey-reed-count').textContent=journey.reedCountText;
+  $('#journey-target').textContent=journey.targetLabel;
+  $('#journey-distance').textContent=journey.distanceText;
   $('#journal').innerHTML=game.journal.map((entry,i)=>`<div class="journal-entry"><i>${String(i+1).padStart(2,'0')}</i><span>${escapeHtml(entry)}</span></div>`).join('');
   $('#note-count').textContent=String(game.journal.length).padStart(2,'0');
   $('#beacon-state').textContent=game.beacon_awake?'SIGNAL RETURNED':'DORMANT';
@@ -973,7 +986,13 @@ const hudLayoutPanel=$('#hud-layout-panel');
 const hudLayoutStatus=$('#hud-layout-status');
 const hudWidgets=new Map([...document.querySelectorAll('[data-hud-widget]')].map(widget=>[widget.dataset.hudWidget,widget]));
 const hudPositionableWidgets=new Map([...hudWidgets,['drawer',$('#memory-drawer')],['camera',$('#view-settings')],['guide',$('#ai-chat-panel')],['explanation',$('#event-explanation')]]);
-const defaultHudPreferences=()=>Object.fromEntries([...hudPositionableWidgets.keys()].map(id=>[id,{visible:true,collapsed:false,position:null}]));
+const defaultHudPreferences=()=>Object.fromEntries([...hudPositionableWidgets.keys()].map(id=>[id,{
+  visible:id!=='pulse'&&id!=='events',
+  collapsed:id==='fieldkit',
+  position:null,
+  locked:false,
+  edge:id==='fieldkit'?'left':'bottom',
+}]));
 let hudPreferences=defaultHudPreferences();
 function readHudPreferences(){
   try{
@@ -992,8 +1011,11 @@ function readHudPreferences(){
         position:value.position&&Number.isFinite(value.position.x)&&Number.isFinite(value.position.y)
           ?{x:Math.max(0,Math.min(1,value.position.x)),y:Math.max(0,Math.min(1,value.position.y))}
           :null,
+        locked:typeof value.locked==='boolean'?value.locked:defaults.locked,
+        edge:id==='fieldkit'&&['left','right','top','bottom'].includes(value.edge)?value.edge:defaults.edge,
       };
     }
+    if(hudPreferences.fieldkit.locked)hudPreferences.fieldkit.collapsed=false;
   }catch(error){console.warn('Saved HUD preferences could not be read; using the default layout.',error);}
 }
 function persistHudPreferences(){
@@ -1026,10 +1048,25 @@ function applyHudPreferences(){
     const preference=hudPreferences[id];
     if(hudWidgets.has(id))widget.hidden=!preference.visible;
     widget.dataset.hudCollapsed=String(preference.collapsed);
+    if(id==='fieldkit'){
+      const nav=widget.querySelector('#fieldkit-widget-body');
+      const navHidden=preference.collapsed&&!preference.locked;
+      widget.dataset.dockEdge=preference.edge;
+      widget.dataset.dockLocked=String(preference.locked);
+      widget.dataset.dockPeeking='false';
+      nav.inert=navHidden;
+      nav.setAttribute('aria-hidden',String(navHidden));
+      $('#fieldkit-dock-edge').value=preference.edge;
+      $('#fieldkit-dock-lock').checked=preference.locked;
+      const lock=widget.querySelector('[data-hud-lock]');
+      lock.setAttribute('aria-pressed',String(preference.locked));
+      lock.setAttribute('aria-label',preference.locked?'Unlock panels':'Lock panels open');
+      lock.textContent=preference.locked?'◆':'◇';
+    }
     const collapse=widget.querySelector('[data-hud-collapse]');
     if(collapse){
       collapse.setAttribute('aria-expanded',String(!preference.collapsed));
-      collapse.setAttribute('aria-label',`${preference.collapsed?'Expand':'Fold'} ${collapse.dataset.hudCollapse==='character'?'traveler status':collapse.dataset.hudCollapse==='quest'?'next step':collapse.dataset.hudCollapse==='pulse'?'world pulse':collapse.dataset.hudCollapse==='events'?'recent events':'field kit'}`);
+      collapse.setAttribute('aria-label',`${preference.collapsed?'Expand':'Fold'} ${collapse.dataset.hudCollapse==='character'?'traveler status':collapse.dataset.hudCollapse==='quest'?'next step':collapse.dataset.hudCollapse==='pulse'?'world pulse':collapse.dataset.hudCollapse==='events'?'recent events':'panels'}`);
       collapse.textContent=preference.collapsed?'⌄':'⌃';
     }
     const checkbox=document.querySelector(`[data-hud-visibility="${id}"]`);
@@ -1045,6 +1082,33 @@ function resetHudPreferences(){
   }
   applyHudPreferences();persistHudPreferences();
   hudLayoutStatus.textContent='HUD layout reset to its original positions.';
+}
+function setHudCollapsed(id,collapsed,save=true){
+  const widget=hudWidgets.get(id),button=widget?.querySelector('[data-hud-collapse]');
+  if(!widget||!button)return;
+  hudPreferences[id].collapsed=collapsed;
+  widget.dataset.hudCollapsed=String(collapsed);
+  if(id==='fieldkit'){
+    const nav=widget.querySelector('#fieldkit-widget-body');
+    const navHidden=collapsed&&!hudPreferences.fieldkit.locked;
+    nav.inert=navHidden;
+    nav.setAttribute('aria-hidden',String(navHidden));
+  }
+  button.setAttribute('aria-expanded',String(!collapsed));
+  button.setAttribute('aria-label',`${collapsed?'Expand':'Fold'} ${id==='character'?'traveler status':id==='quest'?'next step':id==='pulse'?'world pulse':id==='events'?'recent events':'panels'}`);
+  button.textContent=collapsed?'⌄':'⌃';
+  if(save)persistHudPreferences();
+}
+function setHudPeek(open){
+  const widget=hudWidgets.get('fieldkit');
+  if(!widget||hudPreferences.fieldkit.locked||!hudPreferences.fieldkit.collapsed)return;
+  widget.dataset.dockPeeking=String(open);
+  const nav=widget.querySelector('#fieldkit-widget-body');
+  nav.inert=!open;
+  nav.setAttribute('aria-hidden',String(!open));
+  const button=widget.querySelector('[data-hud-collapse]');
+  button.setAttribute('aria-expanded',String(open));
+  button.setAttribute('aria-label',open?'Keep panels open':'Expand panels');
 }
 readHudPreferences();applyHudPreferences();
 hudLayoutToggle.addEventListener('click',()=>{
@@ -1063,14 +1127,53 @@ document.querySelectorAll('[data-hud-visibility]').forEach(checkbox=>checkbox.ad
   hudLayoutStatus.textContent=`${widget.getAttribute('aria-label')||id} ${event.currentTarget.checked?'shown':'hidden'}.`;
 }));
 document.querySelectorAll('[data-hud-collapse]').forEach(button=>button.addEventListener('click',()=>{
-  const id=button.dataset.hudCollapse,widget=hudWidgets.get(id);
-  hudPreferences[id].collapsed=!hudPreferences[id].collapsed;
-  widget.dataset.hudCollapsed=String(hudPreferences[id].collapsed);
-  button.setAttribute('aria-expanded',String(!hudPreferences[id].collapsed));
-  button.setAttribute('aria-label',`${hudPreferences[id].collapsed?'Expand':'Fold'} ${id==='character'?'traveler status':id==='quest'?'next step':id==='pulse'?'world pulse':id==='events'?'recent events':'field kit'}`);
-  button.textContent=hudPreferences[id].collapsed?'⌄':'⌃';
-  persistHudPreferences();
+  const id=button.dataset.hudCollapse;
+  if(id==='fieldkit'&&hudPreferences.fieldkit.locked){
+    const checkbox=$('#fieldkit-dock-lock');
+    checkbox.checked=false;
+    checkbox.dispatchEvent(new Event('change',{bubbles:true}));
+    return;
+  }
+  setHudCollapsed(id,!hudPreferences[id].collapsed);
 }));
+$('#fieldkit-dock-edge').addEventListener('change',event=>{
+  const edge=event.currentTarget.value;
+  if(!['left','right','top','bottom'].includes(edge))return;
+  hudPreferences.fieldkit.edge=edge;
+  hudPreferences.fieldkit.position=null;
+  const widget=hudWidgets.get('fieldkit');
+  widget.classList.remove('hud-positioned');
+  for(const property of ['left','top','right','bottom','transform'])widget.style.removeProperty(property);
+  applyHudPreferences();persistHudPreferences();
+  hudLayoutStatus.textContent=`Panels docked at the ${edge} edge.`;
+});
+$('#fieldkit-dock-lock').addEventListener('change',event=>{
+  const locked=event.currentTarget.checked;
+  hudPreferences.fieldkit.locked=locked;
+  setHudCollapsed('fieldkit',!locked,false);
+  const widget=hudWidgets.get('fieldkit');
+  widget.dataset.dockLocked=String(locked);
+  const button=widget.querySelector('[data-hud-lock]');
+  button.setAttribute('aria-pressed',String(locked));
+  button.setAttribute('aria-label',locked?'Unlock panels':'Lock panels open');
+  button.textContent=locked?'◆':'◇';
+  persistHudPreferences();
+  hudLayoutStatus.textContent=locked?'Panels will stay open.':'Panels will slide out on hover.';
+});
+document.querySelector('[data-hud-lock="fieldkit"]').addEventListener('click',()=>{
+  const checkbox=$('#fieldkit-dock-lock');
+  checkbox.checked=!checkbox.checked;
+  checkbox.dispatchEvent(new Event('change',{bubbles:true}));
+});
+const fieldkitWidget=hudWidgets.get('fieldkit');
+fieldkitWidget.addEventListener('pointerenter',event=>{if(event.pointerType!=='touch')setHudPeek(true);});
+fieldkitWidget.addEventListener('pointerleave',()=>{
+  if(!fieldkitWidget.contains(document.activeElement))setHudPeek(false);
+});
+fieldkitWidget.addEventListener('focusin',()=>setHudPeek(true));
+fieldkitWidget.addEventListener('focusout',event=>{
+  if(!fieldkitWidget.contains(event.relatedTarget)&&!fieldkitWidget.matches(':hover'))setHudPeek(false);
+});
 let activeHudDrag=null;
 document.querySelectorAll('[data-hud-drag]').forEach(handle=>{
   const id=handle.dataset.hudDrag,widget=hudPositionableWidgets.get(id);
@@ -1101,7 +1204,22 @@ document.querySelectorAll('[data-hud-drag]').forEach(handle=>{
 });
 window.addEventListener('resize',()=>{for(const id of hudPositionableWidgets.keys())applyHudPosition(id);});
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape'&&!hudLayoutPanel.hidden){hudLayoutPanel.hidden=true;hudLayoutToggle.setAttribute('aria-expanded','false');hudLayoutToggle.focus();}
+  if(event.key!=='Escape')return;
+  if(!hudLayoutPanel.hidden){
+    hudLayoutPanel.hidden=true;hudLayoutToggle.setAttribute('aria-expanded','false');hudLayoutToggle.focus();return;
+  }
+  if(hudPreferences.fieldkit.locked){
+    const checkbox=$('#fieldkit-dock-lock');
+    checkbox.checked=false;
+    checkbox.dispatchEvent(new Event('change',{bubbles:true}));
+    hudLayoutToggle.focus();
+  }else if(!hudPreferences.fieldkit.collapsed){
+    setHudCollapsed('fieldkit',true);
+    hudLayoutToggle.focus();
+  }else if(fieldkitWidget.dataset.dockPeeking==='true'){
+    setHudPeek(false);
+    hudLayoutToggle.focus();
+  }
 });
 document.addEventListener('pointerdown',event=>{
   if(hudLayoutPanel.hidden||hudLayoutPanel.contains(event.target)||hudLayoutToggle.contains(event.target))return;
