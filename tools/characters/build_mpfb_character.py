@@ -29,6 +29,7 @@ from mathutils.kdtree import KDTree
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_RUNTIME_TEXTURE_DIMENSION = 1024
+OPAQUE_CLOTHING_ASSETS = frozenset({"cortu_cargo_pants", "toigo_fisherman_sweater"})
 
 
 def mpfb_symbol(module_suffix: str, symbol: str):
@@ -97,6 +98,7 @@ def hide_body_under_clothing(
     garments,
     distance_threshold: float = 0.025,
     opening_clearance: float = 0.04,
+    neck_opening_clearance: float = 0.09,
 ) -> dict:
     """Mask body only well inside garments, preserving skin at open boundaries."""
     depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -104,6 +106,7 @@ def hide_body_under_clothing(
     covered_vertices: set[int] = set()
     measured_garments = []
     opening_protected = set()
+    neck_opening_protected = set()
 
     for garment in garments:
         evaluated = garment.evaluated_get(depsgraph)
@@ -134,28 +137,49 @@ def hide_body_under_clothing(
                 for sample_index, sample in enumerate(boundary_samples):
                     boundary_tree.insert(sample, sample_index)
                 boundary_tree.balance()
+            sweater_hem_z = None
+            if "toigo_fisherman_sweater" in garment.name:
+                torso_z = [
+                    (garment.matrix_world @ vertex.co).z
+                    for vertex in mesh.vertices
+                    if abs((evaluated.matrix_world @ vertex.co).x) < 0.12
+                ]
+                sweater_hem_z = min(torso_z) if torso_z else None
             garment_coverage = set()
             for index, point in enumerate(body_points):
                 nearest = tree.find_nearest(point)
-                if nearest and nearest[3] <= distance_threshold:
-                    if boundary_tree and boundary_tree.find(point)[2] < opening_clearance:
+                if nearest:
+                    is_sweater_hem = False
+                    boundary_nearest = boundary_tree.find(point) if boundary_tree else None
+                    is_sweater_collar = False
+                    if boundary_tree and sweater_hem_z is not None:
+                        is_sweater_hem = (
+                            boundary_nearest[2] < opening_clearance
+                            and abs(point.x) < 0.24
+                            and abs(boundary_nearest[0].x) < 0.24
+                            and boundary_nearest[0].z < sweater_hem_z + 0.15
+                        )
+                        is_sweater_collar = (
+                            abs(point.x) < 0.20
+                            and abs(boundary_nearest[0].x) < 0.20
+                            and boundary_nearest[0].z > sweater_hem_z + 0.30
+                        )
+                    effective_distance = 0.04 if is_sweater_hem else distance_threshold
+                    if nearest[3] > effective_distance:
+                        continue
+                    effective_opening_clearance = (
+                        neck_opening_clearance if is_sweater_collar else opening_clearance
+                    )
+                    if boundary_nearest and boundary_nearest[2] < effective_opening_clearance and not is_sweater_hem:
                         opening_protected.add(index)
+                        if is_sweater_collar:
+                            neck_opening_protected.add(index)
                         continue
                     garment_coverage.add(index)
             covered_vertices.update(garment_coverage)
             measured_garments.append({"object": garment.name, "near_body_vertices": len(garment_coverage)})
         finally:
             evaluated.to_mesh_clear()
-
-    # Keep any base face that only partly overlaps a garment. This avoids
-    # creating ragged one-vertex holes at sleeve, hem, and waistband edges.
-    boundary_vertices = set()
-    for polygon in body.data.polygons:
-        indices = set(polygon.vertices)
-        overlap = indices & covered_vertices
-        if overlap and overlap != indices:
-            boundary_vertices.update(overlap)
-    covered_vertices.difference_update(boundary_vertices)
 
     group_name = "Atlas.HideBodyUnderClothing"
     group = body.vertex_groups.get(group_name) or body.vertex_groups.new(name=group_name)
@@ -168,15 +192,21 @@ def hide_body_under_clothing(
     return {
         "distance_threshold_m": distance_threshold,
         "open_boundary_clearance_m": opening_clearance,
+        "neck_opening_clearance_m": neck_opening_clearance,
         "body_vertices_hidden": len(covered_vertices),
         "body_vertices_protected_near_openings": len(opening_protected),
+        "body_vertices_protected_near_sweater_neck": len(neck_opening_protected),
         "garments": measured_garments,
-        "boundary_policy": "retain body vertices near garment open edges; mask only interior coverage",
+        "boundary_policy": "preserve open collar/cuff vertices; mask the sweater hem where pants overlap",
     }
 
 
 def make_mesh_material_opaque(mesh_objects) -> None:
-    """Do not alpha-blend solid skin and clothing against other character meshes."""
+    """Mark only the body and solid clothing passed here as opaque.
+
+    Hair, eyes, brows, lashes, and teeth are intentionally excluded so their
+    source alpha maps remain connected for GLB export.
+    """
     seen = set()
     for obj in mesh_objects:
         for material in obj.data.materials:
@@ -194,44 +224,212 @@ def make_mesh_material_opaque(mesh_objects) -> None:
             alpha.default_value = 1.0
 
 
-def trim_pants_under_sweater(recipe: dict, garments) -> dict | None:
-    """Lower the pants top beneath the sweater hem for this known asset pair."""
-    if recipe.get("shirt") != "toigo_fisherman_sweater" or recipe.get("pants") != "toigo_wool_pants":
+def fit_pants_under_sweater(recipe: dict, garments) -> dict | None:
+    """Trim the pants to the generated sweater's curved hem profile."""
+    if recipe.get("shirt") != "toigo_fisherman_sweater" or recipe.get("pants") != "cortu_cargo_pants":
         return None
     shirt = next((obj for obj in garments if recipe["shirt"] in obj.name), None)
     pants = next((obj for obj in garments if recipe["pants"] in obj.name), None)
     if shirt is None or pants is None:
-        raise RuntimeError("Expected sweater/pants objects were not created by MPFB")
+        raise RuntimeError("Expected sweater/high-rise pants objects were not created by MPFB")
 
-    # Find the sweater's torso hem while excluding its low sleeves, then overlap
-    # the pants top 25 mm inside the sweater. This keeps the waistband concealed
-    # without opening a visible gap between the two garments.
-    torso_hem = [
-        (shirt.matrix_world @ vertex.co).z
-        for vertex in shirt.data.vertices
-        if abs((shirt.matrix_world @ vertex.co).x) < 0.12
-    ]
-    if not torso_hem:
-        raise RuntimeError("Could not locate the sweater torso hem")
-    cutoff_z = min(torso_hem) + 0.025
-    inverse = pants.matrix_world.inverted()
-    local_co = inverse @ Vector((0.0, 0.0, cutoff_z))
-    local_no = (pants.matrix_world.to_3x3().transposed() @ Vector((0.0, 0.0, 1.0))).normalized()
-    mesh = bmesh.new()
-    mesh.from_mesh(pants.data)
-    bmesh.ops.bisect_plane(
-        mesh,
-        geom=list(mesh.verts) + list(mesh.edges) + list(mesh.faces),
-        plane_co=local_co,
-        plane_no=local_no,
-        dist=1e-6,
-        clear_outer=True,
-        clear_inner=False,
+    world_vertices = [shirt.matrix_world @ vertex.co for vertex in shirt.data.vertices]
+    shirt_hem = min(point.z for point in world_vertices if abs(point.x) < 0.12)
+    pants_top = max((pants.matrix_world @ vertex.co).z for vertex in pants.data.vertices)
+    # Find the connected, closed boundary loop at the bottom of this exact
+    # generated sweater. Its height changes with the MPFB body proportions.
+    edge_face_counts = {}
+    for polygon in shirt.data.polygons:
+        for edge_key in polygon.edge_keys:
+            key = tuple(sorted(edge_key))
+            edge_face_counts[key] = edge_face_counts.get(key, 0) + 1
+    candidate_edges = []
+    for edge, count in edge_face_counts.items():
+        if count != 1:
+            continue
+        a, b = (world_vertices[index] for index in edge)
+        if max(a.z, b.z) <= shirt_hem + 0.08 and abs(a.x) < 0.30 and abs(b.x) < 0.30:
+            candidate_edges.append(edge)
+    adjacency = {}
+    for a, b in candidate_edges:
+        adjacency.setdefault(a, set()).add(b)
+        adjacency.setdefault(b, set()).add(a)
+    components = []
+    component_sizes = []
+    unseen = set(adjacency)
+    while unseen:
+        seed = unseen.pop()
+        component = {seed}
+        pending = [seed]
+        while pending:
+            current = pending.pop()
+            for neighbor in adjacency[current] & unseen:
+                unseen.remove(neighbor)
+                component.add(neighbor)
+                pending.append(neighbor)
+        is_closed_loop = all(len(adjacency[index] & component) == 2 for index in component)
+        component_sizes.append({"vertices": len(component), "closed": is_closed_loop})
+        if len(component) >= 8 and is_closed_loop:
+            components.append(component)
+    if not components:
+        raise RuntimeError(
+            "Could not find a closed sweater hem loop for curved pants fitting; "
+            + json.dumps({
+                "candidate_boundary_edges": len(candidate_edges),
+                "candidate_components": component_sizes,
+            })
+        )
+    hem_loop = min(components, key=lambda comp: sum(world_vertices[i].z for i in comp) / len(comp))
+    first = min(hem_loop)
+    ordered_loop = [first]
+    previous = None
+    current = first
+    while True:
+        following = next(index for index in adjacency[current] if index != previous)
+        if following == first:
+            break
+        if following in ordered_loop:
+            raise RuntimeError("Sweater hem boundary loop is not a simple ring")
+        ordered_loop.append(following)
+        previous, current = current, following
+    if len(ordered_loop) != len(hem_loop):
+        raise RuntimeError("Could not order the complete sweater hem boundary")
+
+    pants_overlap_above_hem = 0.01
+    radial_margin = 0.05
+    pants_vertices_before_fit = len(pants.data.vertices)
+    pants_faces_before_fit = len(pants.data.polygons)
+    pants_height_before_fit = pants.dimensions.z
+    pants_dimensions_before_fit = tuple(pants.dimensions)
+    ring = [world_vertices[index].copy() for index in ordered_loop]
+    center_x = sum(point.x for point in ring) / len(ring)
+    center_y = sum(point.y for point in ring) / len(ring)
+    lower_ring = []
+    for point in ring:
+        dx, dy = point.x - center_x, point.y - center_y
+        radial_length = math.hypot(dx, dy) or 1.0
+        lower_ring.append((
+            point.x + dx / radial_length * radial_margin,
+            point.y + dy / radial_length * radial_margin,
+            point.z + pants_overlap_above_hem,
+        ))
+    cutter_top = max(pants_top + 0.05, max(point[2] for point in lower_ring) + 0.05)
+    count = len(lower_ring)
+    cutter_vertices = lower_ring + [(x, y, cutter_top) for x, y, _ in lower_ring]
+    cutter_faces = [tuple(reversed(range(count))), tuple(range(count, count * 2))]
+    cutter_faces.extend(
+        (index, (index + 1) % count, (index + 1) % count + count, index + count)
+        for index in range(count)
     )
-    mesh.to_mesh(pants.data)
-    mesh.free()
+    cutter_mesh = bpy.data.meshes.new("Atlas.CurvedWaistCut.mesh")
+    cutter_mesh.from_pydata(cutter_vertices, [], cutter_faces)
+    cutter_mesh.update()
+    cutter = bpy.data.objects.new("Atlas.CurvedWaistCut", cutter_mesh)
+    bpy.context.scene.collection.objects.link(cutter)
+    bm = bmesh.new()
+    bm.from_mesh(cutter_mesh)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(cutter_mesh)
+    bm.free()
+
+    modifier = pants.modifiers.new("Atlas Curved Sweater Waist Fit", "BOOLEAN")
+    modifier_name = modifier.name
+    modifier.operation = "DIFFERENCE"
+    modifier.solver = "EXACT"
+    modifier.object = cutter
+    try:
+        bpy.ops.object.select_all(action="DESELECT")
+        pants.select_set(True)
+        bpy.context.view_layer.objects.active = pants
+        result = bpy.ops.object.modifier_apply(modifier=modifier_name)
+        if "FINISHED" not in result:
+            raise RuntimeError("Could not apply curved sweater-to-pants waist fit")
+    finally:
+        existing_modifier = pants.modifiers.get(modifier_name)
+        if existing_modifier:
+            pants.modifiers.remove(existing_modifier)
+        bpy.data.objects.remove(cutter, do_unlink=True)
+        bpy.data.meshes.remove(cutter_mesh)
+
     pants.data.update()
-    return {"pants": pants.name, "cutoff_world_z_m": round(cutoff_z, 4), "method": "overlapped 25mm inside sweater torso hem"}
+    if not pants.data.polygons:
+        raise RuntimeError("Curved sweater waist fit removed the complete pants mesh")
+    pants_vertices_after_fit = len(pants.data.vertices)
+    pants_faces_after_fit = len(pants.data.polygons)
+    pants_height_after_fit = pants.dimensions.z
+    vertex_retention = pants_vertices_after_fit / max(1, pants_vertices_before_fit)
+    face_retention = pants_faces_after_fit / max(1, pants_faces_before_fit)
+    height_retention = pants_height_after_fit / max(1e-9, pants_height_before_fit)
+    fit_diagnostics = {
+        "pants_vertices_before_fit": pants_vertices_before_fit,
+        "pants_vertices_after_fit": pants_vertices_after_fit,
+        "pants_vertex_retention_pct": round(vertex_retention * 100, 2),
+        "pants_vertices_removed_pct": round(max(0.0, 1.0 - vertex_retention) * 100, 2),
+        "pants_faces_before_fit": pants_faces_before_fit,
+        "pants_faces_after_fit": pants_faces_after_fit,
+        "pants_face_retention_pct": round(face_retention * 100, 2),
+        "pants_faces_removed_pct": round(max(0.0, 1.0 - face_retention) * 100, 2),
+        "pants_dimensions_before_fit_m": [round(value, 4) for value in pants_dimensions_before_fit],
+        "pants_vertical_retention_pct": round(height_retention * 100, 2),
+    }
+    # Boolean cutters can occasionally classify a mesh incorrectly. Do not
+    # save/export a candidate if it has removed most of the pants or shortened
+    # the legs; retain these diagnostics in the raised error for review.
+    if vertex_retention < 0.50 or face_retention < 0.50 or height_retention < 0.75:
+        raise RuntimeError(
+            "Curved sweater waist fit removed too much pants geometry: "
+            + json.dumps(fit_diagnostics, sort_keys=True)
+        )
+    return {
+        "shirt": shirt.name,
+        "pants": pants.name,
+        "pants_top_world_z_m": round(pants_top, 4),
+        "shirt_hem_world_z_m": round(shirt_hem, 4),
+        "shirt_hem_height_range_world_m": [
+            round(min(point.z for point in ring), 4),
+            round(max(point.z for point in ring), 4),
+        ],
+        "pants_overlap_above_sweater_hem_m": pants_overlap_above_hem,
+        "cutter_radial_margin_m": radial_margin,
+        **fit_diagnostics,
+        "pants_dimensions_after_fit_m": [round(value, 4) for value in pants.dimensions],
+        "hem_loop_vertices": len(ring),
+        "candidate_boundary_edges": len(candidate_edges),
+        "candidate_components": component_sizes,
+        "closed_hem_components": len(components),
+        "selected_hem_component_vertices": len(hem_loop),
+        "method": "boolean trim follows this generated sweater hem loop",
+    }
+
+
+def measure_garment_intersections(garments) -> dict:
+    """Count triangle-pair intersections between generated garment surfaces."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    garment_trees = []
+    for garment in garments:
+        evaluated = garment.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        try:
+            vertices = [evaluated.matrix_world @ vertex.co for vertex in mesh.vertices]
+            polygons = [list(polygon.vertices) for polygon in mesh.polygons]
+            tree = BVHTree.FromPolygons(vertices, polygons, all_triangles=False) if vertices and polygons else None
+            garment_trees.append((garment.name, tree))
+        finally:
+            evaluated.to_mesh_clear()
+
+    pairs = []
+    for first_index, (first_name, first_tree) in enumerate(garment_trees):
+        for second_name, second_tree in garment_trees[first_index + 1:]:
+            intersections = first_tree.overlap(second_tree) if first_tree and second_tree else []
+            pairs.append({
+                "objects": [first_name, second_name],
+                "triangle_pair_count": len(intersections),
+            })
+    return {
+        "pairs": pairs,
+        "total_triangle_pair_count": sum(pair["triangle_pair_count"] for pair in pairs),
+        "note": "Counts intersecting triangle pairs; touching/coincident surfaces may count, so review per garment pair.",
+    }
 
 
 def build(recipe: dict, output_dir: Path) -> None:
@@ -260,6 +458,7 @@ def build(recipe: dict, output_dir: Path) -> None:
             break
 
     garments = []
+    face_detail_objects = []
     for subdir, filename, asset_type in (
         ("eyes", "low-poly.mhclo", "Eyes"),
         ("eyebrows", "eyebrow001.mhclo", "Eyebrows"),
@@ -277,10 +476,18 @@ def build(recipe: dict, output_dir: Path) -> None:
         )
         if subdir == "clothes":
             garments.append(added_asset)
+        elif subdir in {"eyes", "eyebrows", "eyelashes", "teeth", "hair"}:
+            face_detail_objects.append(added_asset)
 
-    garment_fit_adjustment = trim_pants_under_sweater(recipe, garments)
+    garment_fit_adjustment = fit_pants_under_sweater(recipe, garments)
+    garment_intersections = measure_garment_intersections(garments)
     clothing_occlusion = hide_body_under_clothing(body, garments)
-    make_mesh_material_opaque([body, *garments])
+    opaque_clothing = [
+        garment for garment in garments
+        if any(asset_name in garment.name for asset_name in OPAQUE_CLOTHING_ASSETS)
+    ]
+    alpha_preserved_clothing = [garment for garment in garments if garment not in opaque_clothing]
+    make_mesh_material_opaque([body, *opaque_clothing])
 
     character_objects = {armature, body} | set(ObjectService.get_list_of_children(armature))
     for obj in tuple(bpy.context.scene.objects):
@@ -289,11 +496,15 @@ def build(recipe: dict, output_dir: Path) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     # Keep repeated local rebuilds from accumulating stale .blend1 backups.
     bpy.context.preferences.filepaths.save_version = 0
-    # Some MakeHuman face and detail surfaces have inconsistent winding or are
-    # intentionally open shells. Export them double-sided so front views do
-    # not lose polygons to backface culling.
-    for material in bpy.data.materials:
-        material.use_backface_culling = False
+    # MPFB's current outfit meshes have open or inconsistent winding around
+    # garment edges. Keep character surfaces double-sided until each source
+    # asset is validated and normalized independently.
+    double_sided_materials = set()
+    for obj in (body, *face_detail_objects, *garments):
+        for material in obj.data.materials:
+            if material:
+                material.use_backface_culling = False
+                double_sided_materials.add(material.name)
     bpy.ops.file.pack_all()
     blend_path = output_dir / f"{recipe['character_id']}.blend"
     glb_path = output_dir / f"{recipe['character_id']}.glb"
@@ -337,7 +548,26 @@ def build(recipe: dict, output_dir: Path) -> None:
         "character_id": recipe["character_id"],
         "recipe": recipe,
         "recipe_sha256": hashlib.sha256(json.dumps(recipe, sort_keys=True).encode("utf-8")).hexdigest(),
-        "generator": {"name": "MakeHuman Community MPFB", "version": "2.0.17", "blender": bpy.app.version_string},
+        "generator": {
+            "name": "MakeHuman Community MPFB",
+            "version": "2.0.17",
+            "blender": bpy.app.version_string,
+            "mpfb_scale_factor": 0.1,
+            "coordinate_units": "meters",
+            "generated_body_dimensions_m": [round(value, 4) for value in body.dimensions],
+        },
+        "material_policy": {
+            "opaque_material_objects": [body.name, *(obj.name for obj in opaque_clothing)],
+            "opaque_clothing_assets": sorted(
+                asset_name for asset_name in OPAQUE_CLOTHING_ASSETS
+                if any(asset_name in obj.name for obj in opaque_clothing)
+            ),
+            "alpha_preserved_objects": [
+                obj.name for obj in (*face_detail_objects, *alpha_preserved_clothing)
+            ],
+            "double_sided_materials": sorted(double_sided_materials),
+            "reason": "current MPFB clothing assets have open or inconsistent edge winding",
+        },
         "asset_license": "MakeHuman core/system graphics assets are CC0; verify each selected module's source record.",
         "rig": {
             "name": "MPFB game_engine",
@@ -365,6 +595,7 @@ def build(recipe: dict, output_dir: Path) -> None:
         },
         "clothing_occlusion": clothing_occlusion,
         "garment_fit_adjustment": garment_fit_adjustment,
+        "garment_intersections": garment_intersections,
         "outputs": {
             "blend": {"path": blend_path.name, "sha256": hashlib.sha256(blend_path.read_bytes()).hexdigest()},
             "glb": {"path": glb_path.name, "sha256": hashlib.sha256(glb_path.read_bytes()).hexdigest()},

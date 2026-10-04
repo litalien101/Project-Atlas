@@ -1,0 +1,281 @@
+{
+  "schema": "atlas-mpfb-character-build/v1",
+  "build_id": "20261004T221418.960333Z",
+  "character_id": "mpfb_female_prototype",
+  "recipe": {
+    "schema": "atlas-mpfb-character-recipe/v1",
+    "character_id": "mpfb_female_prototype",
+    "macro": {
+      "gender": 0.0,
+      "age": 0.55,
+      "muscle": 0.6,
+      "weight": 0.42,
+      "proportions": 0.5,
+      "height": 0.58,
+      "cupsize": 0.5,
+      "firmness": 0.5,
+      "race": {
+        "asian": 0.0,
+        "caucasian": 1.0,
+        "african": 0.0
+      }
+    },
+    "skin": "young_caucasian_female",
+    "hair": "ponytail01",
+    "pants": "cortu_cargo_pants",
+    "shirt": "toigo_fisherman_sweater"
+  },
+  "recipe_sha256": "594a1c8c4b7231f0273227a19db0eec12d2597a8623fbb555fc2143c10c56f01",
+  "generator": {
+    "name": "MakeHuman Community MPFB",
+    "version": "2.0.17",
+    "blender": "4.2.15 LTS",
+    "mpfb_scale_factor": 0.1,
+    "coordinate_units": "meters",
+    "generated_body_dimensions_m": [
+      1.0343,
+      0.3658,
+      1.6924
+    ]
+  },
+  "material_policy": {
+    "opaque_material_objects": [
+      "Human",
+      "Human.cortu_cargo_pants",
+      "Human.toigo_fisherman_sweater"
+    ],
+    "alpha_preserved_objects": [
+      "Human.low-poly",
+      "Human.eyebrow001",
+      "Human.eyelashes01",
+      "Human.teeth_base",
+      "Human.ponytail01"
+    ],
+    "double_sided_materials": [
+      "Human.body",
+      "Human.eyebrow001",
+      "Human.eyelashes01",
+      "Human.low-poly",
+      "Human.ponytail01",
+      "Human.teeth_base"
+    ],
+    "single_sided_clothing_materials": [
+      "Human.cortu_cargo_pants",
+      "Human.toigo_fisherman_sweater"
+    ]
+  },
+  "asset_license": "MakeHuman core/system graphics assets are CC0; verify each selected module's source record.",
+  "rig": {
+    "name": "MPFB game_engine",
+    "bone_count": 53,
+    "bone_names": [
+      "root",
+      "pelvis",
+      "spine_01",
+      "spine_02",
+      "spine_03",
+      "clavicle_l",
+      "upperarm_l",
+      "lowerarm_l",
+      "hand_l",
+      "index_01_l",
+      "index_02_l",
+      "index_03_l",
+      "middle_01_l",
+      "middle_02_l",
+      "middle_03_l",
+      "pinky_01_l",
+      "pinky_02_l",
+      "pinky_03_l",
+      "ring_01_l",
+      "ring_02_l",
+      "ring_03_l",
+      "thumb_01_l",
+      "thumb_02_l",
+      "thumb_03_l",
+      "clavicle_r",
+      "upperarm_r",
+      "lowerarm_r",
+      "hand_r",
+      "index_01_r",
+      "index_02_r",
+      "index_03_r",
+      "middle_01_r",
+      "middle_02_r",
+      "middle_03_r",
+      "pinky_01_r",
+      "pinky_02_r",
+      "pinky_03_r",
+      "ring_01_r",
+      "ring_02_r",
+      "ring_03_r",
+      "thumb_01_r",
+      "thumb_02_r",
+      "thumb_03_r",
+      "neck_01",
+      "head",
+      "thigh_l",
+      "calf_l",
+      "foot_l",
+      "ball_l",
+      "thigh_r",
+      "calf_r",
+      "foot_r",
+      "ball_r"
+    ],
+    "animation_clips": [],
+    "status": "Rigged; no Atlas animation retarget or deformation review has been completed."
+  },
+  "shape_keys": {
+    "count": 12,
+    "raw_names": [
+      "$md-$ca-$fe-$yn",
+      "$md-$ca-$fe-old",
+      "$md-universal-$fe-$yn-$av$mu-min$wg",
+      "$md-universal-$fe-$yn-$av$mu-$av$wg",
+      "$md-universal-$fe-$yn-max$mu-min$wg",
+      "$md-universal-$fe-$yn-max$mu-$av$wg",
+      "$md-universal-$fe-old-$av$mu-min$wg",
+      "$md-universal-$fe-old-$av$mu-$av$wg",
+      "$md-universal-$fe-old-max$mu-$av$wg",
+      "$md-$fe-$yn-$av$mu-min$wg-max$hg",
+      "$md-$fe-$yn-$av$mu-$av$wg-max$hg",
+      "$md-$fe-$yn-max$mu-$av$wg-max$hg"
+    ],
+    "recipe_controls": [
+      "age",
+      "cupsize",
+      "firmness",
+      "gender",
+      "height",
+      "muscle",
+      "proportions",
+      "race",
+      "weight"
+    ]
+  },
+  "texture_memory_estimate": {
+    "unique_image_count": 9,
+    "decoded_rgba_mib": 42.0,
+    "with_full_mip_chain_mib": 56.0,
+    "runtime_max_dimension": 1024,
+    "high_detail_texture_exceptions": {
+      "ponytail": 2048
+    },
+    "images": [
+      {
+        "name": "brown_eye.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      },
+      {
+        "name": "cargo_pants_diff.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      },
+      {
+        "name": "cargo_pants_norm.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      },
+      {
+        "name": "eyebrow001.png",
+        "width": 512,
+        "height": 512,
+        "format": "PNG"
+      },
+      {
+        "name": "eyelashes01.png",
+        "width": 512,
+        "height": 512,
+        "format": "PNG"
+      },
+      {
+        "name": "ponytail01_diffuse.png",
+        "width": 2048,
+        "height": 2048,
+        "format": "PNG"
+      },
+      {
+        "name": "shirt-knit.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      },
+      {
+        "name": "teeth.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      },
+      {
+        "name": "young_lightskinned_female_diffuse.png",
+        "width": 1024,
+        "height": 1024,
+        "format": "PNG"
+      }
+    ],
+    "caveat": "Estimate assumes RGBA8 GPU textures; actual usage depends on the target GPU and texture format."
+  },
+  "clothing_occlusion": {
+    "distance_threshold_m": 0.025,
+    "open_boundary_clearance_m": 0.04,
+    "body_vertices_hidden": 5735,
+    "body_vertices_protected_near_openings": 955,
+    "garments": [
+      {
+        "object": "Human.cortu_cargo_pants",
+        "near_body_vertices": 2179
+      },
+      {
+        "object": "Human.toigo_fisherman_sweater",
+        "near_body_vertices": 3751
+      }
+    ],
+    "boundary_policy": "preserve open collar/cuff vertices; mask the sweater hem where pants overlap"
+  },
+  "garment_fit_adjustment": {
+    "shirt": "Human.toigo_fisherman_sweater",
+    "pants": "Human.cortu_cargo_pants",
+    "pants_top_world_z_m": 0.9696,
+    "shirt_hem_world_z_m": 0.8842,
+    "shirt_hem_height_range_world_m": [
+      0.8845,
+      0.928
+    ],
+    "pants_underlap_below_sweater_hem_m": 0.01,
+    "cutter_radial_margin_m": 0.035,
+    "hem_loop_vertices": 36,
+    "candidate_boundary_edges": 36,
+    "candidate_components": [
+      {
+        "vertices": 36,
+        "closed": true
+      }
+    ],
+    "closed_hem_components": 1,
+    "selected_hem_component_vertices": 36,
+    "method": "boolean trim follows this generated sweater hem loop"
+  },
+  "outputs": {
+    "blend": {
+      "path": "mpfb_female_prototype.blend",
+      "sha256": "c914a7c7f97fa1a5c634f12764a48f17328ae231be2dc7916b49e6fbe7645f3e"
+    },
+    "glb": {
+      "path": "mpfb_female_prototype.glb",
+      "sha256": "8fbf8fbc3dcc27068b0ee65bda00e34cf10595b2f6f0c32c99a06aad3f9e67ad"
+    },
+    "blender_view": {
+      "path": "mpfb_female_prototype_blender_view.blend",
+      "sha256": "86aab85da67dbd2bbf2afdc1991ddfdfd1cce2701e8fe87e85f16ef955f3bf0f"
+    }
+  },
+  "notes": [
+    "Generated from an MPFB base and swappable CC0 system assets.",
+    "Review visual quality, animation, clothing fit, and GLB shape-key behavior before runtime approval."
+  ]
+}

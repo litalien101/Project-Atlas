@@ -11,7 +11,8 @@ Records are negative evidence, not approved assets or automatic training data.
 Promote a lesson into a generator guardrail only when the failure has a
 reproducible cause. The MPFB prototype's current guardrails reject combined
 outfit fields, cap runtime texture dimensions, force solid character materials
-opaque, mask the body under clothing, and overlap this sweater/pants pairing.
+opaque, mask the body away from open garment edges, and fit the raised pants
+inside the sweater at their overlap.
 Blender's GLB importer defaults imported armatures to "In Front"; the dedicated
 inspection file hides the armature bones in its default viewport while keeping
 the rig available to unhide. Keep new failure codes specific and tie each rule

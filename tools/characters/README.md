@@ -68,22 +68,35 @@ weight, proportions, height, and related controls) plus replaceable system
 assets. It intentionally rejects unrecognized fields and free-form anatomy
 descriptions. Categorical modules cover hair and independent shirt and pants
 slots. The prototype recipe uses garments from MakeHuman Community's CC0
-`pants01` and `shirts01` packs; install those packs in MPFB's asset library
-before building. Each garment is a separate object, allowing independent
-selection and replacement. Check the license on every asset from other packs;
-community contributions can have different terms. Armor, ears, eyes, and
-attachment compatibility are future work. Generated assets remain pending
-until visual, license, animation, clothing-fit, and runtime review is recorded.
+`cortu_cargo_pants` and `toigo_fisherman_sweater` system assets; install those
+assets in MPFB's library before building. Each garment is a separate object,
+allowing independent selection and replacement. Check the license on every
+asset from other packs; community contributions can have different terms.
+Armor, ears, eyes, and attachment compatibility are future work. Generated
+assets remain pending until visual, license, animation, clothing-fit, and
+runtime review is recorded.
 The editable `.blend` keeps the source-resolution maps. The exported GLB caps
 most textures at 1024 pixels per longest edge and keeps the ponytail's 2048 map
 to preserve its hairline. Solid skin and clothing materials export opaque, and
-the builder masks base-body vertices under clothing. The known fisherman
-sweater/wool-pants pair also overlaps the pants top inside the sweater hem. These
-steps address alpha sorting, body poke-through, and the exposed pants waistband
-in this prototype. The body mask also keeps a 40 mm clearance from open garment
-edges so it does not cut skin at the collar, cuffs, or hem; inspect other
-garment combinations individually. The builder records texture dimensions and
-an estimated decoded RGBA8 and mip-chain
+the builder masks base-body vertices under clothing. For the current cargo
+pants and fisherman sweater pair, it extracts the generated sweater's closed
+hem loop and uses a Boolean cutter to shape the pants top along that curve,
+with 10 mm of overlap beneath the sweater. The sweater remains full length
+and outermost. The body mask preserves a 90 mm
+clearance at the sweater neck opening and 40 mm at other open garment edges,
+except the hem where it masks covered skin. The build manifest
+records loop diagnostics, body dimensions, scale factor, and material alpha
+policy; alpha maps remain connected on hair, eyes, brows, lashes, and teeth.
+The pants fit records before/after vertex, face, and height retention, and
+aborts before export if it removes over half the mesh or shortens the pants by
+more than 25%. The measured 5 cm radial expansion on the current sample keeps
+96.43% of pants faces and 96.01% of pant height; review fit diagnostics and the
+render together because intersection counts can include harmless contacts.
+The current MPFB body, outfit, and alpha-card details export double-sided
+because these source assets have open or inconsistent edge winding. Normalize
+and review assets before enabling backface culling selectively.
+Inspect other garment combinations and extreme morphs individually. The
+builder records texture dimensions and an estimated decoded RGBA8 and mip-chain
 cost in `build.json`; read the current manifest for the actual regenerated
 sample measurement. This estimate is not a final device budget. The GLB
 exporter may truncate meshes with more than four joint influences; inspect

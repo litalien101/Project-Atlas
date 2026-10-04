@@ -846,6 +846,530 @@
       ],
       "build_manifest_path": "art/characters/failure_records/manifests/20261004T211854.606021Z.json",
       "build_manifest_sha256": "68cba604e35c5cdcbdd6eb5baeab55fb7d13143977c36280833a573f4f6860a8"
+    },
+    {
+      "build_id": "20261004T212412.629601Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "pants_waist_too_low"
+      ],
+      "findings": [
+        {
+          "code": "pants_waist_too_low",
+          "evidence": "Rear-view review shows a visible body-colored strip between the sweater hem and pants top; the trousers do not reach the waist.",
+          "lesson": "Raise the pants upper edge to the sweater waist/hip coverage and verify the back view after each build."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23764436,
+          "sha256": "5b800809a7b42905f3d9da3cd3866a4cb1e9aae877c0b53b57700b8c22e7c5d3",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11960604,
+          "sha256": "7948aa32e039de929585893724129d2bca6d473d92f6254541610a6cba9d81da",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25517244,
+          "sha256": "b01ebb5a3b57e97f7ad72b6d54bc4437f55005378c8e6ea34efef9af91e3dfa4",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T212412.629601Z.json",
+      "build_manifest_sha256": "dcc924cb16f60e4a89fdb9101868813b7cc63172181d585fc075d86a647b8f63"
+    },
+    {
+      "build_id": "20261004T213854.094734Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "sweater_intersects_raised_pants"
+      ],
+      "findings": [
+        {
+          "code": "sweater_intersects_raised_pants",
+          "evidence": "Rear-view preview shows two red sweater patches visible through the gray pants where the 100 mm raised waist overlaps the sweater mesh.",
+          "lesson": "When raising pants inside an untucked sweater, project any pants vertices that protrude outside the sweater surface slightly behind the sweater surface before export."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23813936,
+          "sha256": "d1382605465bcc57d85dabf9d13a0464922b8918bab19b15c12d9b3aeac91129",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11941516,
+          "sha256": "7770518bc90f6b4d2d6ce74144e22866189e35be1136b0cb88d223f2a702ea1c",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25543652,
+          "sha256": "5a83fbf384e302ce418bcbf4b2f99dc00e044cbbe3c99a8f56bdbcacc6770535",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T213854.094734Z.json",
+      "build_manifest_sha256": "cc584789aca78c44a8fbf68a60c0cda3849ec7534891d1917647cc29205f6ac3"
+    },
+    {
+      "build_id": "20261004T214340.551187Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "highrise_fit_distorted_overlap"
+      ],
+      "findings": [
+        {
+          "code": "highrise_fit_distorted_overlap",
+          "evidence": "Rear-view render of the 100 mm rise shows the raised pants overlap distorting through the sweater in gray/red patches and pale spots.",
+          "lesson": "Do not move individual pants vertices through the sweater surface; remove only the overlap triangles that lie outside the sweater shell so the sweater remains clean and the pants reach the waist."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23813952,
+          "sha256": "92a7e314e6f57396a43636bbc68377b4323f840a52a52c56c40768853c04e80c",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11940784,
+          "sha256": "3339f6645f6a5a7ad81535f070597d3d2cf55df546e6b9519a3b728fa216f748",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25542516,
+          "sha256": "86debf809d4e6d65f4e8daf590687796b66d8d351ce9ca26207b6716d37fcd0a",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T214340.551187Z.json",
+      "build_manifest_sha256": "3663bef1651068f30c5859cefad76bb7035e5986351189287c3a73255a1af0b9"
+    },
+    {
+      "build_id": "20261004T214546.450240Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "raised_pants_body_band"
+      ],
+      "findings": [
+        {
+          "code": "raised_pants_body_band",
+          "evidence": "Rear-view render showed a broad skin-colored gap where deleting protruding overlap faces removed coverage but body vertices stayed visible near the pants opening.",
+          "lesson": "Do not remove all overlap coverage without a matching waist occlusion or a garment asset whose top fits this body and shirt."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23797928,
+          "sha256": "47fb4bd8b242fc9e5586dec4a002cd71c3dbb3c465f927aedabe8936d7a69373",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11983756,
+          "sha256": "397ba87883ec007762b85fd3f9938ac4dc29988b9f7e575c4ce02077e00858db",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25563792,
+          "sha256": "11970cde7f05f520a1c713ffb0f6ea93125fed016ad9a168797dc4cd918ef4a6",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T214546.450240Z.json",
+      "build_manifest_sha256": "4acdd383cb0d4b7993233a787b51bdcf9641844108bf8c2463b9c97cc78963b6"
+    },
+    {
+      "build_id": "20261004T214819.417259Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "sweater_pant_waist_intersection"
+      ],
+      "findings": [
+        {
+          "code": "sweater_pant_waist_intersection",
+          "evidence": "Rear-view review of the high-rise cargo pants shows sweater-colored strips and pale body patches around the shared waistband; the pants reach the waist but the untucked hem intersects it.",
+          "lesson": "For this high-rise pant and sweater pair, tuck the sweater mesh slightly below the pants top boundary so the pants form the outer layer; avoid extending the pants through the sweater."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29219704,
+          "sha256": "39e1d6436fd5b5314900873d76547cef9e026055893354a18390bcfcccc6e589",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13267044,
+          "sha256": "720c22e8f300be6218af072de07949bcac5a37abb7259ed7cc395b42a0767d1a",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 28157340,
+          "sha256": "9406a55381d08a3467a0ad4dbb9d7c54341f3abe0ba4b6b63cf05d42d67e0e9f",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T214819.417259Z.json",
+      "build_manifest_sha256": "2ce1669e4d1d86b540a1a56b679a84d57ecc4d8e148740234f42ec099cf6881f"
+    },
+    {
+      "build_id": "20261004T215143.134413Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "body_poke_through_sweater_hem"
+      ],
+      "findings": [
+        {
+          "code": "body_poke_through_sweater_hem",
+          "evidence": "Rear-view close render shows two body-colored patches protruding through the sweater at its lower hem after raising the cargo pants.",
+          "lesson": "Treat the central lower hem as a covered region for body masking while preserving body vertices near the collar and sleeve cuffs."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29157468,
+          "sha256": "f0087b12ae406d371203a81802fd034c0cceb1e40b420401f9bdf75c05645fe6",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13273808,
+          "sha256": "ae5131c63c95d388e4dd3fec7d8e6f6aff20d0a0d8267f3bfd4eebb7ff43081c",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 28109276,
+          "sha256": "36a2576fd2e4455a86e466c191d852fa115734a5cd70714bb61441ea90e1c9a9",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T215143.134413Z.json",
+      "build_manifest_sha256": "f57af290f74a7b44749e74ba957307fd8d9de721188737b14bfd68801b0b7f3e"
+    },
+    {
+      "build_id": "20261004T215613.548269Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "waist_gap_after_pants_trim"
+      ],
+      "findings": [
+        {
+          "code": "waist_gap_after_pants_trim",
+          "evidence": "Rear review still shows a visible strip of skin between the full-length sweater hem and cargo pants after trimming the pants waistband to 5mm below the sweater hem.",
+          "lesson": "Do not use the sweater\u2019s lowest central vertex as a global pants cutoff; measure the rear hem profile or preserve a small concealed pants overlap under the sweater."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29222564,
+          "sha256": "5e7760efa223fa546d8f07a8facea16668eafdf195d21868bd3dc41cee7c6691",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13099372,
+          "sha256": "0ab3dbc5a536ff7ee4016f4e8fa4704e8a38d146c3ef2806a9d2ed711263fd4b",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27959596,
+          "sha256": "65310aa5298b990d01bd59138c926d2e55e31f154787b0d58f6e6b96d0b9443a",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T215613.548269Z.json",
+      "build_manifest_sha256": "c98830ae5b2ac4bb03f7b6786c1d147d87b0750e9cfde26deba227340531e1fb"
+    },
+    {
+      "build_id": "20261004T215737.453503Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "residual_waist_skin_strip"
+      ],
+      "findings": [
+        {
+          "code": "residual_waist_skin_strip",
+          "evidence": "Rear review shows the sweater now overlaps the pants, but a narrow strip of skin remains visible along the waist.",
+          "lesson": "Keep a deeper concealed pants overlap beneath the intact sweater hem so the hem covers the waistband and body mask removes exposed skin."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29224760,
+          "sha256": "e88668ada2b539d431583ba3587f951844e628f29e022e8c898200d8c9c1d925",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13084516,
+          "sha256": "89368f3e974cc88fd400e24cfeb62aeefa8b89ab99535c5d9ca87ed22d526888",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27946768,
+          "sha256": "cc4344289503155ff40e49882bf20c63d82fd93842ec414431d1dad8d528938a",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T215737.453503Z.json",
+      "build_manifest_sha256": "e484b9ace27b0ba44df00130d9524a4afbf67d3d631547d12916e195b0e0b384"
+    },
+    {
+      "build_id": "20261004T215840.581146Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "rear_waist_clothing_intersection"
+      ],
+      "findings": [
+        {
+          "code": "rear_waist_clothing_intersection",
+          "evidence": "Rear review still shows uneven sweater and pants geometry meeting along the back waistband; the flat global Z trim does not follow the sweater hem profile.",
+          "lesson": "Derive the pants boundary from the generated sweater\u2019s hem loop so each generated morph is fitted to its own actual garment geometry."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29226052,
+          "sha256": "d9feebb76a3dd788956a52455320e3d69f3327ba7b18a465f73fe96684bfd903",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13084952,
+          "sha256": "9558b283187b02ef90a8b2071431fa2b6f670f13ee3c03aa4e1db2c4c462c3e8",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27948376,
+          "sha256": "16a4fd9026db4f956d2a460cd7f251a75f340ec376e06a93a6e0b5afdbb41aeb",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T215840.581146Z.json",
+      "build_manifest_sha256": "69901c4b4a2df90e69343598d32836b40381ef8f03d2dbc281402a1adddc78b6"
+    },
+    {
+      "build_id": "20261004T220259.772352Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "curved_fit_leaves_hem_fragments"
+      ],
+      "findings": [
+        {
+          "code": "curved_fit_leaves_hem_fragments",
+          "evidence": "Rear review of the hem-loop Boolean trim shows small sweater-colored fragments overlapping the pants waistband.",
+          "lesson": "Place the pants top slightly below the generated sweater hem curve so the intact sweater visibly overlaps the waistband without coplanar edges."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29229464,
+          "sha256": "cd1914434f475259e36340011c26d4b47580dd4a48a643ab918760116bb8ae41",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13088456,
+          "sha256": "0fe87d05d7676d5ac6cd60baeb6c71a03b51b2328b4966a471bedf021a12df5b",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27958900,
+          "sha256": "dff0a68c26b261cb5b5882a2abbfde063a46f7527672bf22ef25cf44d0eb7b1e",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T220259.772352Z.json",
+      "build_manifest_sha256": "f6609393cd91657f6d3bfaecdd2e9c204eed2f9e55a840805ccd8b4f0d40ad38"
+    },
+    {
+      "build_id": "20261004T221418.960333Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "garment_culling_and_waist_cut_artifacts"
+      ],
+      "findings": [
+        {
+          "code": "garment_culling_and_waist_cut_artifacts",
+          "evidence": "User close-ups show a dark neck/collar outline and a torn black gap with visible holes across the rear waistband in the current candidate.",
+          "lesson": "Keep source garments double-sided where winding/open shells require it; validate the curved cutter against garment surfaces and ensure the pants top remains covered by the full sweater hem."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29227340,
+          "sha256": "c914a7c7f97fa1a5c634f12764a48f17328ae231be2dc7916b49e6fbe7645f3e",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13087932,
+          "sha256": "8fbf8fbc3dcc27068b0ee65bda00e34cf10595b2f6f0c32c99a06aad3f9e67ad",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27956544,
+          "sha256": "86aab85da67dbd2bbf2afdc1991ddfdfd1cce2701e8fe87e85f16ef955f3bf0f",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T221418.960333Z.json",
+      "build_manifest_sha256": "9befddf9e62b6d8b6254a76b9092300f20a44aa87c20d19d3d78d7206552201b"
+    },
+    {
+      "build_id": "20261004T221803.577416Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "collar_mask_cavity",
+        "rear_waist_body_gap"
+      ],
+      "findings": [
+        {
+          "code": "collar_mask_cavity",
+          "evidence": "The generated close render shows a dark cavity at the sweater neck; disabling the body mask removes it and reveals a continuous neck surface.",
+          "lesson": "Use a larger protected clearance only around the sweater collar opening so neck vertices remain visible without weakening cuff/hem masking."
+        },
+        {
+          "code": "rear_waist_body_gap",
+          "evidence": "With body masking disabled, a skin strip appears between the sweater hem and pants, while the normal render shows that strip as a black gap.",
+          "lesson": "Extend the pants top above the hem profile by a small measured overlap so the full-length sweater conceals the waistband and body mask does not expose a void."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29227340,
+          "sha256": "f034ad97760a853da498fc993027d94ddba8ff9e8ccd92965d17ef6b5ba2e707",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13087972,
+          "sha256": "98242d5e3ffe47a9f76ee9309c71478c4b85560cf426b9b43d40d09e8a31ecf1",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 27956544,
+          "sha256": "f8b8e1b94d38d4482909289fde6f80a3a8d897837812e0942d6694caff3b7de6",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T221803.577416Z.json",
+      "build_manifest_sha256": "295cbb6ee0ec322ed7306837af69e5f544331e3c9e5334155c6f433c1cab17a9"
+    },
+    {
+      "build_id": "20261004T222843.470811Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "waist_surface_intersections_remain"
+      ],
+      "findings": [
+        {
+          "code": "waist_surface_intersections_remain",
+          "evidence": "The generated manifest reports 211 overlapping shirt-pants triangle pairs concentrated between z=0.875 and 0.931 m at the waist, despite the reduced visible gap.",
+          "lesson": "Subtract a small solidified sweater shell from the pants after curved hem trimming, then require another intersection measurement and rear render."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29227280,
+          "sha256": "59d78d524edbed0058954b0587ca881b68a93e9b421de7d6d61fbc01b062dbe6",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13139436,
+          "sha256": "d73742e74ec76e559f2255ee056f70ac1606458b91ce6963b3e60fcf1d0df22a",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 28021192,
+          "sha256": "27019a57327fc5b3d0346d28b6d39be4f3a2ddb75624533101d0160137a7c4f1",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T222843.470811Z.json",
+      "build_manifest_sha256": "6e52a1e4df10d098bbf9998b664322a9052651e7b6d6041dac2f95c376add6cd"
+    },
+    {
+      "build_id": "20261004T223118.484489Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "sweater_shell_boolean_removed_pants"
+      ],
+      "findings": [
+        {
+          "code": "sweater_shell_boolean_removed_pants",
+          "evidence": "The rear render after subtracting a solidified full sweater shell shows the cargo pants missing from the hips and legs, leaving exposed skin despite only seven measured shirt-pants triangle pairs.",
+          "lesson": "Do not Boolean-subtract the full sweater shell from all pants; restrict collision resolution to the waist overlap region and verify pants bounds and face counts before export."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 29185820,
+          "sha256": "c0445c7b9c1a8cf113490be63dfe800a87963bf90404e8d71f33f9d4544b1671",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 13474568,
+          "sha256": "50127cd20afe9d5fa1c7c7bb7dd29e09b1793fd1cfa3227ebc2f25c3ac7aef29",
+          "disposition": "deleted_after_verified_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 28388976,
+          "sha256": "4669dbf60edf988563499bcfca247e63a39b4a325345cdd7c14032beb581aa0c",
+          "disposition": "deleted_after_verified_manifest_archive"
+        }
+      ],
+      "blender_backups_at_cleanup": [],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T223118.484489Z.json",
+      "build_manifest_sha256": "dc2ecd17f67dfc56b9de844e5e612da2c3563b21ccf3759fb49df326a2cf28da"
     }
   ],
   "enforced_lessons": [
