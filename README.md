@@ -1,6 +1,9 @@
 # Project Atlas: The Reach
 
-The Reach is Atlas's playable reference world. The browser movement/world prototype remains, but there is currently no licensed Atlas character model registered. The project opens on a clean, undecorated ground plane while the character geometry pipeline is being rebuilt around assets with verifiable rights.
+The Reach is Atlas's playable reference world: a local movement and interaction
+prototype with an atmospheric procedural landscape, a stylized placeholder
+traveler, and an explainable event history. No licensed Atlas character model
+is registered, and the full persistent-world gameplay loop is not implemented.
 
 ## Start here
 
@@ -26,8 +29,14 @@ Run the local, deterministic character authoring UI from the repository root:
 python3 tools/characters/recipe_studio_server.py
 ```
 
-Open <http://127.0.0.1:8766>. The first workbench is limited to the Stone Troll
-profile and explicit geometry values such as `height 220 cm` and
+Open <http://127.0.0.1:8766> for the compact 3D model review screen. It lists
+local Troll Sample 1 remesh GLBs when they are present and saves issue markers
+with notes and 3D coordinates. These source-derived review meshes are not
+included in the public repository because their rights and provenance are not
+cleared; the review screen will report that no models are available in a fresh
+checkout until a separately rights-reviewed candidate is supplied locally.
+Open <http://127.0.0.1:8766/builder> for the Stone Troll recipe
+builder, which is limited to explicit geometry values such as `height 220 cm` and
 `shoulders 125%`. Qualitative words remain attached to the brief and are not
 converted into proportions automatically. The UI can compile a candidate build
 plan and ask Blender to generate an unrigged blockout for review. It does not

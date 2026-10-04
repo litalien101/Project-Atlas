@@ -1,5 +1,101 @@
 # Project Atlas Change History
 
+### 2026-10-04 — Clarify public model-review asset boundaries
+
+- Updated the project overview to describe the current local game accurately
+  and documented that the Recipe Studio review screen requires locally
+  supplied candidates. Troll Sample 1 source-derived remesh files are not
+  included in the public changes because their rights and provenance remain
+  unresolved.
+
+### 2026-10-04 — Clarify the Reach HUD hierarchy
+
+- Removed duplicate header shortcuts for inventory and memory; the action bar
+  is now the single home for those panels, with expanded-state accessibility
+  reflected on its controls.
+- Made world status a compact, keyboard-operable disclosure for traveler and
+  event counts; event rationale remains in the dedicated memory view instead
+  of being repeated in another always-open card. Reduced the visible activity
+  list to the two latest meaningful events, excluding movement and session
+  lifecycle noise.
+- Reworded the main lead as a clear next step with context that changes as the
+  player meets Mara and awakens the Beacon. Corrected the action-bar grid to
+  match its four controls on desktop and mobile.
+- CI passed: 20 JavaScript tests, 46 Python tests, asset validation, and client
+  build. Browser checks verified the disclosure, drawer section switching,
+  hidden-panel behavior, and non-overlapping 1440×900 and 390×844 layouts.
+  `git diff --check` passed.
+
+### 2026-10-04 — Restore and polish the Reach gameplay presentation
+
+- Restored the full in-game HUD that had been hidden by the focused character
+  preview mode, refined its panels, action bar, controls, and responsive layouts,
+  and added focus/reduced-motion support.
+- Replaced the flat sky and abrupt playable-ground edge with a warm atmospheric
+  sky, distance haze, seamless deterministic grassland extending to the
+  horizon, and a restrained screen vignette. Added a simple procedural traveler
+  silhouette because no licensed character asset is registered; no new assets
+  or gameplay systems were added.
+- Restored the opening lead to finding Mara before waking the Listening Beacon.
+  Clarified that appearance controls save locally but do not affect the
+  prototype traveler.
+- `npm run ci` passed: 20 JavaScript tests, 46 Python tests, asset validation,
+  and client build. Browser review verified the 1440×900 and 390×844 layouts,
+  an initially closed memory panel, and inventory/appearance tab state.
+  `git diff --check` passed.
+
+### 2026-10-04 — Reconcile server audit and status notes
+
+- Marked the completed action-validation, projection-rebuild, and disconnect
+  replay findings and their networking regressions as implemented in the server
+  audit.
+- Corrected the status table to reflect that clothing preparation was removed
+  and no clothing workflow is currently available.
+- `npm run ci` passed: 20 JavaScript tests, 46 Python tests, asset validation,
+  and client build. Python `compileall` and `git diff --check` passed.
+
+### 2026-10-04 — Bound counterfactual replay and release gameplay writes
+
+- Counterfactual simulation snapshots are limited to 10,000 ordered world
+  events; larger histories fail explicitly rather than silently truncating.
+- Moved deterministic replay outside the gameplay write lock and SQLite write
+  transaction. The result is persisted in a short write transaction after replay.
+- Added tests for over-cap rejection and for a concurrent traveler write
+  completing within 250 ms while simulation replay is paused.
+- Updated the world-model specification, server audit, and implementation
+  status. Session tests passed (12 tests), the full Python suite passed
+  (46 tests), Python compilation passed, and `git diff --check` passed.
+
+### 2026-10-04 — Replayable session release
+
+- Explicit session close and idle expiration now append a `PlayerSessionReleased`
+  event in the same SQLite transaction that persists zero movement velocity.
+- Projection replay applies the release event, preventing a rebuild from
+  restoring stale movement. Added a regression covering movement, release,
+  tampered projection rebuild, and duplicate close.
+- Updated the local multiplayer contract and implementation status. Focused
+  networking and session suites passed (25 and 10 tests); the full Python
+  suite passed (44 tests). Python compilation and `git diff --check` passed.
+
+### 2026-10-04 — Secure action inputs and rebuild world projections
+
+- Added action-type allowlists at both the HTTP and store boundaries, including
+  movement-frame and movement-input fields. Unsupported and server-only request
+  fields are rejected before an event or projection change can be committed.
+- Kept attack rewind sequence as a client hint, but pass the resolved attacker
+  and target snapshots to world rules as separate server-trusted context.
+- Projection rebuild now starts event-derived shared/player state and ticks
+  from their initial per-player baseline, then replays events. Appearance
+  profiles now live in separate `player_profiles` rows; existing saved profiles
+  migrate in place and remain unchanged by projection rebuild.
+- Added regressions for forged/unknown action fields, HTTP rejection without
+  state or event changes, accepted server-resolved rewind, and repeated rebuild
+  equality for inventory, health, journal, combat, appearance, and ticks.
+- Updated the local multiplayer contract and implementation status. Focused
+  networking/session tests passed (24 and 10 tests), the full Python suite
+  passed (43 tests), modified Python files compiled, and `git diff --check`
+  passed. No full JavaScript test/build was needed for these server changes.
+
 ### 2026-10-03 — Remove retired character and clothing tools
 
 - Deleted six source-dependent character/clothing scripts tied to the removed

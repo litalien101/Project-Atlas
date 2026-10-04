@@ -81,11 +81,19 @@
   removed, the profile currently has no registered character mesh to affect;
   hair, age, stress, and emotion do not drive appearance.
 - **World persistence and analysis:** ontology-validated entities, relationships,
-  actions, and provenance events are stored in SQLite. APIs expose authored
-  graph edits, knowledge/memory reads, observed-event analytics, a narrow
-  deterministic resource-progression simulation, policy evaluation, and
-  human-reviewed decisions. Deployment of policy-approved world changes is
-  not implemented.
+  actions, and provenance events are stored in SQLite. Action requests reject
+  fields not declared for their action type, including server-only simulation
+  and rewind context; rewind context is derived from recent server-recorded
+  movement history. Projection rebuild resets event-derived shared/player state
+  and movement ticks to their defaults before replaying immutable events.
+  Appearance profiles are stored separately from the replay-derived projection.
+  Session release records a `PlayerSessionReleased` event atomically with
+  stopping movement, and projection rebuild replays that stopped velocity.
+  APIs expose authored graph edits,
+  knowledge/memory reads, observed-event analytics, a narrow deterministic
+  resource-progression simulation capped at 10,000 event-history rows and
+  replayed outside the gameplay write lock, policy evaluation, and human-reviewed
+  decisions. Deployment of policy-approved world changes is not implemented.
 
 | Area | Status | Notes |
 | --- | --- | --- |
@@ -108,10 +116,10 @@
 | Relationship discovery/miner | Planned | Recipe curation can run alongside geometry work; do not claim mined findings until the vocabulary and independent licensed dataset support them. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |
 | Production-quality model generation | Not implemented | Requires a suitable modeling path and high-detail source/sculpt; do not claim the current blockout is production ready. |
-| Shared pipeline for every game model category | Not implemented | Character generation and clothing preparation exist; there is no unified generator for props, buildings, environments, and all assets. |
+| Shared pipeline for every game model category | Not implemented | Character generation exists, but clothing preparation was removed with its source-dependent base/region map; there is no unified generator for props, buildings, environments, clothing, and all assets. |
 | Age/stress-driven appearance | Not implemented | No simulation state currently changes hair, materials, morphs, or other visual traits over time. |
-| Playable world client | Prototype implemented | Browser world/movement sandbox and appearance data persistence; no character model is currently registered after rights cleanup. |
-| World graph and history | Local foundation implemented | SQLite entities/relationships and immutable, provenance-bearing events; loopback development API. |
+| Playable world client | Prototype implemented | Browser movement sandbox with a responsive MMO-inspired HUD, a plain-language next-step lead, compact expandable world status, atmospheric procedural sky and continuous grassland, a simple procedural traveler silhouette, and explainable world-event memory; no licensed character asset is registered, so appearance values remain saved profile data only and do not alter the in-world silhouette. |
+| World graph and history | Local foundation implemented | SQLite entities/relationships and immutable, provenance-bearing events; strict action-field validation and event-replayable projections; loopback development API. |
 | Analytics and simulation | Narrow prototype implemented | Event counts and one deterministic recorded-event resource-progression counterfactual. |
 | NPC personality, emotion, memory, autonomous behavior | Not implemented | Current NPCs and dialogue are scripted prototypes; no persistent agent mind/state yet. |
 | Player/NPC and NPC/NPC relationships | Data foundation only | Ontology relationships and event links exist; evolving social relationship behavior is not implemented. |
