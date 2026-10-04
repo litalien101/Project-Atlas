@@ -72,4 +72,5 @@ budget. Three.js supports KTX2/Basis through `KTX2Loader`, which must be
 configured on `GLTFLoader` before assets using `KHR_texture_basisu` are loaded.
 
 References: [Three.js KTX2Loader](https://threejs.org/docs/pages/KTX2Loader.html),
-[Three.js GLTFLoader](https://threejs.org/docs/pages/GLTFLoader.html).
+[Three.js GLTFLoader](https://threejs.org/docs/pages/GLTFLoader.html), and
+[Blender normal-map baking](https://docs.blender.org/manual/en/latest/render/cycles/baking.html).
