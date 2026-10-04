@@ -70,3 +70,7 @@ deformation, and whether facial or twist bones are needed.
 
 See [`specs/atlas-character-generation.md`](../../specs/atlas-character-generation.md)
 for the broader pipeline boundary and next steps.
+
+Superseded failed builds are removed after their manifests, failure evidence,
+and artifact hashes are recorded in
+[`art/characters/failure_records/README.md`](../../art/characters/failure_records/README.md).
