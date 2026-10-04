@@ -1,4 +1,4 @@
-"""Shared validation for AI-authored Atlas design profiles."""
+"""Shared validation for Atlas design profiles."""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SCHEMA_PATH = ROOT / "specs/atlas-character-design-profile-v1.schema.json"
-PROFILE_SCHEMA = "atlas-character-design-profile/v1"
+SCHEMA_PATH = ROOT / "specs/atlas-character-design-profile-v2.schema.json"
+PROFILE_SCHEMA = "atlas-character-design-profile/v2"
 COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 SLUG = re.compile(r"^[a-z][a-z0-9_]{1,47}$")
 RANGES = {
@@ -28,11 +28,10 @@ RANGES = {
     "muscle_percent": (65, 160),
     "nose_percent": (70, 160),
 }
-ARCHETYPES = {"humanoid", "troll", "orc", "elf", "goblin"}
+ARCHETYPES = {"humanoid"}
 STYLES = {"realistic", "stylized", "low_poly", "painted"}
 ACTIONS = {"idle", "walk", "run", "jump", "fall", "land", "climb", "swim", "attack"}
-PALETTE_KEYS = {"skin", "secondary", "accent", "eyes", "horns", "tusks"}
-TRAIT_KEYS = {"horns", "tusks", "pointed_ears"}
+PALETTE_KEYS = {"skin", "eyes"}
 
 
 def _object(value: Any, expected: set[str], label: str, optional: set[str] | None = None) -> dict[str, Any]:
@@ -55,7 +54,7 @@ def validate_profile(value: Any) -> dict[str, Any]:
         raise ValueError("profile must be an object.")
     value = dict(value)
     value.setdefault("style", "realistic")
-    top = _object(value, {"schema", "character_id", "display_name", "concept", "base_template", "style", "body", "palette", "traits", "actions"}, "profile", {"reference_calibration"})
+    top = _object(value, {"schema", "character_id", "display_name", "concept", "base_template", "style", "body", "palette", "actions"}, "profile", {"reference_calibration"})
     if top["schema"] != PROFILE_SCHEMA:
         raise ValueError(f"schema must be {PROFILE_SCHEMA!r}.")
     if not isinstance(top["character_id"], str) or not SLUG.fullmatch(top["character_id"]):
@@ -63,7 +62,7 @@ def validate_profile(value: Any) -> dict[str, Any]:
     if not isinstance(top["display_name"], str) or not top["display_name"].strip() or len(top["display_name"]) > 80:
         raise ValueError("display_name must contain 1 to 80 characters.")
     if top["base_template"] != "atlas_parametric_humanoid_v1":
-        raise ValueError("v1 generation supports only the atlas_parametric_humanoid_v1 template.")
+        raise ValueError("v2 currently supports only the atlas_parametric_humanoid_v1 template.")
     if not isinstance(top["style"], str) or top["style"] not in STYLES:
         raise ValueError(f"style must be one of: {', '.join(sorted(STYLES))}.")
 
@@ -144,9 +143,6 @@ def validate_profile(value: Any) -> dict[str, Any]:
     for field, color in palette.items():
         if not isinstance(color, str) or not COLOR.fullmatch(color):
             raise ValueError(f"palette.{field} must be a six-digit hex color.")
-    traits = _object(top["traits"], TRAIT_KEYS, "traits")
-    if any(not isinstance(value, bool) for value in traits.values()):
-        raise ValueError("Every traits value must be a boolean.")
     actions = top["actions"]
     if not isinstance(actions, list) or not actions or any(not isinstance(action, str) for action in actions):
         raise ValueError(f"actions must be a non-empty list using: {', '.join(sorted(ACTIONS))}.")

@@ -25,7 +25,7 @@ subsystem; do not infer production readiness from a generated preview.
   bundled browser output (`web/game.js`). Edit `web/app.js` and source modules;
   rebuild the bundle with `npm run build`.
 - `art/characters/profiles/`: input design profiles, validated against
-  `specs/atlas-character-design-profile-v1.schema.json`.
+  `specs/atlas-character-design-profile-v2.schema.json`.
 - `tools/characters/`: deterministic Blender generation, asset preparation,
   profile validation, base review, landmark placement, and asset checks.
 - `art/characters/pending_models/` and `pending_equipment/`: review artifacts;
@@ -37,35 +37,19 @@ subsystem; do not infer production readiness from a generated preview.
 
 ## Character pipeline
 
-The repository does not call an AI API. The local Recipe Studio can compile a
-small set of explicit text measurements and feature toggles into a Stone Troll
-profile; qualitative prose is preserved but not guessed into geometry. A user
-can also supply compact design-profile JSON. Blender scripts deterministically
-generate or process the mesh. The stages are profile, recipe/build plan, base
-generation, human base acceptance, texture/material authoring, landmark
-placement, rig/weight review, animation, then separate runtime release review.
-The runtime appearance save profile is distinct from the creator design
-profile. Begin with `specs/atlas-character-generation.md` and follow its
-commands and review gates.
+Atlas uses a local, deterministic authoring workflow. The current baseline is a
+neutral parametric humanoid profile; it is technical scaffolding, not the new
+character design. The Recipe Studio maps only explicit supported measurements.
+Blender produces review blockouts; it does not generate production topology,
+materials, a rig, weights, or animation. Keep design intent, observed reference
+data, generated candidates, review decisions, and runtime assets as separate
+artifacts.
 
-Read `MASTER_FILE.md` as the documentation index. Use `VISION.md` for the
-intended player experience, `ARCHITECTURE.md` for system design, `STATUS.md`
-for implemented versus planned capabilities, `ROADMAP.md` for work sequencing,
-`DECISIONS.md` for durable choices, and `CHANGELOG.md` for dated history. Update
-each document according to the ownership rules in the index when making a
-substantial pipeline or world-system change. Keep implementation claims factual;
-do not mark a planned capability as implemented.
-
-The former `stone_troll` calibration was removed during the rights audit; do
-not restore or use that source as troll geometry. Procedural generation creates
-a low-detail blockout and requires `--allow-blockout`. An optional geometry-seed
-path can adapt a separately calibrated `.glb` or `.blend` only after a human
-attests rights, topology, and design fit; hash checks and that attestation do
-not establish visual quality or production readiness. No current source is an
-approved Stone Troll geometry seed. The pipeline has no high-detail mesh
-generator. The image path uses local pixel measurements only; it cannot infer
-hidden geometry, surface detail, or production topology. See
-`specs/atlas-character-generation.md` for the source-seed workflow and limits.
+Before changing a stage, update its versioned schema and workflow documentation.
+Preserve source hashes and license evidence for any reference input. A candidate
+remains outside the runtime registry until visual review and release checks pass.
+Do not claim that the observation intake is a trained model or that authored
+rules were learned from data. Begin with `specs/atlas-character-generation.md`.
 
 ## Useful commands
 
@@ -80,7 +64,7 @@ python3 -m atlas_server
 Character profile and asset checks:
 
 ```sh
-npm run characters:profile-check -- art/characters/profiles/stone_troll.json
+npm run characters:profile-check -- art/characters/profiles/starter_humanoid.json
 npm run assets:check
 ```
 
@@ -92,7 +76,7 @@ Blender generation requires Blender 4.x or newer with glTF support:
 
 ```sh
 blender --background --python tools/characters/generate_character_base.py -- \
-  --profile art/characters/profiles/stone_troll.json
+  --profile art/characters/profiles/starter_humanoid.json
 ```
 
 The project test suites are available through `npm run ci`; review the README

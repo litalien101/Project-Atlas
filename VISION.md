@@ -18,10 +18,10 @@ visible silhouette and appearance, but it does not contain all the depth,
 topology, back-side anatomy, or rigging needed for a production model.
 
 The system should also learn reusable design knowledge from collections of
-reviewed character recipes. For example, after reviewing many independent troll
+reviewed character recipes. For example, after reviewing many independent humanoid
 examples, it should be able to propose that certain traits or structural
 relationships commonly occur together, show the evidence and uncertainty, and
-offer those patterns when composing a new troll recipe. Learned patterns are
+offer those patterns when composing a new humanoid recipe. Learned patterns are
 recommendations until reviewed; they must not silently become universal anatomy
 rules.
 

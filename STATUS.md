@@ -4,7 +4,7 @@
 
 ### Implemented pipeline inventory
 
-- **Profiles and recipes:** `atlas-character-design-profile/v1` has a JSON
+- **Profiles and recipes:** `atlas-character-design-profile/v2` has a JSON
   Schema and Python validator. `compile_character_recipe.py` applies the
   authored grammar, scales supported proportions, carries relationships/tags,
   and records profile and grammar hashes. Draft archetype rules require an
@@ -19,7 +19,7 @@
   It is schema groundwork only; no current generator executes this contract.
 - **Text-to-recipe UI:** `recipe_studio_server.py` serves a loopback-only,
   chat-style workbench. `deterministic_recipe_compiler.py` maps a limited set
-  of explicit measurements and feature toggles into the Stone Troll profile;
+  of explicit measurements and feature toggles into the Neutral humanoid baseline profile;
   unparsed prose is preserved but does not silently alter geometry. The UI
   compiles a character recipe/build plan and can run Blender to create a
   blockout candidate. There is no general natural-language parser or AI
@@ -54,14 +54,14 @@
   existing character recipe now flow through a checksum-bound plan into
   Blender. This does not execute the full cross-category model-recipe schema;
   the builder still emits a low-detail blockout and no target-matching Stone
-  Troll mesh has been accepted.
+  Humanoid mesh has been accepted.
 - **Geometry acceptance:** Current review tooling requires explicit sculpt and
   T-pose attestations, a passing sampled shoulder-connectivity check, and an
   unchanged preview hash. It does not yet measure the full geometry acceptance
   checklist; complete visual/anatomical review remains human-led.
 - **Texture, landmark, rig, and animation stages:** Existing marker guides and
   manual marker-placement UI are a handoff foundation. Texture recipe/build,
-  assisted marker placement, a Stone Troll skeleton/weight generator, and its
+  assisted marker placement, a Neutral humanoid baseline skeleton/weight generator, and its
   animation authoring/approval stages are not implemented. The former raw
   Mixamo clips were removed during the rights audit; no character animations are
   currently registered.
@@ -100,18 +100,17 @@
 | Design profiles | Implemented | Structured JSON; free-form prompts are not parsed by Blender. |
 | Character geometry builder | Implemented, limited | Explicit `--allow-blockout` procedural mode plus an opt-in, hash-pinned `.glb`/`.blend` source-seed path with human review attestation and coarse supported warps. Neither path is production-ready. |
 | Front-image measurement | Tool implemented, no retained image data | Use only sources with documented rights; a single view cannot infer depth or production surface detail. |
-| Licensed Troll calibration | Not retained | Stale calibration tied to an unavailable source was removed; CC-BY Troll Mauler remains an authoring reference only. |
 | Base review gate | Implemented, human-led | Requires sculpt and T-pose attestations; approval unlocks rig work only. |
-| Stone Troll unrigged geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. No armature or skinning is required for this first approval; rigging follows later. |
+| Neutral humanoid baseline unrigged geometry-only T-pose base | Not complete | External references are available; neither matches the final design or is accepted as the target mesh. No armature or skinning is required for this first approval; rigging follows later. |
 | Recipe compiler | Implemented | Applies authored profile/grammar data; does not learn from a dataset. |
 | Character recipe-to-Blender geometry plan | Implemented, limited | Hash-bound plan applies supported recipe body proportions and T-pose to procedural geometry or a separately calibrated and reviewed source mesh; it does not execute the full model-recipe contract. |
-| Recipe Studio UI and deterministic text compiler | Implemented prototype | Loopback chat UI handles explicit Stone Troll measurements/toggles, plan compilation, procedural blockout generation, and a candidate gallery with local GLB preview, reference-only keep status, and confirmed deletion scoped to one Recipe Studio build; source-seeded builds remain CLI-only and adjectives are not mapped automatically. |
+| Recipe Studio UI and deterministic text compiler | Implemented prototype | Loopback chat UI handles explicit Neutral humanoid baseline measurements/toggles, plan compilation, procedural blockout generation, and a candidate gallery with local GLB preview, reference-only keep status, and confirmed deletion scoped to one Recipe Studio build; unparsed adjectives remain in the brief and do not alter geometry. |
 | Cross-category model recipe schema | Contract groundwork | Captures build detail and provenance; builder/compiler integration is not implemented. |
-| General text-to-recipe authoring | Planned, AI optional | Current prototype only maps explicit values for the Stone Troll; broader vocabulary, templates, ambiguity handling, and editable structured review remain. |
+| General text-to-recipe authoring | Planned, AI optional | Current prototype only maps explicit values for the Neutral humanoid baseline; broader vocabulary, templates, ambiguity handling, and editable structured review remain. |
 | Geometry-to-texture approval workflow | Planned | Geometry-first order is documented; no general stage-state service or procedural texture builder exists. |
 | Marker placement UI and skeleton generation | Planned | Blender add-on supports manual marker edits/exports only; the Mixamo-style visual workflow and marker-driven armature builder are not implemented. |
 | AI-assisted landmark proposal | Planned | Suggestions, per-marker confidence, and provenance are not implemented. |
-| Stone Troll rig and animation pipeline | Not implemented | No character rig or animation clips are registered; rig generation must follow approved visual markers. |
+| Neutral humanoid baseline rig and animation pipeline | Not implemented | No character rig or animation clips are registered; rig generation must follow approved visual markers. |
 | Structured observation dataset | Intake prototype | Blender source inspection emits hash-pinned technical dossiers and unknown-by-default draft observations; no reviewed dataset has been collected. |
 | Relationship discovery/miner | Planned | Recipe curation can run alongside geometry work; do not claim mined findings until the vocabulary and independent licensed dataset support them. |
 | Learned-rule approval and recipe composition | Planned | Candidate findings need evidence and human approval before grammar use. |

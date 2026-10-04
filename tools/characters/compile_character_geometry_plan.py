@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/characters"))
 from character_design_profile import load_profile  # noqa: E402
 
-PROFILE_SCHEMA_PATH = ROOT / "specs/atlas-character-design-profile-v1.schema.json"
+PROFILE_SCHEMA_PATH = ROOT / "specs/atlas-character-design-profile-v2.schema.json"
 RECIPE_SCHEMA_PATH = ROOT / "specs/atlas-character-recipe-v1.schema.json"
 PLAN_SCHEMA = "atlas-character-geometry-build-plan/v1"
 BUILDER_PATH = ROOT / "tools/characters/generate_character_base.py"
@@ -183,7 +183,7 @@ def compile_plan(profile_path: Path, recipe_path: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("profile", type=Path, help="Validated atlas-character-design-profile/v1 JSON")
+    parser.add_argument("profile", type=Path, help="Validated atlas-character-design-profile/v2 JSON")
     parser.add_argument("recipe", type=Path, help="Compiled atlas-character-recipe/v1 JSON")
     parser.add_argument("--output", type=Path, required=True, help="Frozen candidate build-plan JSON output")
     args = parser.parse_args()

@@ -1,4 +1,4 @@
-"""Validate an AI-authored Atlas character design profile."""
+"""Validate an Atlas character design profile."""
 
 from __future__ import annotations
 

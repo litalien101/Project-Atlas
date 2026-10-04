@@ -21,7 +21,7 @@ dated snapshot; verify each issue against current code before implementation.
 
 **Status: safeguards, a recipe-driven blockout path, and a reviewed-source
 adaptation path are implemented; the target geometry milestone remains open.**
-The milestone is a reviewed geometry-only Stone Troll in a complete T-pose. It
+The milestone is a reviewed geometry-only Neutral humanoid baseline in a complete T-pose. It
 does not require final textures, surface detailing, or a rig. The previous
 browser base was removed during a rights audit; no accepted runtime character
 mesh is registered.

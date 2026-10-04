@@ -1,22 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Atlas Character Design Profile v1",
-  "description": "AI-authored, human-reviewable brief consumed by deterministic parametric Blender character tools.",
+  "title": "Atlas Character Design Profile v2",
+  "description": "Human-reviewable design profile consumed by the deterministic parametric character pipeline.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema", "character_id", "display_name", "concept", "base_template",
-    "body", "palette", "traits", "actions"
+    "body", "palette", "actions"
   ],
   "properties": {
-    "schema": { "const": "atlas-character-design-profile/v1" },
+    "schema": { "const": "atlas-character-design-profile/v2" },
     "character_id": { "type": "string", "pattern": "^[a-z][a-z0-9_]{1,47}$" },
     "display_name": { "type": "string", "minLength": 1, "maxLength": 80 },
     "concept": {
       "type": "object", "additionalProperties": false,
       "required": ["archetype", "source_prompt", "design_summary", "assumptions"],
       "properties": {
-        "archetype": { "type": "string", "enum": ["humanoid", "troll", "orc", "elf", "goblin"] },
+        "archetype": { "type": "string", "const": "humanoid" },
         "source_prompt": { "type": "string", "minLength": 1, "maxLength": 2000 },
         "design_summary": { "type": "string", "minLength": 1, "maxLength": 1200 },
         "assumptions": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 240 } }
@@ -92,23 +92,10 @@
     },
     "palette": {
       "type": "object", "additionalProperties": false,
-      "required": ["skin", "secondary", "accent", "eyes", "horns", "tusks"],
+      "required": ["skin", "eyes"],
       "properties": {
         "skin": { "$ref": "#/$defs/color" },
-        "secondary": { "$ref": "#/$defs/color" },
-        "accent": { "$ref": "#/$defs/color" },
-        "eyes": { "$ref": "#/$defs/color" },
-        "horns": { "$ref": "#/$defs/color" },
-        "tusks": { "$ref": "#/$defs/color" }
-      }
-    },
-    "traits": {
-      "type": "object", "additionalProperties": false,
-      "required": ["horns", "tusks", "pointed_ears"],
-      "properties": {
-        "horns": { "type": "boolean" },
-        "tusks": { "type": "boolean" },
-        "pointed_ears": { "type": "boolean" }
+        "eyes": { "$ref": "#/$defs/color" }
       }
     },
     "actions": {

@@ -23,46 +23,31 @@ loop. See [the player experience and core loop](VISION.md#intended-player-experi
 
 ### Recipe Studio
 
-Run the local, deterministic character authoring UI from the repository root:
+Start the local authoring workbench from the repository root:
 
 ```sh
 python3 tools/characters/recipe_studio_server.py
 ```
 
-Open <http://127.0.0.1:8766> for the compact 3D model review screen. It lists
-local Troll Sample 1 remesh GLBs when present and saves surface pins and traced
-3D edit paths with instructions. These source-derived review meshes are not
-included in the public repository because their rights and provenance are not
-cleared; the review screen will report that no models are available in a fresh
-checkout until a separately rights-reviewed candidate is supplied locally.
-Open <http://127.0.0.1:8766/builder> for the Stone Troll recipe
-builder, which is limited to explicit geometry values such as `height 220 cm` and
-`shoulders 125%`. Qualitative words remain attached to the brief and are not
-converted into proportions automatically. The UI can compile a candidate build
-plan and ask Blender to generate an unrigged blockout for review. It does not
-call an AI service and does not create a production-ready mesh. Each UI build
-attempt gets a unique directory under
-`art/characters/pending_models/recipe_studio/` so revisions remain available
-for comparison. The **Generated Model Review** gallery below the workbench
-loads earlier builds from that folder, previews the selected GLB in the
-browser, and records **Keep for reference** or deletes the selected Recipe
-Studio build after confirmation. Keeping is a review note only; it does not
-approve or publish the candidate. Deletion is limited to that generated build
-folder and does not address source libraries or runtime assets.
+Open <http://127.0.0.1:8766>. Recipe Studio starts from a neutral parametric
+profile and compiles explicit measurements into a versioned profile, recipe,
+and frozen build plan. Qualitative text remains in the brief and is never
+silently converted to geometry. A build asks Blender for a low-detail, unrigged
+blockout and stores it in a unique review directory. The local candidate gallery
+supports preview, a keep-for-reference note, or deletion of that generated
+build. Neither action accepts or publishes a model. No remote AI service is
+called.
 
-The character pipeline has a design-profile contract and deterministic Blender tools. It can create either an explicitly requested procedural blockout or a draft adapted from a separately calibrated, human-approved source mesh. It does not create a finished production mesh, call an AI service, or generate a rig. Work in `art/characters/pending_models/` is authoring/review data, not a runtime asset; runtime activation requires explicit review and registration.
+The current generator is a humanoid blockout, not a general-purpose 3D model
+generator. It does not produce production topology, final materials, a rig,
+weights, or animation. See the [character-generation workflow](specs/atlas-character-generation.md)
+for the supported controls and stage gates.
 
-For source evidence intake, `tools/characters/inspect_character_source.py`
-creates a hash-pinned technical dossier, explainable technical screening
-report, and unreviewed observation draft from upright humanoid `.blend`,
-`.glb`, or `.gltf` sources. Its height-to-one shape normalization is virtual;
-original files and scale metadata are kept. The report can flag measurable
-technical issues but cannot judge visual quality, anatomy, archetype fit,
-source independence, or rights. Learning eligibility always remains
-unapproved until human review. See the [observation intake workflow](art/characters/recipe_observations/README.md)
-and the [source-model lifecycle](specs/source-model-intake-lifecycle.md).
-
-The first character quality target is the geometry-only mesh in the approved T-pose. Textures and fine surface details are later stages; passing the mesh gate is not production or runtime approval. Optional free modeling references and their exact licenses are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
+Source intake tools create hash-pinned technical dossiers and unreviewed
+observation drafts for upright humanoid `.blend`, `.glb`, and `.gltf` files.
+They do not approve visual quality, anatomy labels, source rights, lineage, or
+learning eligibility. See the [observation intake workflow](art/characters/recipe_observations/README.md)
+and [source-model lifecycle](specs/source-model-intake-lifecycle.md).
 
 ## Run locally
 
@@ -106,9 +91,15 @@ No character GLB or animation clips are currently registered. The raw Mixamo fil
 
 Clothing authoring is paused until a licensed, reviewed base mesh and rig are available. The source-dependent female-base and clothing scripts have been removed; no clothing preparation or registration workflow is currently available.
 
-### Text-to-character generation
+### Character generation
 
-The creator workflow uses a compact, validated [`atlas-character-design-profile/v1`](specs/atlas-character-design-profile-v1.schema.json) contract. Procedural blockout generation requires `--allow-blockout`. The alternate source-seeded path requires a calibrated `.glb` or `.blend`, matching hashes, documented provenance, and a human attestation of rights, topology, and design fit; it only applies coarse supported shape changes and does not retopologize. Neither path creates a finished mesh or has a high-detail text-to-3D backend. A front-view image can adjust silhouette width in procedural mode, but cannot supply hidden geometry, surface detail, or production topology. No Stone Troll source has been approved as geometry seed. See [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md) for commands, limits, and review gates.
+The versioned design-profile schema and deterministic compiler are documented
+in [`specs/atlas-character-generation.md`](specs/atlas-character-generation.md).
+Generation is opt-in and explicitly labeled `blockout_only`. The current
+profile is a neutral starting point; author the actual brief and review the
+structured fields before building. A front-view image can guide silhouette
+width but cannot supply hidden geometry, surface detail, or production topology.
+Candidates are not runtime assets until separately reviewed and registered.
 
 Run `npm run assets:check` to validate registered asset paths and SHA-256 checksums, plus GLB skin structure when a manifest entry declares its skeleton contract. `npm run assets:release-check` also requires every registered asset to have `redistribution_status: cleared`; do not clear that field without documenting the applicable redistribution terms. Automated checks do not replace visual review.
 

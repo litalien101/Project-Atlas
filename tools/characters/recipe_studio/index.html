@@ -34,7 +34,7 @@
       <section class="chat-card" aria-label="Deterministic recipe compiler">
         <div class="chat-head">
           <div class="chat-avatar">✦</div>
-          <div class="chat-title"><b>Recipe compiler</b><small>STONE TROLL PROFILE · DETERMINISTIC MODE</small></div>
+          <div class="chat-title"><b>Recipe compiler</b><small>NEUTRAL STARTER PROFILE · DETERMINISTIC MODE</small></div>
           <button id="clear-chat" class="quiet-button" type="button" title="Clear conversation">NEW DRAFT</button>
         </div>
 
@@ -43,7 +43,7 @@
             <div class="message-avatar">A</div>
             <div class="message-content">
               <div class="message-meta">ATLAS COMPILER <time>READY</time></div>
-              <p>Tell me what you want to change about the Stone Troll’s geometry. I understand explicit measurements such as <code>height 220 cm</code>, <code>shoulders 125%</code>, and feature switches such as <code>without horns</code>.</p>
+              <p>Describe the geometry you want to author. Atlas applies explicit supported measurements such as <code>height 175 cm</code> and <code>shoulders 105%</code>. Appearance and animation requests stay in the brief for later authoring stages.</p>
               <p class="message-note">Words like “massive” stay in your saved brief until you choose a numeric value. I won’t guess proportions from adjectives.</p>
             </div>
           </article>
@@ -51,14 +51,14 @@
 
         <div class="examples">
           <span>TRY A DETAIL</span>
-          <button type="button" data-prompt="Make the troll 220 cm tall, with shoulders 130% and hands 115%.">Height + proportions</button>
-          <button type="button" data-prompt="Keep the same build, but without horns and with pointed ears.">Feature switches</button>
-          <button type="button" data-prompt="Make him massive with huge hands and broad shoulders.">Qualitative wording</button>
+          <button type="button" data-prompt="Set height to 175 cm, shoulders to 105%, and hands to 100%.">Height + proportions</button>
+          <button type="button" data-prompt="Set jaw size to 100% and muscle definition to 100%.">Shape controls</button>
+          <button type="button" data-prompt="Make the silhouette powerful with broad shoulders.">Qualitative wording</button>
         </div>
 
         <form class="composer" id="prompt-form">
           <label class="sr-only" for="prompt-input">Describe the character changes</label>
-          <textarea id="prompt-input" rows="3" maxlength="2000" placeholder="For example: 220 cm tall, shoulders 130%, hands 115%, without horns…"></textarea>
+          <textarea id="prompt-input" rows="3" maxlength="2000" placeholder="For example: 175 cm tall, shoulders 105%, hands 100%…"></textarea>
           <div class="composer-bottom">
             <span><kbd>ENTER</kbd> TO COMPILE <i>·</i> <span id="char-count">0 / 2000</span></span>
             <button class="send-button" id="send-button" type="submit"><span>Parse brief</span><b>↑</b></button>
@@ -70,7 +70,7 @@
       <aside class="recipe-column">
         <section class="recipe-card" aria-labelledby="recipe-title">
           <div class="section-kicker"><span>01</span> LIVE RECIPE</div>
-          <div class="recipe-heading"><div><h2 id="recipe-title">Stone Troll</h2><p id="recipe-subtitle">Base profile · draft values</p></div><span class="draft-badge" id="draft-badge">WAITING</span></div>
+          <div class="recipe-heading"><div><h2 id="recipe-title">Neutral starting profile</h2><p id="recipe-subtitle">Replace with the approved character brief</p></div><span class="draft-badge" id="draft-badge">WAITING</span></div>
           <div class="recipe-summary" id="recipe-summary">
             <div class="summary-empty"><span>✧</span><b>Your structured recipe will appear here.</b><small>Submit a brief to see exactly which fields the compiler changes.</small></div>
           </div>

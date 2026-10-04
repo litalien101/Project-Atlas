@@ -14,14 +14,12 @@ import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 UI_ROOT = Path(__file__).resolve().parent / "recipe_studio"
 DRAFT_ROOT = ROOT / "data/recipe_studio/drafts"
 CANDIDATE_ROOT = ROOT / "art/characters/pending_models/recipe_studio"
-REVIEW_ROOT = ROOT / "art/characters/pending_models/troll_sample_1"
-ANNOTATION_ROOT = ROOT / "data/model_reviews/troll_sample_1"
 MAX_BODY = 256_000
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from character_design_profile import validate_profile  # noqa: E402
@@ -50,29 +48,6 @@ class Handler(BaseHTTPRequestHandler):
             })
         if path == "/api/candidates":
             return self._json(200, {"candidates": self._list_candidates()})
-        if path == "/api/model-review/models":
-            return self._json(200, {"models": self._review_models()})
-        if path == "/api/model-review/annotations":
-            query = parse_qs(urlsplit(self.path).query)
-            model_id = query.get("model_id", [None])[0]
-            if model_id not in self._review_model_map():
-                return self._json(400, {"error": "Unknown review model."})
-            return self._read_annotations(model_id)
-        if path == "/api/model-review/model":
-            query = parse_qs(urlsplit(self.path).query)
-            model_id = query.get("model_id", [None])[0]
-            model = self._review_model_map().get(model_id)
-            if model is None or model.is_symlink() or not model.is_file():
-                return self._json(404, {"error": "Review model was not found."})
-            return self._send_file(model, "model/gltf-binary")
-        if path == "/api/model-review/blend":
-            query = parse_qs(urlsplit(self.path).query)
-            model_id = query.get("model_id", [None])[0]
-            glb = self._review_model_map().get(model_id)
-            blend = glb.with_suffix(".blend") if glb else None
-            if blend is None or blend.is_symlink() or not blend.is_file():
-                return self._json(404, {"error": "Blender project was not found."})
-            return self._send_file(blend, "application/octet-stream", download_name=blend.name)
         if path == "/api/candidate/preview":
             query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
             if set(query) != {"draft_id", "build_id"} or any(len(values) != 1 for values in query.values()):
@@ -80,15 +55,11 @@ class Handler(BaseHTTPRequestHandler):
             draft_id, build_id = query["draft_id"][0], query["build_id"][0]
             if not re.fullmatch(r"[0-9a-f-]{36}", draft_id) or not re.fullmatch(r"[0-9a-f-]{36}", build_id):
                 return self._json(400, {"error": "Invalid candidate identifier."})
-            preview = (
-                ROOT / "art/characters/pending_models/recipe_studio" /
-                draft_id / build_id / "stone_troll/character_base_preview.glb"
-            ).resolve()
-            allowed_root = (ROOT / "art/characters/pending_models/recipe_studio").resolve()
-            if allowed_root not in preview.parents:
-                return self._json(403, {"error": "Preview path is outside the candidate directory."})
-            if not preview.is_file():
-                return self._json(404, {"error": "No Stone Troll preview has been built yet."})
+            candidate = self._candidate_directory(draft_id, build_id)
+            model_dir = self._candidate_model_dir(candidate) if candidate else None
+            preview = model_dir / "character_base_preview.glb" if model_dir else None
+            if preview is None or not preview.is_file():
+                return self._json(404, {"error": "Character preview was not found."})
             content = preview.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "model/gltf-binary")
@@ -165,8 +136,6 @@ class Handler(BaseHTTPRequestHandler):
                 return self._build_candidate(content)
             if path == "/api/candidate/review":
                 return self._review_candidate(content)
-            if path == "/api/model-review/annotations":
-                return self._write_annotations(content)
             return self._json(404, {"error": "API endpoint not found."})
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
             return self._json(422, {"error": str(error)})
@@ -180,8 +149,6 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(content.get("profile"), dict) or not isinstance(content.get("prompt"), str):
             return self._json(422, {"error": "Provide a profile object and its original prompt."})
         profile = validate_profile(content["profile"])
-        if profile["character_id"] != "stone_troll":
-            return self._json(422, {"error": "This first workbench only supports the Stone Troll profile."})
         draft_id = str(uuid.uuid4())
         draft_dir = DRAFT_ROOT / draft_id
         draft_dir.mkdir(parents=True, exist_ok=False)
@@ -248,7 +215,8 @@ class Handler(BaseHTTPRequestHandler):
                 "error": "Blender rejected or failed to build the blockout candidate.",
                 "details": details,
             })
-        candidate_dir = output_root / "stone_troll"
+        profile = json.loads((draft_dir / "design_profile.json").read_text(encoding="utf-8"))
+        candidate_dir = output_root / profile["character_id"]
         record_path = candidate_dir / "character.json"
         record = json.loads(record_path.read_text(encoding="utf-8"))
         self._json(200, {
@@ -292,9 +260,26 @@ class Handler(BaseHTTPRequestHandler):
             return None
         # The expected record makes this a Recipe Studio build, not an arbitrary
         # directory that happens to be beneath the candidate root.
-        if not (candidate / "stone_troll" / "character.json").is_file():
+        if self._candidate_model_dir(candidate) is None:
             return None
         return candidate
+
+    @staticmethod
+    def _candidate_model_dir(candidate: Path) -> Path | None:
+        if not candidate.is_dir():
+            return None
+        for child in candidate.iterdir():
+            if child.is_symlink() or not child.is_dir() or not re.fullmatch(r"[a-z][a-z0-9_]{1,47}", child.name):
+                continue
+            record = child / "character.json"
+            if record.is_file() and not record.is_symlink():
+                try:
+                    metadata = json.loads(record.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                if metadata.get("character_id") == child.name:
+                    return child
+        return None
 
     def _list_candidates(self) -> list[dict]:
         candidates: list[dict] = []
@@ -309,7 +294,9 @@ class Handler(BaseHTTPRequestHandler):
                 candidate_dir = self._candidate_directory(draft.name, build.name)
                 if candidate_dir is None:
                     continue
-                model_dir = candidate_dir / "stone_troll"
+                model_dir = self._candidate_model_dir(candidate_dir)
+                if model_dir is None:
+                    continue
                 try:
                     record = json.loads((model_dir / "character.json").read_text(encoding="utf-8"))
                 except (OSError, json.JSONDecodeError):
@@ -327,7 +314,7 @@ class Handler(BaseHTTPRequestHandler):
                 candidates.append({
                     "draft_id": draft.name,
                     "build_id": build.name,
-                    "character_id": record.get("character_id", "stone_troll"),
+                    "character_id": record.get("character_id", model_dir.name),
                     "quality_tier": record.get("generation_quality", {}).get("tier", "unknown"),
                     "production_ready": bool(record.get("generation_quality", {}).get("production_ready", False)),
                     "vertex_count": record.get("mesh", {}).get("vertex_count"),
@@ -373,89 +360,6 @@ class Handler(BaseHTTPRequestHandler):
             shutil.rmtree(candidate)
             return self._json(200, {"status": "deleted"})
         return self._json(422, {"error": "Action must be 'keep' or 'delete'."})
-
-    @staticmethod
-    def _review_model_map() -> dict[str, Path]:
-        # Deliberately allow-list review candidates; this endpoint cannot read
-        # arbitrary workspace files or source-model directories.
-        return {
-            "appearance-r002-mottled-hide": REVIEW_ROOT / "appearance-r002-mottled-hide/geometry_candidate.glb",
-            "appearance-r001-moss-hide": REVIEW_ROOT / "appearance-r001-moss-hide/geometry_candidate.glb",
-            "r002": REVIEW_ROOT / "voxel-remesh-r002/geometry_candidate.glb",
-            "r002-adaptive": REVIEW_ROOT / "voxel-remesh-r002-adaptive/geometry_candidate.glb",
-            "r003": REVIEW_ROOT / "voxel-remesh-r003/geometry_candidate.glb",
-            "r004-fine": REVIEW_ROOT / "voxel-remesh-r004-fine/geometry_candidate.glb",
-        }
-
-    def _review_models(self) -> list[dict]:
-        models = []
-        for model_id, path in self._review_model_map().items():
-            if path.is_symlink() or not path.is_file():
-                continue
-            models.append({
-                "id": model_id,
-                "label": (
-                    "Troll Sample 1 · Mottled Hide (textured)"
-                    if model_id == "appearance-r002-mottled-hide"
-                    else f"Troll Sample 1 · {model_id}"
-                ),
-                "size_bytes": path.stat().st_size,
-                "url": f"/api/model-review/model?model_id={model_id}",
-                "blend_path": str(path.with_suffix(".blend").relative_to(ROOT)),
-            })
-        return models
-
-    def _read_annotations(self, model_id: str) -> None:
-        path = ANNOTATION_ROOT / f"{model_id}.json"
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            data = {"schema": "atlas-model-edit-guide/v1", "model_id": model_id, "annotations": []}
-        except (OSError, json.JSONDecodeError):
-            return self._json(500, {"error": "Saved annotations could not be read."})
-        return self._json(200, data)
-
-    def _write_annotations(self, content: dict) -> None:
-        if set(content) != {"model_id", "annotations"}:
-            return self._json(422, {"error": "Provide model_id and annotations."})
-        model_id, annotations = content["model_id"], content["annotations"]
-        if not isinstance(model_id, str) or model_id not in self._review_model_map() or not isinstance(annotations, list) or len(annotations) > 80:
-            return self._json(422, {"error": "Unknown model or invalid annotation list."})
-        clean = []
-        actions = {"feature", "separate", "reshape", "smooth", "remove"}
-        for annotation in annotations:
-            if not isinstance(annotation, dict) or set(annotation) != {"id", "kind", "action", "title", "note", "points", "created_at"}:
-                return self._json(422, {"error": "Each edit mark needs id, kind, action, title, note, points, and created_at."})
-            points = annotation["points"]
-            kind = annotation["kind"]
-            if (not isinstance(annotation["id"], str) or len(annotation["id"]) > 80
-                or not isinstance(kind, str) or kind not in {"point", "polyline"}
-                or not isinstance(annotation["action"], str) or annotation["action"] not in actions
-                or not isinstance(annotation["title"], str) or not annotation["title"].strip() or len(annotation["title"]) > 100
-                or not isinstance(annotation["note"], str) or len(annotation["note"]) > 1000
-                or not isinstance(points, list) or len(points) > 256
-                or (kind == "point" and len(points) != 1) or (kind == "polyline" and len(points) < 2)
-                or not isinstance(annotation["created_at"], str)):
-                return self._json(422, {"error": "An edit mark has invalid fields or point count."})
-            if any(not isinstance(point, list) or len(point) != 3
-                   or any(isinstance(value, bool) or not isinstance(value, (int, float)) or not (-10 <= value <= 10) for value in point)
-                   for point in points):
-                return self._json(422, {"error": "Edit-mark coordinates must be finite 3D points within the model review bounds."})
-            clean.append({
-                "id": annotation["id"], "kind": kind, "action": annotation["action"],
-                "title": annotation["title"].strip(), "note": annotation["note"].strip(),
-                "points": points, "created_at": annotation["created_at"],
-            })
-        ANNOTATION_ROOT.mkdir(parents=True, exist_ok=True)
-        target = ANNOTATION_ROOT / f"{model_id}.json"
-        temporary = ANNOTATION_ROOT / f".{model_id}.{uuid.uuid4().hex}.tmp"
-        document = {"schema": "atlas-model-edit-guide/v1", "model_id": model_id, "updated_at": datetime.now(timezone.utc).isoformat(), "annotations": clean}
-        with temporary.open("x", encoding="utf-8") as stream:
-            stream.write(json.dumps(document, indent=2, ensure_ascii=False) + "\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        temporary.replace(target)
-        return self._json(200, document)
 
     def _send_file(self, path: Path, content_type: str, download_name: str | None = None) -> None:
         self.send_response(200)

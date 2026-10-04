@@ -1,0 +1,43 @@
+{
+  "schema": "atlas-character-design-profile/v2",
+  "character_id": "starter_humanoid",
+  "display_name": "Neutral humanoid baseline",
+  "concept": {
+    "archetype": "humanoid",
+    "source_prompt": "Neutral parametric humanoid baseline. Replace this brief with the approved character design before production authoring.",
+    "design_summary": "Undesigned neutral starting point for the parametric character pipeline.",
+    "assumptions": [
+      "This profile is a technical baseline, not a finished character concept.",
+      "The current Blender builder produces review blockouts, not production topology or animation."
+    ]
+  },
+  "base_template": "atlas_parametric_humanoid_v1",
+  "style": "realistic",
+  "body": {
+    "height_cm": 175,
+    "build_percent": 100,
+    "shoulder_percent": 100,
+    "arm_length_percent": 100,
+    "leg_length_percent": 100,
+    "head_percent": 100,
+    "torso_length_percent": 100,
+    "bust_percent": 100,
+    "stomach_percent": 100,
+    "hips_percent": 100,
+    "glutes_percent": 100,
+    "thighs_percent": 100,
+    "jaw_percent": 100,
+    "hand_percent": 100,
+    "foot_percent": 100,
+    "ear_percent": 100,
+    "muscle_percent": 100,
+    "nose_percent": 100
+  },
+  "palette": {
+    "skin": "#b78d72",
+    "eyes": "#4b6571"
+  },
+  "actions": [
+    "idle"
+  ]
+}

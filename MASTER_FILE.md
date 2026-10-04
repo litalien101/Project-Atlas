@@ -27,7 +27,7 @@ own contracts and workflows.
 - [`CHANGELOG.md`](CHANGELOG.md) — dated historical notes about changes and
   verification.
 - [`to_do.md`](to_do.md) — detailed actionable checklist for the character
-  asset-authoring pipeline.
+  authoring pipeline.
 
 ## Detailed specifications
 
@@ -52,7 +52,7 @@ when implementation state changes and `CHANGELOG.md` with a dated summary.
 - [`specs/asset-provenance.md`](specs/asset-provenance.md) and
   [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) — rights, attribution, and
   redistribution rules.
-- [`art/characters/sources/README.md`](art/characters/sources/README.md) —
+- [`art/characters/references/README.md`](art/characters/references/README.md) —
   character reference sources, checksums, licenses, and limitations.
 
 ## Workspace asset references outside this repository

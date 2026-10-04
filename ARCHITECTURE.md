@@ -5,7 +5,7 @@
 ### 1. Concept profile
 
 `art/characters/profiles/*.json` stores an individual design brief, supported
-proportion controls, palette, traits, and intended actions. The profile schema
+proportion controls, preview colors, and intended actions. The profile schema
 validates shape and values; it does not understand arbitrary prose or sculpt a
 mesh from it.
 
@@ -39,7 +39,7 @@ The planned local analysis flow is:
    approved findings, while preserving optional traits and exceptions.
 
 The planned miner must distinguish statements such as “these appeared together
-in 78 of 100 reviewed troll examples” from rules such as “every troll must have
+in 78 of 100 reviewed humanoid examples” from rules such as “every humanoid must have
 both.” It should not infer a relationship from text similarity alone. An
 observation needs normalized fields or a human-reviewed extraction before it
 can contribute evidence.
@@ -134,74 +134,33 @@ versioned rather than stored as undocumented free-form keys.
 
 ### 4. Geometry pipeline
 
-`tools/characters/generate_character_base.py` creates a deterministic
-parametric blockout and can measure a front image's silhouette. The image fit
-adjusts widths; it does not generate detailed hidden geometry, materials, or a
-rig. The earlier Sketchfab Troll calibration and Bing Image Creator references
-were removed because reuse rights could not be verified or the source was
-unavailable. The licensed Troll Mauler and Blender human-base bundle remain
-documented authoring references; neither is accepted Atlas geometry.
+`tools/characters/generate_character_base.py` builds a deterministic,
+low-detail parametric humanoid blockout. The generator applies the explicit
+profile controls and does not add category-specific silhouette priors. The
+Recipe Studio parser preserves qualitative language without translating it to
+numeric geometry. A front-view image can guide silhouette width; it cannot
+supply hidden geometry, detailed surfaces, production topology, materials, or
+a rig.
 
-The generator now refuses the procedural path unless `--allow-blockout` is
-explicit. Its record labels the output `blockout_only`. The base-review tool
-does not advance it to rig authoring unless a reviewer confirms that it has
-been sculpted into the intended mesh and verifies the complete T-pose in the
-refreshed preview. The review record is tied to the preview checksum and only
-unlocks rig-authoring work. It does not mark the asset production-ready.
+A blockout remains a review candidate. The project has no approved new
+character target or production-ready base mesh. Geometry acceptance requires a
+human visual decision against an approved brief and review views, alongside
+applicable structural checks. The result does not by itself pass material,
+rigging, deformation, animation, provenance, or runtime-release gates.
 
-The first character quality milestone is a **geometry-only base mesh**: a
-complete, connected, correctly proportioned model in the required
-`t_pose_fingers_spread` pose, matching the approved design and passing
-structural checks. This first mesh is deliberately unrigged and unskinned: it
-does not need an armature, bones, skin weights, or animation. Those are created
-later from approved visual markers. It also does not need final materials,
-textures, hair, skin detail, or runtime packaging. Those belong to later
-stages. The automated
-shoulder test is only a topology check; silhouette, hands/wrists, proportions,
-and actual T-pose alignment still require review against the reference images.
-Acceptance is scoped to the base-mesh/rig-authoring stage, never a finished or
-shippable character.
-
-“Perfect” is a quality goal, not a machine-verifiable boolean. For this gate,
-mesh approval means the creator accepts the design and the recorded checks
-pass: the declared scale and coordinate frame are consistent; the T-pose is
-complete; wrists join the arms and hands; required anatomy regions are present
-and attached as specified; there are no unexplained floating or missing body
-parts; normals and surface continuity meet the category policy; and silhouette
-and proportions have been reviewed from the available reference views. Separate
-eyes, teeth, or other intentionally distinct surfaces are allowed when their
-component relationships are explicitly recorded. A topology report alone does
-not establish any of these visual or anatomical judgments.
-
-The intended model pipeline is broader than humanoid meshes. It should manage
-asset recipes, source references, geometry, materials, textures, rigs or other
-deformation data, animation where applicable, collision/interaction metadata,
-LODs, runtime packaging, and provenance for every model category. Each category
-will have appropriate validators: a creature needs anatomy and deformation
-checks; a building needs scale, collision, and modular-fit checks; an item
-needs attachment points and material checks. Shared intake, versioning, review,
-and release contracts should surround category-specific generation tools.
-
-Two external sources have been downloaded and inspected as authoring
-references: the CC-BY Troll Mauler sculpt and Blender Studio's CC0 human-base
-bundle. Their metadata, exact checksums, acquisition command, and limitations
-are documented in [`art/characters/sources/README.md`](art/characters/sources/README.md).
-They remain in the local ignored source cache and are not runtime assets. The
-Troll Mauler has a different crouched design and pose, while the Blender source
-is human anatomy; neither has been adopted as the Stone Troll output. The
-target's high-quality T-pose geometry remains to be authored and reviewed.
+The long-term model pipeline covers versioned briefs, profiles, recipes,
+references, geometry, materials, deformation data, animation where applicable,
+collision and interaction metadata, LODs, runtime packaging, and provenance.
+Shared intake, review, versioning, and release contracts should surround
+category-specific builders and validators.
 
 #### Generated candidate review
 
-Recipe Studio keeps each successful build in a unique directory under
-`art/characters/pending_models/recipe_studio/<draft-id>/<build-id>/`. Its
-Generated Model Review gallery lists those builds, loads each available GLB
-for local 3D inspection, and shows build metadata. A **kept for reference**
-decision is a local review status, not geometry acceptance or runtime approval.
-The confirmed delete action removes only the selected build directory after
-server-side identifier, expected-record, and path-containment checks. This UI
-does not scan or modify source libraries, other pending-model folders, or
-runtime assets.
+Recipe Studio stores each build in a unique directory under
+`art/characters/pending_models/recipe_studio/<draft-id>/<build-id>/`. Its local
+gallery previews generated GLBs and records a keep-for-reference note or
+removes the selected generated build. Neither action grants geometry acceptance
+or runtime approval.
 
 ### 4a. Creator-to-runtime gated character workflow
 

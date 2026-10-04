@@ -9,8 +9,3 @@ data/world.sqlite3-shm
 data/world.sqlite3-wal
 data/recipe_studio/
 data/source_intake/
-
-# Local Troll Sample 1 source-derived review trials. Source rights/provenance
-# are unresolved, so keep these generated meshes and edit guides out of Git.
-art/characters/pending_models/troll_sample_1/
-data/model_reviews/troll_sample_1/

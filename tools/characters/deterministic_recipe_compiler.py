@@ -15,7 +15,7 @@ from typing import Any
 from character_design_profile import SCHEMA_PATH, validate_profile
 
 ROOT = Path(__file__).resolve().parents[2]
-STONE_TROLL_PROFILE = ROOT / "art/characters/profiles/stone_troll.json"
+STARTER_PROFILE = ROOT / "art/characters/profiles/starter_humanoid.json"
 
 CONTROL_ALIASES: dict[str, tuple[str, ...]] = {
     "build_percent": ("body build", "build", "bulk"),
@@ -123,33 +123,6 @@ def _apply_height(prompt: str, profile: dict[str, Any]) -> list[dict[str, Any]]:
     return results
 
 
-def _apply_traits(prompt: str, profile: dict[str, Any]) -> list[dict[str, Any]]:
-    rules = {
-        "horns": (r"\b(?:without|no) horns\b|\bhorns?\s*[:=]\s*(?:false|off|no)\b", r"\bwith horns?\b|\bhorns?\s*[:=]\s*(?:true|on|yes)\b"),
-        "tusks": (r"\b(?:without|no) tusks?\b|\btusks?\s*[:=]\s*(?:false|off|no)\b", r"\bwith tusks?\b|\btusks?\s*[:=]\s*(?:true|on|yes)\b"),
-        "pointed_ears": (r"\b(?:without|no) pointed ears?\b|\bpointed_ears?\s*[:=]\s*(?:false|off|no)\b", r"\bwith pointed ears?\b|\bpointed_ears?\s*[:=]\s*(?:true|on|yes)\b"),
-    }
-    results = []
-    for field, (negative, positive) in rules.items():
-        negated = re.search(negative, prompt, re.IGNORECASE)
-        affirmed = re.search(positive, prompt, re.IGNORECASE)
-        match = negated or affirmed
-        if not match:
-            continue
-        value = not bool(negated)
-        previous = profile["traits"][field]
-        profile["traits"][field] = value
-        results.append({
-            "field": field,
-            "value": value,
-            "previous_value": previous,
-            "status": "applied",
-            "source_text": match.group(0),
-            "message": f"Set {field.replace('_', ' ')} to {'yes' if value else 'no'}.",
-        })
-    return results
-
-
 def compile_text(prompt: str) -> dict[str, Any]:
     """Return a validated profile draft plus explicit scope and parse evidence."""
     text = prompt.strip()
@@ -157,7 +130,7 @@ def compile_text(prompt: str) -> dict[str, Any]:
         raise ValueError("Enter a character description first.")
     if len(text) > 2000:
         raise ValueError("Keep the description to 2,000 characters or fewer.")
-    source = json.loads(STONE_TROLL_PROFILE.read_text(encoding="utf-8"))
+    source = json.loads(STARTER_PROFILE.read_text(encoding="utf-8"))
     profile = copy.deepcopy(validate_profile(source))
     profile["concept"]["source_prompt"] = text
     original_profile = copy.deepcopy(profile)
@@ -166,7 +139,6 @@ def compile_text(prompt: str) -> dict[str, Any]:
     controls.extend(_apply_height(text, profile))
     for field in CONTROL_ALIASES:
         controls.extend(_apply_control(text, profile, field))
-    controls.extend(_apply_traits(text, profile))
 
     grouped: dict[str, list[dict[str, Any]]] = {}
     for item in controls:
@@ -177,8 +149,7 @@ def compile_text(prompt: str) -> dict[str, Any]:
         values = {item["value"] for item in items}
         if len(values) < 2:
             continue
-        section, name = ("body", field) if field in profile["body"] else ("traits", field)
-        profile[section][name] = original_profile[section][name]
+        profile["body"][field] = original_profile["body"][field]
         for item in items:
             item["status"] = "conflict"
         conflicts.append({
@@ -187,16 +158,7 @@ def compile_text(prompt: str) -> dict[str, Any]:
             "message": f"The brief gives conflicting values for {field.replace('_', ' ')}. Keep one value and resubmit.",
         })
 
-    # The first UI is a Stone Troll geometry workbench. Other archetypes need
-    # their own reviewed profile/template instead of silently swapping anatomy.
-    other_archetypes = sorted(set(re.findall(r"\b(humanoid|orc|elf|goblin)\b", text, re.IGNORECASE)))
     blocking = []
-    if other_archetypes:
-        blocking.append({
-            "kind": "unsupported_template",
-            "source_text": ", ".join(other_archetypes),
-            "message": "This first workbench only builds from the Stone Troll template; no other archetype was applied.",
-        })
     invalid = [item for item in controls if item["status"] == "needs_revision"]
     blocking.extend(conflicts)
     blocking.extend({
@@ -209,9 +171,8 @@ def compile_text(prompt: str) -> dict[str, Any]:
     # Kept separate from parsed geometry values: these requests are retained
     # for later authoring, but the geometry builder does not act on them.
     later_stage_terms = [
-        "texture", "skin detail", "moss", "mottling", "scar", "scars",
-        "rough skin", "amber eyes", "eye color", "material", "color",
-        "walk", "run", "jump", "climb", "animation", "idle",
+        "texture", "surface detail", "scar", "scars", "eye color",
+        "material", "color", "walk", "run", "jump", "climb", "animation", "idle",
     ]
     later_stage = [term for term in later_stage_terms if re.search(rf"\b{re.escape(term)}\b", text, re.IGNORECASE)]
     return {

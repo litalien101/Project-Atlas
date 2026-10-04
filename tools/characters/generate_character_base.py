@@ -2,7 +2,7 @@
 
 Run with the repository's Blender version:
   blender --background --python tools/characters/generate_character_base.py -- \
-    --profile art/characters/profiles/stone_troll.json
+    --profile art/characters/profiles/starter_humanoid.json
 
 By default, the body is built from profile-scaled parametric forms. A reviewed
 reference mesh can instead seed the body; its exact file, object, calibration,
@@ -31,21 +31,9 @@ from character_image_reference import fit_mesh_to_front_profile, measure_front_r
 
 
 MARKER_PREFIX = "ATLAS_MARKER_"
-PROFILE_SCHEMA = "atlas-character-design-profile/v1"
-GENERATOR_VERSION = "atlas-character-base/v28"
+PROFILE_SCHEMA = "atlas-character-design-profile/v2"
+GENERATOR_VERSION = "atlas-character-base/v29"
 DEFAULT_NEUTRAL_POSE = "t_pose_fingers_spread"
-
-# Archetype modifiers are deterministic silhouette priors. Explicit profile
-# controls remain the source of truth and are applied on top of these subtle
-# defaults, so an AI-authored profile can override the stereotype.
-ARCHETYPE_PRIORS = {
-    "humanoid": {"jaw": 1.0, "hand": 1.0, "foot": 1.0, "ear": 1.0, "nose": 1.0, "head": 1.0},
-    "troll": {"jaw": 1.03, "hand": 1.04, "foot": 1.03, "ear": 1.05, "nose": 1.04, "head": 1.0},
-    "orc": {"jaw": 1.16, "hand": 1.08, "foot": 1.04, "ear": 1.0, "nose": 1.10, "head": 1.04},
-    "elf": {"jaw": 0.96, "hand": 0.96, "foot": 1.0, "ear": 1.12, "nose": 0.96, "head": 1.0},
-    "goblin": {"jaw": 0.96, "hand": 1.12, "foot": 0.96, "ear": 1.12, "nose": 1.04, "head": 1.08},
-}
-
 
 def arguments() -> argparse.Namespace:
     if "--" not in sys.argv:
@@ -841,9 +829,8 @@ def build_dimensions(profile: dict) -> dict[str, float]:
     body = profile["body"]
     build = body["build_percent"] / 100
     shoulder = body["shoulder_percent"] / 100
-    priors = ARCHETYPE_PRIORS[profile["concept"]["archetype"]]
     torso = body["torso_length_percent"] / 100
-    head = body["head_percent"] / 100 * priors["head"]
+    head = body["head_percent"] / 100
     arm = body["arm_length_percent"] / 100
     leg = body["leg_length_percent"] / 100
     hip = body["hips_percent"] / 100
@@ -851,12 +838,12 @@ def build_dimensions(profile: dict) -> dict[str, float]:
     bust = body["bust_percent"] / 100
     thigh = body["thighs_percent"] / 100
     glute = body["glutes_percent"] / 100
-    jaw = body["jaw_percent"] / 100 * priors["jaw"]
-    hand = body["hand_percent"] / 100 * priors["hand"]
-    foot = body["foot_percent"] / 100 * priors["foot"]
-    ear = body["ear_percent"] / 100 * priors["ear"]
+    jaw = body["jaw_percent"] / 100
+    hand = body["hand_percent"] / 100
+    foot = body["foot_percent"] / 100
+    ear = body["ear_percent"] / 100
     muscle = body["muscle_percent"] / 100
-    nose = body["nose_percent"] / 100 * priors["nose"]
+    nose = body["nose_percent"] / 100
 
     pelvis_z = 0.84
     waist_z = pelvis_z + 0.17 * torso
@@ -982,22 +969,12 @@ def create_body(profile: dict, d: dict[str, float]) -> bpy.types.Object:
                   (0.022 * d["head"] * nose, 0.042 * d["head"] * nose, 0.050 * d["head"]))
     add_ellipsoid(data, (0, d["head_ry"] * 1.02, d["head_z"] - 0.026 * d["head"]),
                   (0.031 * d["head"] * nose, 0.044 * d["head"] * nose, 0.026 * d["head"]))
-    # Trolls and orcs need a readable mid-face silhouette. This muzzle volume
-    # blends into the nose bridge, cheeks, and jaw instead of sitting as a prop.
-    if profile["concept"]["archetype"] in {"troll", "orc", "goblin"}:
-        muzzle_scale = {"troll": 1.0, "orc": 0.88, "goblin": 0.72}[profile["concept"]["archetype"]]
+    # Rounded ear forms are part of the neutral base anatomy; feature modules
+    # belong in a separately reviewed extension contract.
+    for sign in (-1, 1):
         add_ellipsoid(data,
-                      (0, d["head_ry"] * 0.63, d["head_z"] - 0.044 * d["head"]),
-                      (0.054 * d["head"] * nose * muzzle_scale,
-                       0.056 * d["head"] * nose * muzzle_scale,
-                       0.040 * d["head"] * muzzle_scale))
-    if profile["traits"]["pointed_ears"]:
-        for sign in (-1, 1):
-            add_ellipsoid(data,
-                          (sign * d["head_rx"] * 0.80, -0.004 * d["head"],
-                           d["head_z"] - 0.014 * d["head"]),
-                          (0.042 * d["head"] * d["ear"],
-                           0.030 * d["head"], 0.036 * d["head"]))
+                      (sign * d["head_rx"] * 0.86, 0, d["head_z"] - 0.010 * d["head"]),
+                      (0.032 * d["head"] * d["ear"], 0.026 * d["head"], 0.048 * d["head"]))
     # Subtle orbital and cheek planes keep the face from reading as a featureless
     # sphere while preserving a clean, deformable base surface.
     for sign in (-1, 1):
@@ -1205,12 +1182,12 @@ def add_mouth_line(head_dimensions: dict[str, float], material: bpy.types.Materi
 
 
 def create_features(profile: dict, d: dict[str, float], landmarks: dict[str, Vector]) -> list[bpy.types.Object]:
-    palette, traits = profile["palette"], profile["traits"]
+    """Add neutral face blockout features supported by the current template."""
     objects: list[bpy.types.Object] = []
     sclera_material = make_material("Generated Warm Sclera", "#ded6c5", 0.28)
-    iris_material = make_material("Generated Iris", palette["eyes"], 0.32)
+    iris_material = make_material("Generated Iris", profile["palette"]["eyes"], 0.32)
     pupil_material = make_material("Generated Pupil", "#201a15", 0.2)
-    brow_material = make_material("Generated Brow Blockout", palette["skin"])
+    brow_material = make_material("Generated Brow Blockout", profile["palette"]["skin"])
     mouth_material = make_material("Generated Mouth Crease", "#382b27", 0.92)
     for side in ("left", "right"):
         eye = landmarks[f"eye_{side}"]
@@ -1223,84 +1200,10 @@ def create_features(profile: dict, d: dict[str, float], landmarks: dict[str, Vec
         pupil = iris_center + Vector((0, 0.007 * d["head"], 0))
         objects.append(add_sphere(f"ATLAS_FEATURE_PUPIL_{side.upper()}", pupil,
                                   0.004 * d["head"], pupil_material, (1.0, 0.38, 0.84)))
-        brow = landmarks[f"eyebrow_{side}"]
-        brow = brow + Vector((0, 0.014 * d["head"], 0))
-        objects.append(add_sphere(f"ATLAS_FEATURE_BROW_{side.upper()}", brow, 0.018 * d["head"], brow_material,
-                                  (1.45, 0.48, 0.36)))
+        brow = landmarks[f"eyebrow_{side}"] + Vector((0, 0.014 * d["head"], 0))
+        objects.append(add_sphere(f"ATLAS_FEATURE_BROW_{side.upper()}", brow,
+                                  0.018 * d["head"], brow_material, (1.45, 0.48, 0.36)))
     objects.append(add_mouth_line(d, mouth_material))
-
-    if traits["horns"]:
-        horn_material = make_material("Generated Horns", palette["horns"], 0.5)
-        crown = landmarks["crown"]
-        for side, sign in (("L", -1), ("R", 1)):
-            base = Vector((sign * d["head_rx"] * 0.39, -0.018 * d["head"],
-                           d["head_z"] + 0.068 * d["head"]))
-            horn_depth = 0.095 * d["head"]
-            tilt = Vector((sign * 0.28, -0.62, 0.73)).normalized()
-            center = base + tilt * (horn_depth * 0.48)
-            rotation = tilt.to_track_quat("Z", "Y").to_euler()
-            objects.append(add_cone(f"ATLAS_FEATURE_HORN_{side}", center, 0.025 * d["head"],
-                                    horn_depth, horn_material, tuple(rotation), 12))
-    if traits["tusks"]:
-        tusk_material = make_material("Generated Tusks", palette["tusks"], 0.42)
-        for side, sign in (("L", -1), ("R", 1)):
-            center = Vector((sign * d["head_rx"] * 0.34, d["head_ry"] * 0.95,
-                             d["head_z"] - 0.046 * d["head"]))
-            objects.append(add_cone(f"ATLAS_FEATURE_TUSK_{side}", center, 0.014 * d["head"],
-                                    0.052 * d["head"], tusk_material, (0, -sign * 0.10, 0), 12))
-    if traits["pointed_ears"]:
-        ear_material = make_material("Generated Ears", palette["skin"])
-        for side, sign in (("L", -1), ("R", 1)):
-            base = Vector((sign * d["head_rx"] * 0.82, -0.004 * d["head"],
-                           d["head_z"] - 0.016 * d["head"]))
-            direction = Vector((sign * 0.86, -0.50, 0.06)).normalized()
-            ear_depth = 0.095 * d["head"] * d["ear"]
-            center = base + direction * (ear_depth * 0.48)
-            rotation = direction.to_track_quat("Z", "Y").to_euler()
-            objects.append(add_cone(f"ATLAS_FEATURE_EAR_{side}", center,
-                                    0.030 * d["head"] * d["ear"], ear_depth,
-                                    ear_material, tuple(rotation), 12))
-    return objects
-
-
-def create_reference_trait_features(profile: dict, d: dict[str, float], landmarks: dict[str, Vector]) -> list[bpy.types.Object]:
-    """Add only requested traits that are not guaranteed by a seed human mesh."""
-    objects: list[bpy.types.Object] = []
-    traits, palette = profile["traits"], profile["palette"]
-    head_center = landmarks["head"]
-    rx = max(d.get("head_rx", 0.06), 0.035) * d.get("head", 1.0)
-    ry = max(d.get("head_ry", 0.06), 0.035) * d.get("head", 1.0)
-    rz = max(d.get("head_rz", 0.08), 0.045) * d.get("head", 1.0)
-    if traits["horns"]:
-        material = make_material("Atlas Seed Horns", palette["horns"], 0.5)
-        for side, sign in (("L", -1), ("R", 1)):
-            direction = Vector((sign * 0.32, -0.55, 0.77)).normalized()
-            base = head_center + Vector((sign * rx * 0.38, -ry * 0.10, rz * 0.70))
-            depth = rz * 0.85
-            objects.append(add_cone(
-                f"ATLAS_FEATURE_HORN_{side}", base + direction * (depth * 0.48),
-                rx * 0.20, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 12,
-            ))
-    if traits["tusks"]:
-        material = make_material("Atlas Seed Tusks", palette["tusks"], 0.42)
-        for side, sign in (("L", -1), ("R", 1)):
-            direction = Vector((sign * 0.18, 0.18, 1.0)).normalized()
-            base = head_center + Vector((sign * rx * 0.28, ry * 0.82, -rz * 0.50))
-            depth = rz * 0.40 * d.get("jaw", 1.0)
-            objects.append(add_cone(
-                f"ATLAS_FEATURE_TUSK_{side}", base + direction * (depth * 0.45),
-                rx * 0.12, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 10,
-            ))
-    if traits["pointed_ears"]:
-        material = make_material("Atlas Seed Pointed Ears", palette["skin"])
-        for side, sign in (("L", -1), ("R", 1)):
-            direction = Vector((sign * 0.90, -0.35, 0.10)).normalized()
-            base = head_center + Vector((sign * rx * 0.82, 0.0, -rz * 0.08))
-            depth = rx * 0.80 * d.get("ear", 1.0)
-            objects.append(add_cone(
-                f"ATLAS_FEATURE_EAR_{side}", base + direction * (depth * 0.48),
-                ry * 0.28, depth, material, tuple(direction.to_track_quat("Z", "Y").to_euler()), 12,
-            ))
     return objects
 
 

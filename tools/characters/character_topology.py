@@ -117,7 +117,7 @@ def validate_shoulder_core(
     """Require the torso anchor and both upper-arm sockets to be connected.
 
     This deliberately does not require every vertex in a character mesh to
-    belong to one component. Eyes, teeth, horns, and some licensed seed meshes
+    belong to one component. Eyes, teeth, accessories, and some licensed seed meshes
     may contain intentional islands. It identifies the central chest region
     and the substantial outer shoulder regions, then checks that each resolves
     to the same edge-connected component.

@@ -80,7 +80,7 @@ the measurable technical checks found no blocking concern; visual quality,
 pose, feature visibility, archetype fit, lineage, and rights remain human
 review gates. The report always leaves learning eligibility `not_approved`.
 Its first profile applies only to general humanoid anatomy references; it does
-not establish fitness for a troll-specific learning question.
+not establish fitness for a humanoid-specific learning question.
 
 Only reviewed observations with `rights_status: cleared_for_analysis` should
 contribute to recipe-mining statistics. Do not count multiple poses, renders,

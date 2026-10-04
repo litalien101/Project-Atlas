@@ -1,48 +1,31 @@
 # Project Atlas Decision Log
 
-## Decision log
+## Character pipeline
 
-- The unavailable Sketchfab Troll calibration and Bing-generated reference
-  images are no longer retained. The pinned CC-BY Troll Mauler and CC0 Blender
-  human-base bundle are authoring references only, not the target mesh.
-- The base-mesh milestone is geometry-first: a reviewed, design-matched T-pose
-  sculpt, deliberately unrigged and unskinned. It is not a textured or
-  runtime-ready character; surface detail and later marker-driven rigging
-  follow geometry acceptance.
-- The intended creator pipeline is request -> structured recipe proposal ->
-  deterministic recipe validation/build plan -> Blender mesh -> creator geometry
-  approval -> texture/material build and approval -> Mixamo-style visual marker
-  placement and approval -> deterministic marker-driven skeleton generation ->
-  skinning/deformation review -> animation -> runtime packaging. AI can propose
-  recipes and landmarks but cannot approve assets or bypass deterministic checks.
-- Prefer deterministic text parsing and recipe compilation for supported
-  vocabulary, units, and controls. Prompt the creator to resolve missing or
-  conflicting requirements; reserve optional AI assistance for ambiguous or
-  unsupported descriptions rather than routine geometry execution.
-- The first executable geometry slice is limited to a validated
-  `atlas-character-recipe/v1` and source profile compiled into a hash-bound
-  `atlas-character-geometry-build-plan/v1`. Blender consumes supported body
-  proportions and the canonical T-pose and emits a blockout-only, unrigged
-  candidate. The cross-category model recipe and general text parser are not
-  implemented; Recipe Studio currently recognizes a small fixed vocabulary.
-- A free model's license does not make it design-compatible or Atlas-rig
-  compatible; downloaded models remain references until independently reviewed.
-- A front image is a measurement guide, not a complete 3D asset. Width fitting
-  alone cannot solve the model-quality problem.
-- Curate target recipes and rights-cleared independent observations in parallel
-  with geometry work. The authored Stone Troll recipe is not statistical
-  evidence; do not claim mined findings until reviewed independent examples
-  exist.
-- Implement recipe learning first as an offline Python library/CLI in the
-  repository. A separate network service is unnecessary until scale,
-  collaboration, or deployment needs justify one.
-- Personality and emotion are persistent simulation state with event-based
-  causes, not claims that an NPC is conscious.
-- The economy is intended to connect household, town, and city systems through
-  goods, currency, and constrained trade routes; begin with a small explainable
-  simulation rather than a world-wide opaque optimizer.
-- The asset pipeline is ultimately shared by every model category and should
-  improve through traceable trial results and reviewed recipe revisions.
-- Runtime appearance can respond to long-term simulation state, such as gradual
-  species-appropriate hair graying from age or prolonged stress; this is not a
-  one-event effect or an implemented feature today.
+- Start from a neutral, versioned parametric profile. It is technical
+  scaffolding, not a character concept or target design.
+- Apply explicit geometry values only. Preserve qualitative language as brief
+  text and ask for a decision when the parser encounters a conflict or value
+  outside its declared range.
+- Remove archetype-based silhouette priors. A generated shape must follow
+  authored controls, not a hidden species stereotype.
+- Keep source evidence, authored profiles, compiled recipes, build plans,
+  candidate meshes, review decisions, and runtime registrations separate.
+- Treat current Blender output as a low-detail review blockout. Do not claim
+  production topology, a finished appearance, or a usable rig.
+- Require source provenance and license review before using any external model
+  as a seed, reference observation, or distributable asset.
+- Keep procedural generation and validation local and deterministic. AI may be
+  considered later for proposal tasks, but it cannot approve a mesh or bypass
+  stage checks.
+
+## World simulation and client
+
+- Keep persistent personality and emotion as event-based simulation state, not
+  claims that an NPC is conscious.
+- Make world changes replayable and explainable. Server rules remain the
+  authority for player and NPC actions.
+- Connect local economies through goods, currency, and constrained trade
+  routes; begin with small explainable simulations.
+- Keep the model pipeline reusable across categories while allowing each
+  category to define its own geometry and quality checks.

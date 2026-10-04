@@ -42,37 +42,11 @@
   "archetypes": {
     "humanoid": {
       "proportion_multipliers": {},
-      "silhouette_tags": ["human_proportions"],
-      "material_tags": ["skin"],
+      "silhouette_tags": [
+        "human_proportions"
+      ],
+      "material_tags": [],
       "review_status": "approved",
-      "evidence": []
-    },
-    "troll": {
-      "proportion_multipliers": { "jaw": 1.03, "hand": 1.04, "foot": 1.03, "ear": 1.05, "nose": 1.04, "head": 1.0 },
-      "silhouette_tags": ["heavy_upper_body", "broad_shoulder_girdle", "large_hands", "grounded_stance"],
-      "material_tags": ["rough_skin", "moss_mottling", "scars"],
-      "review_status": "draft",
-      "evidence": []
-    },
-    "orc": {
-      "proportion_multipliers": { "jaw": 1.16, "hand": 1.08, "foot": 1.04, "ear": 1.0, "nose": 1.10, "head": 1.04 },
-      "silhouette_tags": ["heavy_jaw", "strong_build"],
-      "material_tags": ["skin", "war_paint", "scars"],
-      "review_status": "draft",
-      "evidence": []
-    },
-    "elf": {
-      "proportion_multipliers": { "jaw": 0.96, "hand": 0.96, "foot": 1.0, "ear": 1.12, "nose": 0.96, "head": 1.0 },
-      "silhouette_tags": ["slender_build", "long_limbs"],
-      "material_tags": ["skin"],
-      "review_status": "draft",
-      "evidence": []
-    },
-    "goblin": {
-      "proportion_multipliers": { "jaw": 0.96, "hand": 1.12, "foot": 0.96, "ear": 1.12, "nose": 1.04, "head": 1.08 },
-      "silhouette_tags": ["compact_build", "large_hands"],
-      "material_tags": ["skin"],
-      "review_status": "draft",
       "evidence": []
     }
   },
@@ -81,7 +55,7 @@
     "minimum_reviewed_examples": 3,
     "notes": [
       "A reference contributes measurements and evidence; it is not copied as final geometry.",
-      "Archetype rules remain draft until reviewed across multiple licensed examples.",
+      "No learned rules are currently promoted from an observation dataset.",
       "A material tag is a recipe label, not proof that a shader or texture exists."
     ]
   }

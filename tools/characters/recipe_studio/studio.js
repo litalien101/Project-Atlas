@@ -13,6 +13,12 @@ const bodyFields = [
   ["height_cm", "Height", "cm"],
   ["build_percent", "Build", "%"],
   ["shoulder_percent", "Shoulders", "%"],
+  ["torso_length_percent", "Torso length", "%"],
+  ["bust_percent", "Chest volume", "%"],
+  ["stomach_percent", "Abdomen volume", "%"],
+  ["hips_percent", "Hip width", "%"],
+  ["glutes_percent", "Glute volume", "%"],
+  ["thighs_percent", "Thigh size", "%"],
   ["arm_length_percent", "Arm length", "%"],
   ["leg_length_percent", "Leg length", "%"],
   ["head_percent", "Head size", "%"],
@@ -94,15 +100,6 @@ function renderRecipe(profile, parsed = []) {
     row.append(name, value);
     container.append(row);
   }
-  const features = document.createElement("div");
-  features.className = "feature-chips";
-  for (const [field, label] of [["horns", "Horns"], ["tusks", "Tusks"], ["pointed_ears", "Pointed ears"]]) {
-    const chip = document.createElement("span");
-    chip.className = `feature-chip${profile.traits[field] ? "" : " is-off"}`;
-    chip.textContent = `${label} · ${profile.traits[field] ? "ON" : "OFF"}`;
-    features.append(chip);
-  }
-  container.append(features);
   $("#draft-badge").textContent = "DRAFT";
   $("#draft-badge").className = "draft-badge is-ready";
   $("#recipe-subtitle").textContent = `${parsed.length} explicit ${parsed.length === 1 ? "change" : "changes"} mapped · T-pose`;
@@ -126,7 +123,7 @@ function addCompilerOutcome(result) {
     warnings.push("No explicit supported geometry values were found. Use the examples or specify measurements with units/percentages.");
   }
   const narrative = blockers.length || invalid.length
-    ? "I found items that this Stone Troll workbench cannot safely compile yet."
+    ? "Some measurements need revision before Atlas can compile the draft."
     : `I mapped ${parsed.length} explicit ${parsed.length === 1 ? "field" : "fields"}. I did not infer measurements from adjectives; the full text remains attached to the draft profile.`;
   appendMessage(blockers.length || invalid.length ? "error" : "assistant", "ATLAS COMPILER", narrative, [...details, ...invalid, ...blockers, ...warnings]);
   currentResult = result;
@@ -183,7 +180,7 @@ async function compilePlan() {
     $("#action-caption").textContent = `Candidate-only plan · ${currentPlan.plan.quality_tier} · ${currentPlan.plan.neutral_pose}. No rig is needed for this build.`;
     appendMessage("assistant", "BUILD PLANNER", `Recipe and profile are frozen into a candidate plan (${currentPlan.plan.plan_sha256.slice(0, 16)}…). It is ready to build as a low-detail blockout.`, [
       `Saved locally under ${currentPlan.saved_under}.`,
-      "Draft troll grammar is identified in the recipe and still needs review.",
+      "The build plan freezes the profile, recipe, schema, and generator inputs for review.",
     ]);
   } catch (error) {
     compilePlanButton.textContent = "Compile build plan →";
@@ -256,7 +253,7 @@ function renderCandidateList() {
     button.className = `candidate-item${selectedCandidate?.build_id === candidate.build_id && selectedCandidate?.draft_id === candidate.draft_id ? " is-selected" : ""}`;
     button.setAttribute("aria-pressed", String(selectedCandidate?.build_id === candidate.build_id && selectedCandidate?.draft_id === candidate.draft_id));
     const title = document.createElement("b");
-    title.textContent = "Stone Troll blockout";
+    title.textContent = "Parametric character blockout";
     const state = document.createElement("span");
     state.className = `candidate-state${candidate.review_status === "kept_for_reference" ? " is-kept" : ""}`;
     state.textContent = candidate.review_status === "kept_for_reference" ? "KEPT FOR REFERENCE" : "REVIEW REQUIRED";
@@ -289,7 +286,7 @@ async function refreshCandidates() {
 
 function updateCandidateInspector(candidate) {
   $("#preview-card").hidden = false;
-  $("#selected-candidate-title").textContent = "Stone Troll · unrigged T-pose blockout";
+  $("#selected-candidate-title").textContent = "Unrigged T-pose blockout";
   $("#selected-review-badge").textContent = candidate.review_status === "kept_for_reference" ? "KEPT FOR REFERENCE" : "REVIEW REQUIRED";
   $("#keep-candidate").disabled = candidate.review_status === "kept_for_reference";
   $("#keep-candidate").textContent = candidate.review_status === "kept_for_reference" ? "Kept for reference ✓" : "Keep for reference";
@@ -327,7 +324,7 @@ async function selectCandidate(candidate, shouldScroll = true) {
 async function updateCandidateReview(action) {
   if (!selectedCandidate) return;
   if (action === "delete") {
-    const label = `Stone Troll build ${selectedCandidate.build_id.slice(0, 8)}`;
+    const label = `Character build ${selectedCandidate.build_id.slice(0, 8)}`;
     if (!window.confirm(`Permanently delete ${label} and its generated files? This does not affect source or runtime assets.`)) return;
   }
   try {
