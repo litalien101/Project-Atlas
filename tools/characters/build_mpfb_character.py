@@ -2,7 +2,7 @@
 
 Run with Blender 4.2+ and MPFB/system assets installed:
   blender --background --python tools/characters/build_mpfb_character.py -- \
-    --recipe art/characters/profiles/mpfb_prototype.json
+    --recipe art/characters/recipes/mpfb_prototype.json
 
 The recipe is deliberately a narrow proof of concept. It selects supported
 MPFB macro controls and swappable system assets; it does not infer geometry
@@ -46,10 +46,7 @@ def parse_args() -> argparse.Namespace:
     args = parser.parse_args(argv)
     if not args.recipe.is_absolute():
         args.recipe = ROOT / args.recipe
-    if args.output_dir is None:
-        build_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
-        args.output_dir = ROOT / "art/characters/pending_models/mpfb_prototype" / build_id
-    elif not args.output_dir.is_absolute():
+    if args.output_dir is not None and not args.output_dir.is_absolute():
         args.output_dir = ROOT / args.output_dir
     return args
 
@@ -175,7 +172,7 @@ def build(recipe: dict, output_dir: Path) -> None:
     decoded_texture_bytes = sum(image.size[0] * image.size[1] * 4 for image in texture_images)
     manifest = {
         "schema": "atlas-mpfb-character-build/v1",
-        "build_id": output_dir.name,
+        "build_id": datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ"),
         "character_id": recipe["character_id"],
         "recipe": recipe,
         "recipe_sha256": hashlib.sha256(json.dumps(recipe, sort_keys=True).encode("utf-8")).hexdigest(),
@@ -214,6 +211,15 @@ def build(recipe: dict, output_dir: Path) -> None:
         ],
     }
     (output_dir / "build.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    # GLB stores no Blender viewport armature-display flag. Make a companion
+    # Blender inspection file automatically, with imported rig controls behind
+    # the mesh, so the convenient exported asset opens cleanly in Blender too.
+    characters_tool_dir = str(Path(__file__).resolve().parent)
+    if characters_tool_dir not in sys.path:
+        sys.path.insert(0, characters_tool_dir)
+    from prepare_gltf_blender_view import prepare_view
+
+    prepare_view(glb_path, output_dir / f"{recipe['character_id']}_blender_view.blend")
     print(f"MPFB_BUILD_OK {blend_path} {glb_path}")
 
 
@@ -221,4 +227,6 @@ if __name__ == "__main__":
     arguments = parse_args()
     source = json.loads(arguments.recipe.read_text(encoding="utf-8"))
     validate_recipe(source)
+    if arguments.output_dir is None:
+        arguments.output_dir = ROOT / "art/characters/exports" / source["character_id"]
     build(source, arguments.output_dir.resolve())
