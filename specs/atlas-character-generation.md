@@ -8,16 +8,25 @@ language 3D model generator. The committed starter profile is neutral technical
 scaffolding. Replace its brief with the approved character design before
 creating an authored candidate.
 
-The pipeline preserves the original brief and applies only explicit supported
-measurements. It does not infer proportions from adjectives, call a remote AI
-service, learn geometry from the source-model library, or create production
-retopology, final materials, a rig, weights, or animation. The current Blender
-builder is a metaball blockout; the parameter-to-shape-key system described
-below is the recommended next implementation, not an existing capability.
+The general profile pipeline preserves the original brief and applies only
+explicit supported measurements. It does not infer proportions from
+adjectives, call a remote AI service, learn geometry from the source-model
+library, or create production retopology, final materials, a rig, weights, or
+animation. Its current Blender builder is a metaball blockout. A separate
+MPFB recipe builder is now a working proof of concept for scripted rigged
+humanoids; it is not yet the approved production or runtime pipeline.
 
 ## Recommended parameter-to-shape-key route
 
-Use one rights-reviewed, topology-stable base mesh. Store continuous controls
+Use one rights-reviewed, topology-stable base mesh. The current leading
+candidate is MakeHuman/MPFB: a local recipe-driven build has produced a rigged
+GLB and editable Blender source from named macro controls and swappable hair
+and clothing assets. The retained Blender Studio Human Base Meshes are a useful
+comparison for topology and art direction, but the inspected realistic male
+mesh has no rig or shape keys and needs more setup before it can serve as the
+automated base. This is a prototype decision, pending game-quality review.
+
+Store continuous controls
 as named, bounded values in the profile and map them deterministically to
 artist-authored shape targets. Keep the target catalog explicit: parameter ID,
 units/range/default, target name, base-mesh and topology version, and known
@@ -40,9 +49,20 @@ exported as glTF morph targets, so the same authored controls can support a
 browser runtime after validation. See [MPFB targets and blendshapes](https://static.makehumancommunity.org/mpfb/docs/assets/concept_targets.html),
 the [Blender shape keys manual](https://docs.blender.org/manual/en/4.5/animation/shape_keys/introduction.html),
 and [Blender's glTF exporter documentation](https://docs.blender.org/manual/en/5.3/addons/scene_gltf2.html).
-The locally retained MakeHuman starter scenes may be evaluated as candidates,
-but their presence does not approve them as this pipeline's base. See the
-workspace [`Reference_Assets` source register](../../Reference_Assets/ASSET_LICENSE_REGISTER.md).
+The MPFB builder entry point, current recipe, limits, and invocation are
+documented in [`tools/characters/README.md`](../tools/characters/README.md).
+The locally retained starter scenes are reference/build-off assets and are not
+approved runtime content. See the workspace [`Reference_Assets` source
+register](../../Reference_Assets/ASSET_LICENSE_REGISTER.md).
+
+The current prototype confirms recipe-driven asset assembly, not the final rig
+or performance budget. Its 53-bone MPFB game-engine rig is provisional because
+Atlas has no approved animation list or runtime rig contract yet. The generated
+GLB is about 22 MB and its PNG maps estimate to about 134 MiB decoded RGBA8
+(about 179 MiB including a full mip chain); use this profile to drive
+texture/LOD work, not as an acceptable production budget. See
+[`character-performance-budget.md`](character-performance-budget.md) for the
+measured trade-offs and performance acceptance plan.
 
 ## Contracts and artifacts
 

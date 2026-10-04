@@ -1,0 +1,22 @@
+{
+  "schema": "atlas-mpfb-character-recipe/v1",
+  "character_id": "mpfb_female_prototype",
+  "macro": {
+    "gender": 0.0,
+    "age": 0.55,
+    "muscle": 0.6,
+    "weight": 0.42,
+    "proportions": 0.5,
+    "height": 0.58,
+    "cupsize": 0.5,
+    "firmness": 0.5,
+    "race": {
+      "asian": 0.0,
+      "caucasian": 1.0,
+      "african": 0.0
+    }
+  },
+  "skin": "young_caucasian_female",
+  "hair": "ponytail01",
+  "clothes": "female_casualsuit01"
+}

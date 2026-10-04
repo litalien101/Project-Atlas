@@ -11,21 +11,23 @@ registered as runtime content without review.
 
 1. Approve the new character brief, references, silhouette targets, scale, and
    required visible features.
-2. Evaluate the locally documented MakeHuman/MPFB and Blender Studio bases;
-   choose a rights-reviewed, topology-stable starter and pin its source hash
-   and toolchain version.
-3. Prototype a small, named parameter catalog mapped deterministically to
-   artist-authored shape targets on the unchanged base topology. Define units,
-   ranges, defaults, and known compatibility constraints.
-4. Validate target combinations and inspect the mesh from multiple views before
-   expanding the parameter catalog. Add categorical parts such as eyes, ears,
-   hair, and clothing as compatible modular assets, not continuous sliders.
-5. Record immutable build inputs, output hashes, visual review views, and
+2. Expand the MPFB recipe into a versioned character contract and reliable
+   command-line build. Keep parameter names and ranges explicit; add only
+   controls supported by the base system and validated output.
+3. Choose the minimum target device/browser and expected visible character
+   counts. Establish scene and per-character memory/frame budgets from a
+   measured prototype, as described in `specs/character-performance-budget.md`.
+4. Add GPU-compressed texture output and compatible LODs, then validate image
+   quality, memory, frame time, skinning, and morphs in the browser.
+5. Choose the required character actions and animation style; define the rig
+   contract and bone mappings from those needs, then verify representative
+   deformation. Add modular game clothing/armor and compatible head/ear options.
+6. Record immutable build inputs, output hashes, visual review views, and
    accept/reject decisions tied to candidate IDs.
-6. Retire the current metaball preview when the shape-target prototype meets the
-   approved geometry bar. Then implement separate materials, marker placement,
-   rig and weight generation, deformation review, and animation stages.
-7. Expand source observations only with verified rights, independent lineage,
+7. Retire the current metaball preview when the scripted MPFB build meets the
+   approved geometry bar. Keep rig/weight, deformation, and animation stages
+   independently reviewable.
+8. Expand source observations only with verified rights, independent lineage,
    explicit measurements, and human-reviewed labels. Keep inferred rules
    evidence-backed and optional.
 

@@ -20,3 +20,46 @@ lineage, anatomy labels, learning eligibility, or runtime approval.
 See [`../../specs/atlas-character-generation.md`](../../specs/atlas-character-generation.md),
 [`../../art/characters/recipe_observations/README.md`](../../art/characters/recipe_observations/README.md),
 and [`../../specs/source-model-intake-lifecycle.md`](../../specs/source-model-intake-lifecycle.md).
+
+# Scripted MPFB character prototype
+
+The fastest current route to repeatable rigged humanoids is a recipe-driven
+MPFB build. `build_mpfb_character.py` is an isolated proof of concept; it does
+not yet replace the general design-profile/blockout pipeline.
+
+Requirements: Blender 4.2 or newer, MPFB enabled in that Blender installation,
+and the MakeHuman system asset pack installed. Run from the repository root:
+
+```sh
+blender --background --python tools/characters/build_mpfb_character.py -- \
+  --recipe art/characters/recipes/mpfb_prototype.json
+```
+
+The build writes an editable `.blend`, a skinned `.glb`, and a `build.json`
+manifest under the ignored `art/characters/pending_models/mpfb_prototype/`
+directory. Supply `--output-dir` to choose another location. Change numeric
+macro controls and the skin, hair, and clothes asset names in the recipe to
+generate variations without editing the mesh in Blender.
+
+This prototype uses MPFB's supported macro controls (gender, age, muscle,
+weight, proportions, height, and related controls) plus replaceable system
+assets. It intentionally rejects unrecognized fields and free-form anatomy
+descriptions. Categorical modules currently cover hair and one clothing slot;
+armor, ears, eyes, and attachment compatibility are future work. Generated
+assets remain pending until visual, license, animation, clothing-fit, and
+runtime review is recorded. The GLB exporter reports that some meshes have
+more than four joint influences and truncates to four; inspect deformation
+before accepting the export. The prototype's eight PNG maps decode to about
+134 MiB as RGBA8 textures, or about 179 MiB with a full mip chain, despite a
+22.9 MB GLB download. This is a measured prototype warning, not a target budget.
+Before runtime use, set per-character texture budgets, pack suitable maps, use
+GPU-compressed KTX2 textures where supported, and add distance-based mesh/texture
+levels. File compression alone does not guarantee lower GPU memory.
+
+The 53-bone rig is simply MPFB's current game-engine preset. No Atlas rig
+contract or animation list has been chosen, so do not treat this count as a
+final requirement. Choose animation needs first, then verify retargeting,
+deformation, and whether facial or twist bones are needed.
+
+See [`specs/atlas-character-generation.md`](../../specs/atlas-character-generation.md)
+for the broader pipeline boundary and next steps.
