@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101714">
+  <title>Model Review · Project Atlas</title>
+  <link rel="stylesheet" href="/review.css">
+  <script type="importmap">
+    {"imports":{"three":"/vendor/build/three.module.js","three/addons/":"/vendor/examples/jsm/"}}
+  </script>
+  <script type="module" src="/review.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header><div><b>ATLAS <span class="separator">/</span> MODEL REVIEW</b><small>Local model workspace</small></div><a href="/builder">Recipe builder</a></header>
+    <section class="toolbar">
+      <label>Model<select id="model-select" aria-label="Choose model"></select></label>
+      <button id="place-toggle" class="primary" type="button">Place marker</button>
+      <a id="blend-link" class="button" href="#" download>Open in Blender (.blend)</a>
+      <button id="export-markers" class="button" type="button">Export notes</button>
+    </section>
+    <section class="layout">
+      <div class="viewer-card">
+        <div class="viewer" id="viewer"><canvas id="canvas" aria-label="Interactive 3D model viewer"></canvas><div id="loading" class="overlay">Loading model…</div><div id="view-hint" class="hint">Drag to orbit · scroll to zoom</div></div>
+        <div id="status" class="status" role="status">Choose a model to begin.</div>
+      </div>
+      <aside class="notes-card">
+        <h1>Review markers</h1>
+        <p>Add a note, choose <b>Place marker</b>, then click the model. Drag to orbit and scroll to zoom. Notes save automatically.</p>
+        <label class="note-label" for="marker-note">What needs fixing?</label>
+        <textarea id="marker-note" rows="3" maxlength="1000" placeholder="Example: Separate the index and middle fingers here."></textarea>
+        <div id="marker-list" class="marker-list"></div>
+        <p class="coordinates-note">Each marker saves its 3D coordinates and note in the project, associated with the selected model revision.</p>
+      </aside>
+    </section>
+  </main>
+</body>
+</html>

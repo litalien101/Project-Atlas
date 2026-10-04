@@ -20,7 +20,9 @@ ROOT = Path(__file__).resolve().parents[2]
 UI_ROOT = Path(__file__).resolve().parent / "recipe_studio"
 DRAFT_ROOT = ROOT / "data/recipe_studio/drafts"
 CANDIDATE_ROOT = ROOT / "art/characters/pending_models/recipe_studio"
-MAX_BODY = 24_000
+REVIEW_ROOT = ROOT / "art/characters/pending_models/troll_sample_1"
+ANNOTATION_ROOT = ROOT / "data/model_reviews/troll_sample_1"
+MAX_BODY = 256_000
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from character_design_profile import validate_profile  # noqa: E402
 from compile_character_geometry_plan import compile_plan  # noqa: E402
@@ -48,6 +50,29 @@ class Handler(BaseHTTPRequestHandler):
             })
         if path == "/api/candidates":
             return self._json(200, {"candidates": self._list_candidates()})
+        if path == "/api/model-review/models":
+            return self._json(200, {"models": self._review_models()})
+        if path == "/api/model-review/annotations":
+            query = parse_qs(urlsplit(self.path).query)
+            model_id = query.get("model_id", [None])[0]
+            if model_id not in self._review_model_map():
+                return self._json(400, {"error": "Unknown review model."})
+            return self._read_annotations(model_id)
+        if path == "/api/model-review/model":
+            query = parse_qs(urlsplit(self.path).query)
+            model_id = query.get("model_id", [None])[0]
+            model = self._review_model_map().get(model_id)
+            if model is None or model.is_symlink() or not model.is_file():
+                return self._json(404, {"error": "Review model was not found."})
+            return self._send_file(model, "model/gltf-binary")
+        if path == "/api/model-review/blend":
+            query = parse_qs(urlsplit(self.path).query)
+            model_id = query.get("model_id", [None])[0]
+            glb = self._review_model_map().get(model_id)
+            blend = glb.with_suffix(".blend") if glb else None
+            if blend is None or blend.is_symlink() or not blend.is_file():
+                return self._json(404, {"error": "Blender project was not found."})
+            return self._send_file(blend, "application/octet-stream", download_name=blend.name)
         if path == "/api/candidate/preview":
             query = parse_qs(urlsplit(self.path).query, keep_blank_values=True)
             if set(query) != {"draft_id", "build_id"} or any(len(values) != 1 for values in query.values()):
@@ -84,7 +109,12 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(content)
             return
-        names = {"/": "index.html", "/studio.css": "studio.css", "/studio.js": "studio.js"}
+        names = {
+            "/": "review.html", "/review": "review.html", "/review/": "review.html",
+            "/builder": "index.html", "/builder/": "index.html",
+            "/studio.css": "studio.css", "/studio.js": "studio.js",
+            "/review.css": "review.css", "/review.js": "review.js",
+        }
         name = names.get(path)
         if name is None:
             return self._json(404, {"error": "Page not found."})
@@ -135,6 +165,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._build_candidate(content)
             if path == "/api/candidate/review":
                 return self._review_candidate(content)
+            if path == "/api/model-review/annotations":
+                return self._write_annotations(content)
             return self._json(404, {"error": "API endpoint not found."})
         except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
             return self._json(422, {"error": str(error)})
@@ -341,6 +373,80 @@ class Handler(BaseHTTPRequestHandler):
             shutil.rmtree(candidate)
             return self._json(200, {"status": "deleted"})
         return self._json(422, {"error": "Action must be 'keep' or 'delete'."})
+
+    @staticmethod
+    def _review_model_map() -> dict[str, Path]:
+        # Deliberately allow-list review candidates; this endpoint cannot read
+        # arbitrary workspace files or source-model directories.
+        return {
+            "r002": REVIEW_ROOT / "voxel-remesh-r002/geometry_candidate.glb",
+            "r002-adaptive": REVIEW_ROOT / "voxel-remesh-r002-adaptive/geometry_candidate.glb",
+            "r003": REVIEW_ROOT / "voxel-remesh-r003/geometry_candidate.glb",
+            "r004-fine": REVIEW_ROOT / "voxel-remesh-r004-fine/geometry_candidate.glb",
+        }
+
+    def _review_models(self) -> list[dict]:
+        models = []
+        for model_id, path in self._review_model_map().items():
+            if path.is_symlink() or not path.is_file():
+                continue
+            models.append({
+                "id": model_id,
+                "label": f"Troll Sample 1 · {model_id}",
+                "size_bytes": path.stat().st_size,
+                "url": f"/api/model-review/model?model_id={model_id}",
+                "blend_path": str(path.with_suffix(".blend").relative_to(ROOT)),
+            })
+        return models
+
+    def _read_annotations(self, model_id: str) -> None:
+        path = ANNOTATION_ROOT / f"{model_id}.json"
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            data = {"schema": "atlas-model-review/v1", "model_id": model_id, "markers": []}
+        except (OSError, json.JSONDecodeError):
+            return self._json(500, {"error": "Saved annotations could not be read."})
+        return self._json(200, data)
+
+    def _write_annotations(self, content: dict) -> None:
+        if set(content) != {"model_id", "markers"}:
+            return self._json(422, {"error": "Provide model_id and markers."})
+        model_id, markers = content["model_id"], content["markers"]
+        if model_id not in self._review_model_map() or not isinstance(markers, list) or len(markers) > 200:
+            return self._json(422, {"error": "Unknown model or invalid marker list."})
+        clean = []
+        for marker in markers:
+            if not isinstance(marker, dict) or set(marker) != {"id", "position", "note", "created_at"}:
+                return self._json(422, {"error": "Each marker needs id, position, note, and created_at."})
+            position = marker["position"]
+            if (not isinstance(marker["id"], str) or len(marker["id"]) > 80
+                or not isinstance(position, list) or len(position) != 3
+                or any(not isinstance(v, (int, float)) or not (-10 <= v <= 10) for v in position)
+                or not isinstance(marker["note"], str) or not marker["note"].strip()
+                or len(marker["note"]) > 1000 or not isinstance(marker["created_at"], str)):
+                return self._json(422, {"error": "A marker contains invalid coordinates or note text."})
+            clean.append({"id": marker["id"], "position": position, "note": marker["note"].strip(), "created_at": marker["created_at"]})
+        ANNOTATION_ROOT.mkdir(parents=True, exist_ok=True)
+        target = ANNOTATION_ROOT / f"{model_id}.json"
+        temporary = ANNOTATION_ROOT / f".{model_id}.{uuid.uuid4().hex}.tmp"
+        document = {"schema": "atlas-model-review/v1", "model_id": model_id, "updated_at": datetime.now(timezone.utc).isoformat(), "markers": clean}
+        with temporary.open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(document, indent=2, ensure_ascii=False) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        temporary.replace(target)
+        return self._json(200, document)
+
+    def _send_file(self, path: Path, content_type: str, download_name: str | None = None) -> None:
+        self.send_response(200)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(path.stat().st_size))
+        if download_name:
+            self.send_header("Content-Disposition", f'attachment; filename="{download_name}"')
+        self.end_headers()
+        with path.open("rb") as stream:
+            shutil.copyfileobj(stream, self.wfile)
 
     def _json(self, status: int, value: object) -> None:
         body = json.dumps(value, ensure_ascii=False).encode("utf-8")
