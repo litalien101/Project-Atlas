@@ -2,7 +2,7 @@
   "schema": "atlas-character-attempt-lessons/v1",
   "character_id": "mpfb_female_prototype",
   "updated_at_utc": "2026-10-04",
-  "current_candidate": "art/characters/pending_models/mpfb_prototype/20261004T195631.320178Z/",
+  "current_candidate": "art/characters/exports/mpfb_female_prototype/",
   "attempts": [
     {
       "build_id": "20261004T191622.462063Z",
@@ -708,6 +708,144 @@
           "Review visual quality, animation, clothing fit, and GLB shape-key behavior before runtime approval."
         ]
       }
+    },
+    {
+      "build_id": "20261004T195631.320178Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "body_poke_through_clothing",
+        "solid_material_alpha_sorting",
+        "rig_visible_in_blender_inspection",
+        "sweater_pants_waist_gap"
+      ],
+      "findings": [
+        {
+          "code": "body_poke_through_clothing",
+          "evidence": "Earlier user review showed pale body patches under the sweater.",
+          "lesson": "Mask base-body vertices under garments and review occlusion edges."
+        },
+        {
+          "code": "solid_material_alpha_sorting",
+          "evidence": "Source inspection found opaque body and garment alpha inputs exported with alpha blending.",
+          "lesson": "Force solid body and garment Principled alpha to 1.0 before export."
+        },
+        {
+          "code": "rig_visible_in_blender_inspection",
+          "evidence": "User review screenshot showed dark bone-like lines crossing neck, cuffs, and fingers in Blender.",
+          "lesson": "Hide the armature object in the inspection viewport while retaining skinning and rig data."
+        },
+        {
+          "code": "sweater_pants_waist_gap",
+          "evidence": "User review screenshot showed a body-colored sliver and uneven pants edge below the sweater hem.",
+          "lesson": "Increase garment overlap and inspect the result in perspective before accepting the candidate."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23799280,
+          "sha256": "d22dcead272d218f5c26e52d230d65a7d38628ec2e81b37520fafa3878cce122",
+          "disposition": "deleted_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 9432876,
+          "sha256": "54a390022be460a87bf82c9ee54f77fea406db1969fc8cc51f00ace02ee9a605",
+          "disposition": "deleted_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 7901600,
+          "sha256": "bfe3aa0d13e2b71ac5aba5bc9d911c34b4980bf32769d952ebd931226bcb5275",
+          "disposition": "deleted_after_manifest_archive"
+        }
+      ],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T195631.320178Z.json",
+      "build_manifest_sha256": "a07f2522315da8358a3842a07c42b64a4e45e854569a1b3a7b3541ced476c1db"
+    },
+    {
+      "build_id": "20261004T204435.842255Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "rig_visible_in_blender_inspection",
+        "sweater_pants_waist_gap"
+      ],
+      "findings": [
+        {
+          "code": "rig_visible_in_blender_inspection",
+          "evidence": "User review screenshot showed dark bone-like lines crossing the neck, cuffs, and fingers in the Blender inspection viewport.",
+          "lesson": "Hide the armature object in the inspection file viewport by default while retaining the skinned rig in the GLB and Outliner."
+        },
+        {
+          "code": "sweater_pants_waist_gap",
+          "evidence": "User review screenshot showed a visible body-colored sliver and uneven pants edge below the sweater hem.",
+          "lesson": "Overlap the pants top further inside the sweater and inspect the result in perspective before accepting the candidate."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23773572,
+          "sha256": "a2ad8015b6371156f2352a35afa42594cc5350027bd398ed01cca6f9cabcdc66",
+          "disposition": "superseded_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11712164,
+          "sha256": "8569be7bd451654eb5bd0ade7b0b1e58d116a12b21a86e9895a94a862b561fb2",
+          "disposition": "superseded_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25200700,
+          "sha256": "44502f31b0ef8d11983f8635680d7a7f20fcd6417318658076bdf879c354c51b",
+          "disposition": "superseded_after_manifest_archive"
+        }
+      ],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T204435.842255Z.json",
+      "build_manifest_sha256": "169c81c50233c5ce0b5e6e98df24e1813dca2c4dd3de15f9566dffcadc0b5823"
+    },
+    {
+      "build_id": "20261004T211854.606021Z",
+      "disposition": "superseded_failed_attempt",
+      "failure_codes": [
+        "body_mask_removed_skin_at_garment_openings",
+        "rig_drawn_in_blender_inspection"
+      ],
+      "findings": [
+        {
+          "code": "body_mask_removed_skin_at_garment_openings",
+          "evidence": "Close render showed the neck skin torn away at the sweater collar, with the dark background visible between the head and torso.",
+          "lesson": "Protect body vertices within 40mm of open garment boundaries; mask only interior garment coverage."
+        },
+        {
+          "code": "rig_drawn_in_blender_inspection",
+          "evidence": "User review showed bone-like black lines through neck, cuffs, and fingers in Blender viewport.",
+          "lesson": "Hide armature drawing by default in the visual inspection file without removing the skinned rig."
+        }
+      ],
+      "artifacts_at_cleanup": [
+        {
+          "name": "mpfb_female_prototype.blend",
+          "bytes": 23774532,
+          "sha256": "c5d479eb0708f77d24d3f3b49ccc5b7c394380e4af871b40d25fa4556b946bc4",
+          "disposition": "superseded_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype.glb",
+          "bytes": 11712544,
+          "sha256": "b4ebf9955173a3a36d4d62125dc0bb4c3f1e355e403db27f1522b11e49f29930",
+          "disposition": "superseded_after_manifest_archive"
+        },
+        {
+          "name": "mpfb_female_prototype_blender_view.blend",
+          "bytes": 25202160,
+          "sha256": "668d9be31ecf29fa02e7c3160ee60b7772fb7e2ceaaf21764d3052a79625e4df",
+          "disposition": "superseded_after_manifest_archive"
+        }
+      ],
+      "build_manifest_path": "art/characters/failure_records/manifests/20261004T211854.606021Z.json",
+      "build_manifest_sha256": "68cba604e35c5cdcbdd6eb5baeab55fb7d13143977c36280833a573f4f6860a8"
     }
   ],
   "enforced_lessons": [

@@ -41,8 +41,12 @@ def prepare_view(input_path: Path, output_path: Path) -> None:
     armatures = [obj for obj in bpy.context.scene.objects if obj.type == "ARMATURE"]
     for armature in armatures:
         # GLB has no Blender viewport display flag; Blender's importer defaults
-        # imported armatures to drawing in front of the skinned mesh.
+        # imported armatures to drawing in front of the skinned mesh. Keep the
+        # rig available in the Outliner, but hide its bone display in this
+        # inspection file so it cannot read as black fragments through skin or
+        # clothing. The armature and skinning remain in the GLB itself.
         armature.show_in_front = False
+        armature.hide_set(True)
 
     meshes = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
     if not meshes:
@@ -68,6 +72,7 @@ def prepare_view(input_path: Path, output_path: Path) -> None:
             space.shading.type = "MATERIAL"
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(output_path))
     manifest_path = input_path.with_name("build.json")
     if manifest_path.is_file():

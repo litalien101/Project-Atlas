@@ -15,6 +15,7 @@ import argparse
 import hashlib
 import importlib
 import json
+import math
 import re
 import sys
 from datetime import datetime, timezone
@@ -24,6 +25,7 @@ import bpy
 import bmesh
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
+from mathutils.kdtree import KDTree
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_RUNTIME_TEXTURE_DIMENSION = 1024
@@ -90,12 +92,18 @@ def clear_scene() -> None:
     bpy.ops.object.delete(use_global=False)
 
 
-def hide_body_under_clothing(body, garments, distance_threshold: float = 0.025) -> dict:
-    """Mask base-body vertices near clothing surfaces to prevent poke-through."""
+def hide_body_under_clothing(
+    body,
+    garments,
+    distance_threshold: float = 0.025,
+    opening_clearance: float = 0.04,
+) -> dict:
+    """Mask body only well inside garments, preserving skin at open boundaries."""
     depsgraph = bpy.context.evaluated_depsgraph_get()
     body_points = [body.matrix_world @ vertex.co for vertex in body.data.vertices]
     covered_vertices: set[int] = set()
     measured_garments = []
+    opening_protected = set()
 
     for garment in garments:
         evaluated = garment.evaluated_get(depsgraph)
@@ -106,10 +114,33 @@ def hide_body_under_clothing(body, garments, distance_threshold: float = 0.025) 
             if not vertices or not polygons:
                 continue
             tree = BVHTree.FromPolygons(vertices, polygons, all_triangles=False)
+            edge_face_counts = {}
+            for polygon in mesh.polygons:
+                for edge_key in polygon.edge_keys:
+                    key = tuple(sorted(edge_key))
+                    edge_face_counts[key] = edge_face_counts.get(key, 0) + 1
+            boundary_edges = [key for key, count in edge_face_counts.items() if count == 1]
+            boundary_samples = []
+            for first, second in boundary_edges:
+                start, end = vertices[first], vertices[second]
+                segments = max(1, math.ceil((end - start).length / 0.01))
+                boundary_samples.extend(
+                    start.lerp(end, step / segments)
+                    for step in range(segments + 1)
+                )
+            boundary_tree = None
+            if boundary_samples:
+                boundary_tree = KDTree(len(boundary_samples))
+                for sample_index, sample in enumerate(boundary_samples):
+                    boundary_tree.insert(sample, sample_index)
+                boundary_tree.balance()
             garment_coverage = set()
             for index, point in enumerate(body_points):
                 nearest = tree.find_nearest(point)
                 if nearest and nearest[3] <= distance_threshold:
+                    if boundary_tree and boundary_tree.find(point)[2] < opening_clearance:
+                        opening_protected.add(index)
+                        continue
                     garment_coverage.add(index)
             covered_vertices.update(garment_coverage)
             measured_garments.append({"object": garment.name, "near_body_vertices": len(garment_coverage)})
@@ -136,9 +167,11 @@ def hide_body_under_clothing(body, garments, distance_threshold: float = 0.025) 
     modifier.invert_vertex_group = True
     return {
         "distance_threshold_m": distance_threshold,
+        "open_boundary_clearance_m": opening_clearance,
         "body_vertices_hidden": len(covered_vertices),
+        "body_vertices_protected_near_openings": len(opening_protected),
         "garments": measured_garments,
-        "boundary_policy": "retain body faces unless all vertices are covered",
+        "boundary_policy": "retain body vertices near garment open edges; mask only interior coverage",
     }
 
 
@@ -171,7 +204,7 @@ def trim_pants_under_sweater(recipe: dict, garments) -> dict | None:
         raise RuntimeError("Expected sweater/pants objects were not created by MPFB")
 
     # Find the sweater's torso hem while excluding its low sleeves, then overlap
-    # the pants top 5 mm inside the sweater. This keeps the waistband concealed
+    # the pants top 25 mm inside the sweater. This keeps the waistband concealed
     # without opening a visible gap between the two garments.
     torso_hem = [
         (shirt.matrix_world @ vertex.co).z
@@ -180,7 +213,7 @@ def trim_pants_under_sweater(recipe: dict, garments) -> dict | None:
     ]
     if not torso_hem:
         raise RuntimeError("Could not locate the sweater torso hem")
-    cutoff_z = min(torso_hem) + 0.005
+    cutoff_z = min(torso_hem) + 0.025
     inverse = pants.matrix_world.inverted()
     local_co = inverse @ Vector((0.0, 0.0, cutoff_z))
     local_no = (pants.matrix_world.to_3x3().transposed() @ Vector((0.0, 0.0, 1.0))).normalized()
@@ -198,7 +231,7 @@ def trim_pants_under_sweater(recipe: dict, garments) -> dict | None:
     mesh.to_mesh(pants.data)
     mesh.free()
     pants.data.update()
-    return {"pants": pants.name, "cutoff_world_z_m": round(cutoff_z, 4), "method": "overlapped 5mm inside sweater torso hem"}
+    return {"pants": pants.name, "cutoff_world_z_m": round(cutoff_z, 4), "method": "overlapped 25mm inside sweater torso hem"}
 
 
 def build(recipe: dict, output_dir: Path) -> None:
@@ -254,6 +287,8 @@ def build(recipe: dict, output_dir: Path) -> None:
         if obj not in character_objects:
             bpy.data.objects.remove(obj, do_unlink=True)
     output_dir.mkdir(parents=True, exist_ok=True)
+    # Keep repeated local rebuilds from accumulating stale .blend1 backups.
+    bpy.context.preferences.filepaths.save_version = 0
     # Some MakeHuman face and detail surfaces have inconsistent winding or are
     # intentionally open shells. Export them double-sided so front views do
     # not lose polygons to backface culling.
@@ -341,8 +376,8 @@ def build(recipe: dict, output_dir: Path) -> None:
     }
     (output_dir / "build.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     # GLB stores no Blender viewport armature-display flag. Make a companion
-    # Blender inspection file automatically, with imported rig controls behind
-    # the mesh, so the convenient exported asset opens cleanly in Blender too.
+    # Blender inspection file automatically, with rig bones hidden by default,
+    # so the exported asset opens cleanly in Blender too.
     characters_tool_dir = str(Path(__file__).resolve().parent)
     if characters_tool_dir not in sys.path:
         sys.path.insert(0, characters_tool_dir)
