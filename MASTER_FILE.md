@@ -84,7 +84,7 @@ Each subject has one authoritative home:
 | Detailed behavior, schema, and workflow | The relevant file in [`specs/`](specs/) or subsystem documentation | A contract or workflow changes. Keep examples and validators aligned with actual implementation. |
 | Character pipeline tasks | [`to_do.md`](to_do.md) | Character authoring work is added, completed, or re-sequenced. |
 | Setup and run instructions | [`README.md`](README.md) | A user-facing command, dependency, or entry point changes. |
-| Live parallel-work claims and handoffs | `/srv/current_status/project-atlas.json` (local, outside Git) | An AI/human task starts, changes scope/status, waits, resumes, or completes. The CLI and protocol are in `/srv/current_status/README.md`; task records are not committed. |
+| Live parallel-work claims and handoffs | `/srv/current_status/atlas_coord.sqlite3` (local, outside Git) | An AI/human task starts, changes scope/status, waits, resumes, or completes. Use `python3 /srv/current_status/atlas_coord.py show`; the CLI and protocol are in `/srv/current_status/README.md`. Legacy JSON files are snapshots, not live state. |
 
 When a change affects multiple subjects, update each owning document and add
 cross-links. Do not maintain competing copies of the same detailed contract.

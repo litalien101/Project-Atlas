@@ -2,9 +2,11 @@
 
 ## Concurrent AI work coordination (required)
 
-Before editing Project Atlas, read `/srv/current_status/README.md` and
-`/srv/current_status/project-atlas.json`. Register the task's exact file paths
-and semantic contract IDs with `/srv/current_status/atlas_coord.py claim`.
+Before editing Project Atlas, read `/srv/current_status/README.md` and run
+`python3 /srv/current_status/atlas_coord.py show` to inspect live work claims.
+The coordination database is `/srv/current_status/atlas_coord.sqlite3`; the
+legacy JSON snapshot is not the live state. Register the task's exact file
+paths and semantic contract IDs with `/srv/current_status/atlas_coord.py claim`.
 Contract claims cover shared data models, APIs, events, persistence formats,
 and invariants, including changes made in files owned by another task. If a
 file or contract overlap is reported, wait or narrow the task to independent

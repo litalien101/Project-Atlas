@@ -1,5 +1,42 @@
 # Project Atlas Change History
 
+### 2026-10-04 — Increase Troll Sample 1 texture visibility
+
+- Added `appearance-r002-mottled-hide`, a source-preserving revision with
+  stronger lichen color variation and a more visible skin-grain normal map.
+  Includes a close-up texture preview and is available in Recipe Studio as
+  `appearance-r002-mottled-hide` for review. Recipe Studio now selects and
+  labels this textured candidate by default.
+
+### 2026-10-04 — Add a source-preserving Troll Sample 1 appearance pass
+
+- Added an appearance candidate built directly from the user-generated source
+  GLB. It keeps the original mesh and hands, bakes a moss/olive base-color
+  texture and tangent-space surface detail, and is available in Recipe Studio
+  as `appearance-r001-moss-hide` for review.
+- The prior CC0 hand-replacement trial is retained only as a failed experiment
+  and has been removed from the Recipe Studio review list.
+
+### 2026-10-04 — Orient Troll Sample 1 hand candidate
+
+- Recorded the `r007-forward-palms` hand-replacement experiment. The project
+  owner confirmed the original generated hands are correct; this candidate was
+  superseded and removed from the Recipe Studio review list.
+
+### 2026-10-04 — Frame the Reach HUD as an MMO interface
+
+- Moved world-panel shortcuts into a compact left-side navigation stack,
+  grouped the next step and world pulse on the right, and gave travel controls
+  a quiet full-width footer. Kept the valley unobstructed and retained the
+  existing drawer, keyboard shortcuts, and customizable HUD behavior.
+
+### 2026-10-04 — Redesign the field-kit controls
+
+- Replaced the centered, enclosed field-kit tray with a compact lower-left dock
+  of separate, angular tool marks. Removed its persistent title and tray
+  surface while keeping labels, key hints, accessible move/fold controls, and
+  the existing drag and visibility preferences.
+
 ### 2026-10-04 — Make the Reach HUD customizable
 
 - Added a HUD layout menu to show or hide status, objective, world pulse,

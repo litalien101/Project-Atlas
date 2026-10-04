@@ -3,7 +3,8 @@
 Before changing project files, read these in order:
 
 1. `/srv/current_status/README.md`
-2. `/srv/current_status/project-atlas.json`
+2. `python3 /srv/current_status/atlas_coord.py show` (live state is stored in
+   `/srv/current_status/atlas_coord.sqlite3`; the legacy JSON is a snapshot)
 3. `/srv/projects/Project_Atlas/AGENTS.md`
 4. `MASTER_FILE.md`, then the authoritative documents for the task's subsystem.
 
