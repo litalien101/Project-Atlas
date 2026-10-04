@@ -107,6 +107,9 @@ def build(recipe: dict, output_dir: Path) -> None:
         raise RuntimeError(f"MPFB skin not found: {recipe['skin']}")
     HumanService.set_character_skin(skin_path, body, skin_type="GAMEENGINE")
     armature = HumanService.add_builtin_rig(body, "game_engine")
+    # MPFB's game-engine preset enables Blender's "In Front" armature display,
+    # which makes rig controls look like transparent holes through the face.
+    armature.show_in_front = False
     for bone in armature.data.bones:
         if bone.name == "Root":
             bone.name = "root"
