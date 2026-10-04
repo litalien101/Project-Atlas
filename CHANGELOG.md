@@ -1,5 +1,16 @@
 # Project Atlas Change History
 
+### 2026-10-04 — Refine the Reach field-kit HUD
+
+- Reworked the four lower navigation controls as one arched, softly lit field
+  kit with clear inventory, skills, magic, and memory marks instead of empty
+  square slots. Reduced the weight of the character and objective overlays,
+  made world pulse a small pill disclosure, and hid the empty recent-events
+  area until it has something to show. Removed the redundant floating nameplate
+  from the local traveler while keeping other travelers' nameplates visible.
+- Checked drawer opening and desktop/mobile action-bar fit in the browser;
+  `git diff --check` passed.
+
 ### 2026-10-04 — Clarify public model-review asset boundaries
 
 - Updated the project overview to describe the current local game accurately

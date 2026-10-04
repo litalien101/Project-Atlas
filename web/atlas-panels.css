@@ -11,6 +11,131 @@
 .appearance-item small{color:#929b8e;font:8px Georgia,serif}
 .appearance-item input{margin-left:auto;accent-color:#d3bd72}
 
+.character-panel.hud-panel{border:0;border-left:1px solid #d8c98d70;border-radius:0;background:linear-gradient(90deg,#101916a8,transparent);box-shadow:none;backdrop-filter:none;padding-left:15px}
+.character-panel .character-avatar{border-color:#d8c48578;background:radial-gradient(circle,#c8b46822,transparent 72%);box-shadow:none}
+.character-panel .character-footer{border-color:#ffffff12}
+.quest-panel.hud-panel{width:min(330px,31vw);padding:8px 12px;border:0;border-left:1px solid #d9c77c88;border-radius:0;background:linear-gradient(90deg,#111b19a8,transparent);box-shadow:none;backdrop-filter:none}
+.quest-panel .panel-eyebrow{margin-bottom:5px}
+.quest-panel>b{font-size:16px}
+.quest-panel>small{font-size:9px}
+.world-awareness.hud-panel{width:auto;min-width:190px;padding:8px 13px;border:1px solid #d8c98d36;border-radius:22px;background:#111b19a6;box-shadow:0 8px 24px #07100d38;backdrop-filter:blur(8px)}
+.world-awareness .panel-title{gap:14px;padding:0;border:0}
+.world-awareness[open]{border-color:#d8c98d60;background:#111b19e8}
+.world-awareness[open] .panel-title{padding-bottom:9px;border-bottom:1px solid var(--atlas-line)}
+.world-feed:has(.feed-empty){display:none}
+.world-feed{padding:0;border:0;background:linear-gradient(90deg,#10191699,transparent)}
+.feed-heading{opacity:.72}
+
+.atlas-actionbar.combat-actions{
+  bottom:22px;
+  width:min(492px,calc(100vw - 32px));
+  min-width:0;
+  max-width:calc(100vw - 32px);
+  padding:8px 12px 10px;
+  overflow:visible;
+  border:1px solid #d7c78255;
+  border-radius:25px 25px 17px 17px / 19px 19px 14px 14px;
+  background:
+    radial-gradient(ellipse at 50% 0,#d7c78218,transparent 62%),
+    linear-gradient(180deg,#25332ceF 0%,#16211deF 44%,#101816f5 100%);
+  box-shadow:0 16px 44px #050b09a6,inset 0 1px #fff2,inset 0 -2px #050b0970;
+  backdrop-filter:blur(12px) saturate(1.12);
+}
+.atlas-actionbar.combat-actions::before{
+  position:absolute;
+  inset:4px;
+  border:1px solid #d8c98d20;
+  border-radius:21px 21px 13px 13px / 16px 16px 10px 10px;
+  content:"";
+  pointer-events:none;
+}
+.atlas-actionbar .combat-options{position:relative;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
+.atlas-actionbar .combat-options button{
+  min-width:0;
+  min-height:59px;
+  gap:3px;
+  padding:3px 4px 2px;
+  border:1px solid transparent;
+  border-radius:14px 14px 11px 11px;
+  background:transparent;
+  transition:transform .16s,border-color .16s,background .16s,box-shadow .16s;
+}
+.atlas-actionbar .combat-options button:not(:first-child)::before{
+  position:absolute;
+  top:13px;
+  bottom:13px;
+  left:-2px;
+  width:1px;
+  background:linear-gradient(180deg,transparent,#d8c98d28,transparent);
+  content:"";
+  pointer-events:none;
+}
+.atlas-actionbar .combat-options button kbd{
+  top:5px;
+  right:7px;
+  padding:1px 4px;
+  border:1px solid #d8c98d35;
+  border-radius:6px;
+  background:#08110e66;
+  color:#c2b78f;
+  font-size:7px;
+}
+.atlas-actionbar .combat-options button .action-icon{
+  display:grid;
+  width:31px;
+  height:31px;
+  margin:0;
+  place-items:center;
+  border:1px solid #d8c98d58;
+  border-radius:50%;
+  background:radial-gradient(circle at 50% 35%,#d8c98d1b,#09110e66 78%);
+  box-shadow:inset 0 1px #fff1,0 2px 8px #050b0966;
+  color:#e2cd87;
+  font-size:0;
+  line-height:1;
+}
+.atlas-actionbar .combat-options button .action-icon::before{font-size:17px}
+.atlas-actionbar #satchel-action .action-icon::before{content:"▣"}
+.atlas-actionbar #skills-action .action-icon::before{content:"✥"}
+.atlas-actionbar #magic-action .action-icon::before{content:"✦"}
+.atlas-actionbar #memory-action .action-icon::before{content:"◷"}
+.atlas-actionbar .combat-options button b{font-size:7px;letter-spacing:.13em}
+.atlas-actionbar .combat-options button:first-child,
+.atlas-actionbar .combat-options button:first-child .action-icon{color:#e2c47f}
+.atlas-actionbar .combat-options button:hover:not(:disabled),
+.atlas-actionbar .combat-options button[aria-expanded=true]{
+  transform:translateY(-2px);
+  border-color:#dec98355;
+  background:linear-gradient(180deg,#e3cd7b12,#e3cd7b05);
+  box-shadow:inset 0 1px #fff1,0 4px 13px #080d0b44;
+  color:#fff0c3;
+}
+.atlas-actionbar .combat-options button:hover:not(:disabled) .action-icon,
+.atlas-actionbar .combat-options button[aria-expanded=true] .action-icon{
+  border-color:#e2cc827c;
+  background:radial-gradient(circle at 50% 35%,#e3cf842e,#11191699 78%);
+  box-shadow:inset 0 1px #fff2,0 0 14px #d4bd7240;
+}
+.atlas-actionbar .combat-options button:focus-visible{outline:2px solid #f0da91;outline-offset:2px}
+.atlas-actionbar .action-count{top:2px;right:12px}
+
+@media(max-width:1050px){
+  .quest-panel.hud-panel{width:min(300px,29vw)}
+  .world-awareness.hud-panel{min-width:0}
+}
+@media(max-width:760px){
+  .quest-panel.hud-panel{width:min(275px,calc(100vw - 24px))}
+  .world-awareness.hud-panel{padding:7px 10px}
+  .atlas-actionbar.combat-actions{bottom:48px;width:calc(100vw - 24px);max-width:430px;padding:7px 8px 9px}
+  .atlas-actionbar .combat-options{gap:1px}
+  .atlas-actionbar .combat-options button{min-height:55px;padding-inline:2px;border-radius:12px 12px 9px 9px}
+  .atlas-actionbar .combat-options button kbd{top:4px;right:4px;padding:0 3px;font-size:6px}
+  .atlas-actionbar .combat-options button .action-icon{width:28px;height:28px}
+  .atlas-actionbar .combat-options button .action-icon::before{font-size:15px}
+  .atlas-actionbar .combat-options button b{font-size:6px;letter-spacing:.07em}
+  .atlas-actionbar .action-count{right:5px}
+}
+
 .atlas-topbar{height:82px;padding-inline:4%;background:linear-gradient(180deg,rgba(12,20,20,.92),rgba(15,24,22,.62) 72%,transparent)}
 .atlas-topbar .brand-sigil{width:42px;height:42px;box-shadow:0 0 28px #d8c27a18,inset 0 0 18px #d8c27a10}
 .atlas-topbar .world-brand{gap:13px}
@@ -111,3 +236,61 @@ button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid #ead1
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 .appearance-save-status{padding:6px 8px;color:#aeb89f;font:9px Georgia,serif}
+
+.character-panel.hud-panel{border:0;border-left:1px solid #d8c98d70;border-radius:0;background:linear-gradient(90deg,#101916a8,transparent);box-shadow:none;backdrop-filter:none;padding-left:15px}
+.character-panel .character-avatar{border-color:#d8c48578;background:radial-gradient(circle,#c8b46822,transparent 72%);box-shadow:none}
+.character-panel .character-footer{border-color:#ffffff12}
+.quest-panel.hud-panel{width:min(330px,31vw);padding:8px 12px;border:0;border-left:1px solid #d9c77c88;border-radius:0;background:linear-gradient(90deg,#111b19a8,transparent);box-shadow:none;backdrop-filter:none}
+.quest-panel .panel-eyebrow{margin-bottom:5px}
+.quest-panel>b{font-size:16px}
+.quest-panel>small{font-size:9px}
+.world-awareness.hud-panel{width:auto;min-width:190px;padding:8px 13px;border:1px solid #d8c98d36;border-radius:22px;background:#111b19a6;box-shadow:0 8px 24px #07100d38;backdrop-filter:blur(8px)}
+.world-awareness .pulse-summary{min-height:30px}
+.world-awareness[open]{border-color:#d8c98d60;background:#111b19e8}
+.world-awareness[open] .pulse-summary{min-height:38px;border-bottom:1px solid var(--atlas-line)}
+.world-feed:has(.feed-empty){display:none}
+.world-feed{padding:0;border:0;background:linear-gradient(90deg,#10191699,transparent)}
+.feed-heading{opacity:.72}
+.atlas-actionbar.combat-actions{
+  bottom:22px;
+  width:min(492px,calc(100vw - 32px));
+  min-width:0;
+  max-width:calc(100vw - 32px);
+  padding:8px 12px 10px;
+  border:1px solid #d7c78255;
+  border-radius:25px 25px 17px 17px / 19px 19px 14px 14px;
+  background:radial-gradient(ellipse at 50% 0,#d7c78218,transparent 62%),linear-gradient(180deg,#25332cef 0%,#16211def 44%,#101816f5 100%);
+  box-shadow:0 16px 44px #050b09a6,inset 0 1px #fff2,inset 0 -2px #050b0970;
+  backdrop-filter:blur(12px) saturate(1.12);
+}
+.atlas-actionbar.combat-actions::before{position:absolute;inset:4px;border:1px solid #d8c98d20;border-radius:21px 21px 13px 13px / 16px 16px 10px 10px;content:"";pointer-events:none}
+.atlas-actionbar .combat-options{position:relative;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px}
+.atlas-actionbar .combat-options button{min-width:0;min-height:59px;gap:3px;padding:3px 4px 2px;border:1px solid transparent;border-radius:14px 14px 11px 11px;background:transparent;transition:transform .16s,border-color .16s,background .16s,box-shadow .16s}
+.atlas-actionbar .combat-options button:not(:first-child)::before{position:absolute;top:13px;bottom:13px;left:-2px;width:1px;background:linear-gradient(180deg,transparent,#d8c98d28,transparent);content:"";pointer-events:none}
+.atlas-actionbar .combat-options button kbd{top:5px;right:7px;padding:1px 4px;border:1px solid #d8c98d35;border-radius:6px;background:#08110e66;color:#c2b78f;font-size:7px}
+.atlas-actionbar .combat-options button .action-icon{display:none}
+.atlas-actionbar .combat-options button .action-icon::before{content:none!important}
+.atlas-actionbar .combat-options button::after{position:absolute;top:8px;left:50%;display:grid;width:31px;height:31px;transform:translateX(-50%);place-items:center;border:1px solid #d8c98d58;border-radius:50%;background:radial-gradient(circle at 50% 35%,#d8c98d1b,#09110e66 78%);box-shadow:inset 0 1px #fff1,0 2px 8px #050b0966;color:#e2cd87;font-size:17px;line-height:1}
+.atlas-actionbar #satchel-action::after{content:"▣"}
+.atlas-actionbar #skills-action::after{content:"✥"}
+.atlas-actionbar #magic-action::after{content:"✦"}
+.atlas-actionbar #memory-action::after{content:"◷"}
+.atlas-actionbar .combat-options button b{font-size:7px;letter-spacing:.13em}
+.atlas-actionbar .combat-options button b{position:absolute;right:0;bottom:4px;left:0}
+.atlas-actionbar .combat-options button:first-child,.atlas-actionbar .combat-options button:first-child .action-icon{color:#e2c47f}
+.atlas-actionbar .combat-options button:hover:not(:disabled),.atlas-actionbar .combat-options button[aria-expanded=true]{transform:translateY(-2px);border-color:#dec98355;background:linear-gradient(180deg,#e3cd7b12,#e3cd7b05);box-shadow:inset 0 1px #fff1,0 4px 13px #080d0b44;color:#fff0c3}
+.atlas-actionbar .combat-options button:hover:not(:disabled)::after,.atlas-actionbar .combat-options button[aria-expanded=true]::after{border-color:#e2cc827c;background:radial-gradient(circle at 50% 35%,#e3cf842e,#11191699 78%);box-shadow:inset 0 1px #fff2,0 0 14px #d4bd7240}
+.atlas-actionbar .combat-options button:focus-visible{outline:2px solid #f0da91;outline-offset:2px}
+.atlas-actionbar .action-count{top:2px;right:12px}
+@media(max-width:1050px){.quest-panel.hud-panel{width:min(300px,29vw)}.world-awareness.hud-panel{min-width:0}}
+@media(max-width:760px){
+  .quest-panel.hud-panel{width:min(275px,calc(100vw - 24px))}
+  .world-awareness.hud-panel{padding:7px 10px}
+  .atlas-actionbar.combat-actions{bottom:48px;width:calc(100vw - 24px);max-width:430px;padding:7px 8px 9px}
+  .atlas-actionbar .combat-options{gap:1px}
+  .atlas-actionbar .combat-options button{min-height:55px;padding-inline:2px;border-radius:12px 12px 9px 9px}
+  .atlas-actionbar .combat-options button kbd{top:4px;right:4px;padding:0 3px;font-size:6px}
+  .atlas-actionbar .combat-options button::after{top:6px;width:28px;height:28px;font-size:15px}
+  .atlas-actionbar .combat-options button b{font-size:6px;letter-spacing:.07em}
+  .atlas-actionbar .action-count{right:5px}
+}

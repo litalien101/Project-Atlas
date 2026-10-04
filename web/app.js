@@ -207,7 +207,7 @@ function makeCharacter(kind) {
   const playerCharacter = kind === 'player' || kind === 'player2';
   const label = kind === 'npc' ? 'MARA' : kind === 'player2' ? 'PATHFINDER' : 'WAYFARER';
   const color = kind === 'npc' ? '#e7c78b' : kind === 'player2' ? '#e3c7f2' : '#d3e1cb';
-  group.userData.nameplate = makeNameplate(label, color, playerCharacter ? 1.78 : 1.82);
+  group.userData.nameplate = makeNameplate(label, color, playerCharacter ? 1.78 : 1.82, kind !== 'player');
   group.add(group.userData.nameplate);
   addFallbackTraveler(group, kind);
   group.userData.appearance = {
@@ -441,14 +441,14 @@ function setShoulderGuards(character, enabled) {
   if (!enabled) guards.forEach(guard => { guard.visible = false; });
 }
 
-function makeNameplate(label,color,y){
+function makeNameplate(label,color,y,visible=true){
   const element=document.createElement('canvas');element.width=320;element.height=72;
   const g=element.getContext('2d');g.fillStyle='rgba(15,26,24,.78)';g.beginPath();g.roundRect(5,8,310,56,12);g.fill();
   g.strokeStyle='rgba(204,190,141,.65)';g.lineWidth=2;g.stroke();
   g.fillStyle=color;g.font='600 24px system-ui';g.textAlign='center';g.textBaseline='middle';g.letterSpacing='3px';g.fillText(label,160,37);
   const texture=new THREE.CanvasTexture(element);texture.colorSpace=THREE.SRGBColorSpace;
   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false}));
-  sprite.position.set(0,y,0);sprite.scale.set(1.9,.43,1);sprite.renderOrder=5;
+  sprite.position.set(0,y,0);sprite.scale.set(1.9,.43,1);sprite.renderOrder=5;sprite.visible=visible;
   return sprite;
 }
 
@@ -511,7 +511,7 @@ function applyState(state) {
   void installTravelerModel(player, 'female');
   if(player.userData.displayName!==localName){
     if(player.userData.nameplate){player.remove(player.userData.nameplate);player.userData.nameplate.material.map?.dispose();player.userData.nameplate.material.dispose();}
-    player.userData.nameplate=makeNameplate(localName.toUpperCase(),localName==='Pathfinder'?'#e3c7f2':'#d3e1cb',1.67);
+    player.userData.nameplate=makeNameplate(localName.toUpperCase(),localName==='Pathfinder'?'#e3c7f2':'#d3e1cb',1.67,false);
     player.add(player.userData.nameplate);player.userData.displayName=localName;
   }
   if(state.active_player)$('#region-label').textContent=`${state.active_player.name.toUpperCase()} · LOCAL WORLD`;
