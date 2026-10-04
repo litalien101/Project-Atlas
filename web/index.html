@@ -23,52 +23,67 @@
       <div class="hud-actions">
         <span class="world-live"><i></i> SHARED REALM · LOCAL</span>
         <a class="view-toggle studio-link" href="/studio">STUDIO</a>
+        <button class="view-toggle" id="hud-layout-toggle" type="button" aria-expanded="false" aria-controls="hud-layout-panel">HUD</button>
         <button class="view-toggle" id="view-toggle" type="button" aria-expanded="false" aria-controls="view-settings">Camera</button>
         <button class="audio-toggle" id="audio-toggle" type="button" aria-label="Toggle ambient sound" aria-pressed="true">♫</button>
       </div>
     </header>
+    <aside class="hud-layout-panel" id="hud-layout-panel" aria-label="HUD layout" hidden>
+      <div class="hud-layout-heading"><div><small>YOUR INTERFACE</small><b>Arrange the HUD</b></div><button id="hud-layout-reset" type="button">Reset</button></div>
+      <p>Drag a dotted grip to move a panel. Hide or fold anything you do not need. Close the side panel when you are done.</p>
+      <div class="hud-layout-options">
+        <label><input type="checkbox" data-hud-visibility="character" checked> Traveler status</label>
+        <label><input type="checkbox" data-hud-visibility="quest" checked> Next step</label>
+        <label><input type="checkbox" data-hud-visibility="pulse" checked> World pulse</label>
+        <label><input type="checkbox" data-hud-visibility="events" checked> Recent events</label>
+        <label><input type="checkbox" data-hud-visibility="fieldkit" checked> Field kit</label>
+      </div>
+      <span id="hud-layout-status" class="hud-layout-status" role="status" aria-live="polite">Changes save in this browser.</span>
+    </aside>
     <button class="atlas-guide-toggle" id="ai-chat-toggle" type="button" aria-expanded="false" aria-controls="ai-chat-panel"><span>✧</span> ATLAS GUIDE</button>
 
     <aside class="view-settings" id="view-settings" aria-label="Camera settings" hidden>
-      <div class="view-settings-heading"><b>CAMERA</b><button id="close-view-settings" type="button" aria-label="Close camera settings">×</button></div>
+      <div class="view-settings-heading"><b>CAMERA</b><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="camera" aria-label="Move camera settings" title="Drag to move · use arrow keys to nudge">⠿</button><button id="close-view-settings" type="button" aria-label="Close camera settings">×</button></div></div>
       <label>Mouse look <input id="camera-sensitivity" type="range" min="0.4" max="2.2" step="0.1" value="1"></label>
       <label>Zoom speed <input id="camera-zoom-speed" type="range" min="0.5" max="2" step="0.1" value="1"></label>
       <label>Follow smoothing <input id="camera-smoothing" type="range" min="3" max="16" step="1" value="8"></label>
       <label class="invert-camera"><input id="camera-invert-y" type="checkbox"> Invert vertical look</label>
     </aside>
 
-    <section class="character-panel hud-panel" aria-label="Character status">
-      <div class="character-heading"><div class="character-avatar">✦</div><div class="character-identity"><b id="player-name">WAYFARER</b><span>TRAVELER <i>·</i> THE REACH</span></div></div>
-      <div class="character-resource"><div><span>VITALITY</span><b id="vitality">100 <em>/ 100</em></b></div><div class="resource-track"><i id="vitality-meter"></i></div></div>
-      <div class="character-footer"><span>REGION <b>WESTERN REACH</b></span><span id="coords">X 03 · Y 10</span></div>
+    <section class="character-panel hud-panel hud-widget" data-hud-widget="character" aria-label="Character status">
+      <div class="character-heading hud-widget-heading"><div class="character-avatar">✦</div><div class="character-identity"><b id="player-name">WAYFARER</b><span>TRAVELER <i>·</i> THE REACH</span></div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="character" aria-label="Move traveler status panel" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="character" aria-label="Fold traveler status" aria-expanded="true" aria-controls="character-widget-body">⌃</button></div></div>
+      <div class="hud-widget-body" id="character-widget-body">
+        <div class="character-resource"><div><span>VITALITY</span><b id="vitality">100 <em>/ 100</em></b></div><div class="resource-track"><i id="vitality-meter"></i></div></div>
+        <div class="character-footer"><span>REGION <b>WESTERN REACH</b></span><span id="coords">X 03 · Y 10</span></div>
+      </div>
     </section>
 
-    <section class="quest-panel hud-panel" aria-live="polite">
-      <div class="panel-eyebrow"><span class="quest-glyph">✧</span> NEXT STEP <i></i> THE REACH</div>
-      <b id="objective">Find Mara along the western path</b>
-      <small id="objective-hint">Speak with Mara to learn about the Listening Beacon.</small>
+    <section class="quest-panel hud-panel hud-widget" data-hud-widget="quest" aria-live="polite">
+      <div class="quest-widget-heading hud-widget-heading"><div class="panel-eyebrow"><span class="quest-glyph">✧</span> NEXT STEP <i></i> THE REACH</div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="quest" aria-label="Move next step panel" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="quest" aria-label="Fold next step" aria-expanded="true" aria-controls="quest-widget-body">⌃</button></div></div>
+      <div class="hud-widget-body" id="quest-widget-body"><b id="objective">Find Mara along the western path</b><small id="objective-hint">Speak with Mara to learn about the Listening Beacon.</small></div>
     </section>
 
-    <details class="world-awareness hud-panel" aria-label="World pulse">
-      <summary class="panel-title pulse-summary">
+    <section class="world-awareness hud-panel hud-widget" data-hud-widget="pulse" aria-label="World pulse">
+      <div class="panel-title pulse-summary hud-widget-heading">
         <span class="pulse-title">WORLD PULSE</span>
         <span class="pulse-travelers"><i class="live-dot"></i><b id="traveler-count">—</b> travelers</span>
-        <span class="pulse-chevron" aria-hidden="true">⌄</span>
-      </summary>
-      <div class="pulse-details">
+        <div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="pulse" aria-label="Move world pulse panel" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="pulse" aria-label="Fold world pulse" aria-expanded="true" aria-controls="pulse-widget-body">⌃</button></div>
+      </div>
+      <div class="pulse-details hud-widget-body" id="pulse-widget-body">
         <div class="awareness-stat"><span>EVENTS RECORDED</span><b id="world-memory-count">—</b></div>
       </div>
-    </details>
+    </section>
 
-    <section class="world-feed" aria-label="Recent world events"><div class="feed-heading"><i></i> RECENT EVENTS</div><div id="world-feed"><span class="feed-empty">Your discoveries and choices will appear here.</span></div></section>
+    <section class="world-feed hud-widget" data-hud-widget="events" aria-label="Recent world events"><div class="feed-heading hud-widget-heading"><span><i></i> RECENT EVENTS</span><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="events" aria-label="Move recent events panel" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="events" aria-label="Fold recent events" aria-expanded="true" aria-controls="events-widget-body">⌃</button></div></div><div class="hud-widget-body" id="events-widget-body"><div id="world-feed"><span class="feed-empty">Your discoveries and choices will appear here.</span></div></div></section>
 
     <div class="toast" id="toast" role="status"></div>
     <section class="connection-overlay" id="connection-overlay" role="alertdialog" aria-modal="true" aria-labelledby="connection-title" hidden>
       <div><span class="connection-sigil">✦</span><h1 id="connection-title">The world is waiting</h1><p id="connection-message">Connecting to your traveler...</p><button id="connection-retry" type="button">Reconnect</button></div>
     </section>
     <aside class="network-debug" id="network-debug" aria-live="off" hidden></aside>
-    <section class="combat-actions atlas-actionbar" id="combat-actions" aria-label="Action bar">
-      <div class="combat-options">
+    <section class="combat-actions atlas-actionbar hud-widget" id="combat-actions" data-hud-widget="fieldkit" aria-label="Field kit">
+      <div class="fieldkit-heading hud-widget-heading"><span>FIELD KIT</span><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="fieldkit" aria-label="Move field kit" title="Drag to move · use arrow keys to nudge">⠿</button><button class="hud-collapse" type="button" data-hud-collapse="fieldkit" aria-label="Fold field kit" aria-expanded="true" aria-controls="fieldkit-widget-body">⌃</button></div></div>
+      <div class="combat-options hud-widget-body" id="fieldkit-widget-body">
         <button id="satchel-action" type="button" aria-label="Open inventory" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="satchel"><kbd>I</kbd><span class="action-icon">▱</span><b>Inventory</b></button>
         <button id="skills-action" type="button" aria-label="Open skills" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="skills"><kbd>K</kbd><span class="action-icon">✧</span><b>Skills</b></button>
         <button id="magic-action" type="button" aria-label="Open magic" aria-expanded="false" aria-controls="memory-drawer" data-drawer-section="magic"><kbd>J</kbd><span class="action-icon">⌘</span><b>Magic</b></button>
@@ -80,7 +95,7 @@
     <div class="travel-hint"><span>W A S D</span> MOVE <span>SHIFT</span> RUN <span>SPACE</span> JUMP <i></i> RIGHT-DRAG LOOK</div>
 
     <aside class="memory-drawer" id="memory-drawer" data-section="appearance" aria-label="Game panels" hidden>
-      <div class="drawer-heading"><div><small>ATLAS · THE REACH</small><h2 id="drawer-title">World memory</h2></div><button id="close-memory" type="button" aria-label="Close panel">×</button></div>
+      <div class="drawer-heading"><div><small>ATLAS · THE REACH</small><h2 id="drawer-title">World memory</h2></div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="drawer" aria-label="Move side panel" title="Drag to move · use arrow keys to nudge">⠿</button><button id="close-memory" type="button" aria-label="Close panel">×</button></div></div>
       <nav class="drawer-tabs" aria-label="Game panels">
         <button type="button" data-drawer-tab="satchel">Inventory</button><button type="button" data-drawer-tab="appearance">Appearance</button><button type="button" data-drawer-tab="skills">Skills</button><button type="button" data-drawer-tab="magic">Magic</button><button type="button" data-drawer-tab="notes">World memory</button>
       </nav>
@@ -129,14 +144,14 @@
         <div id="journal" class="journal-list"></div>
         <div class="beacon-note" id="beacon-card"><div class="beacon-symbol">◉</div><div><small>THE LISTENING BEACON</small><b id="beacon-state">DORMANT</b><p id="beacon-copy">A weathered signal waits in the western reach.</p></div></div>
         <section class="world-history" aria-label="Recent world memory"><div class="history-heading"><i></i>RECORDED EVENTS · SOURCE + RATIONALE</div><div id="events" class="world-memory-list"></div>
-          <section class="event-explanation" id="event-explanation" aria-live="polite" hidden><div class="event-explanation-heading"><b>EVENT PROVENANCE</b><button id="close-event-explanation" type="button" aria-label="Close event explanation">×</button></div><h3 id="event-explanation-title"></h3><p id="event-explanation-rationale"></p><dl><div><dt>ACTOR</dt><dd id="event-explanation-actor"></dd></div><div><dt>RECORDED</dt><dd id="event-explanation-time"></dd></div><div><dt>SOURCE</dt><dd id="event-explanation-source"></dd></div></dl><small>Recorded event result</small><pre id="event-explanation-result"></pre><small>This is the author’s recorded rationale, not an inferred cause.</small></section>
+          <section class="event-explanation" id="event-explanation" aria-live="polite" hidden><div class="event-explanation-heading"><b>EVENT PROVENANCE</b><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="explanation" aria-label="Move event explanation" title="Drag to move · use arrow keys to nudge">⠿</button><button id="close-event-explanation" type="button" aria-label="Close event explanation">×</button></div></div><h3 id="event-explanation-title"></h3><p id="event-explanation-rationale"></p><dl><div><dt>ACTOR</dt><dd id="event-explanation-actor"></dd></div><div><dt>RECORDED</dt><dd id="event-explanation-time"></dd></div><div><dt>SOURCE</dt><dd id="event-explanation-source"></dd></div></dl><small>Recorded event result</small><pre id="event-explanation-result"></pre><small>This is the author’s recorded rationale, not an inferred cause.</small></section>
         </section>
       </section>
       <span id="attunement" hidden>0 <em>/ 1</em></span><span id="attune-meter" hidden></span><span id="reed-count" hidden>0</span>
     </aside>
 
     <aside class="ai-chat-panel" id="ai-chat-panel" aria-label="Atlas Guide" hidden>
-      <header class="ai-chat-header"><span class="ai-guide-sigil">✧</span><div><b>ATLAS GUIDE</b><small>WORLD CONTEXT ASSISTANT</small></div><button id="ai-chat-close" type="button" aria-label="Close Atlas Guide">×</button></header>
+      <header class="ai-chat-header"><span class="ai-guide-sigil">✧</span><div><b>ATLAS GUIDE</b><small>WORLD CONTEXT ASSISTANT</small></div><div class="hud-widget-tools"><button class="hud-drag-handle" type="button" data-hud-drag="guide" aria-label="Move Atlas Guide" title="Drag to move · use arrow keys to nudge">⠿</button><button id="ai-chat-close" type="button" aria-label="Close Atlas Guide">×</button></div></header>
       <div class="ai-chat-status"><i></i> GROUNDED IN THIS WORLD</div>
       <div class="ai-chat-welcome"><small>THE REACH · FIELD GUIDE</small><h2>Understand the world around you.</h2><p>Ask about recorded events, places, people, and how the world is connected.</p></div>
       <div class="ai-chat-prompts" aria-label="Example questions"><span>What changed recently?</span><span>Why did it happen?</span><span>How is this world connected?</span></div>

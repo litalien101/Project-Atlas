@@ -136,6 +136,97 @@
   .atlas-actionbar .action-count{right:5px}
 }
 
+.hud-widget.hud-positioned{transform:none}
+.hud-widget.hud-dragging{z-index:7;transition:none!important;cursor:grabbing;filter:drop-shadow(0 14px 20px #03070566)}
+.hud-widget[data-hud-collapsed=true] .hud-widget-body{display:none!important}
+.hud-widget-heading{cursor:default}
+.hud-widget-tools{display:flex;align-items:center;gap:3px;flex:none}
+.hud-widget-tools button{display:grid;width:23px;height:23px;place-items:center;border:1px solid transparent;border-radius:4px;background:transparent;color:#d6d0b8;cursor:pointer;line-height:1}
+.hud-widget-tools .hud-drag-handle{color:#aeb39f;font-size:15px;cursor:grab;touch-action:none}
+.hud-widget-tools button:hover{border-color:#d8c98d55;background:#d8c98d12;color:#fff0c3}
+.hud-widget-tools button:focus-visible{outline:2px solid #f0da91;outline-offset:2px}
+.character-heading.hud-widget-heading{cursor:default}
+.character-heading .character-identity{flex:1}
+.character-heading .hud-widget-tools{margin-left:auto}
+.quest-widget-heading,.fieldkit-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.quest-widget-heading .panel-eyebrow{min-width:0;margin:0}
+.quest-widget-heading .hud-widget-tools{margin-left:auto}
+.quest-panel .hud-widget-body{padding-top:7px}
+.quest-panel .hud-widget-body>b{display:block;color:#f0ead8;font:16px/1.35 Georgia,serif;font-weight:400}
+.quest-panel .hud-widget-body>small{display:block;margin-top:4px;color:#a8ad9f;font:9px/1.5 Georgia,serif}
+.world-awareness.hud-panel{padding:0;border-radius:4px;background:linear-gradient(100deg,#101916a0,#10191645);box-shadow:none;backdrop-filter:blur(7px)}
+.world-awareness .pulse-summary{min-height:35px;padding:3px 8px 3px 12px;cursor:default;list-style:none}
+.world-awareness .pulse-title{flex:none}
+.world-awareness .pulse-travelers{margin-left:0}
+.world-awareness .pulse-details{padding:0 12px 10px}
+.world-awareness[data-hud-collapsed=true] .pulse-summary{border-bottom:0}
+.world-feed{border-radius:2px}
+.world-feed .feed-heading{justify-content:space-between;margin-bottom:5px}
+.world-feed .feed-heading>span{display:flex;align-items:center;gap:8px}
+.world-feed .hud-widget-body{padding-left:8px}
+.fieldkit-heading{position:relative;z-index:1;min-height:21px;padding:0 3px 5px;border-bottom:1px solid #e0d29a24;color:#d8cfb4;font-size:7px;letter-spacing:.18em}
+.fieldkit-heading .hud-widget-tools button{width:19px;height:19px}
+.atlas-actionbar.combat-actions{
+  bottom:22px;
+  width:min(460px,calc(100vw - 32px));
+  max-width:calc(100vw - 32px);
+  padding:7px 10px 8px;
+  border:1px solid #d7c78232;
+  border-radius:5px;
+  background:linear-gradient(110deg,#121c1a72,#1a272377 50%,#121c1a72);
+  box-shadow:0 10px 28px #050b0955,inset 0 1px #ffffff09;
+  backdrop-filter:blur(9px) saturate(1.04);
+}
+.atlas-actionbar.combat-actions::before{display:none}
+.atlas-actionbar .combat-options{gap:3px}
+.atlas-actionbar .combat-options button{min-height:53px;border-radius:3px}
+.atlas-actionbar .combat-options button::after{
+  top:6px;width:27px;height:27px;
+  border-color:#d8c98d42;border-radius:6px;
+  background:linear-gradient(145deg,#d8c98d12,#09110e16);
+  box-shadow:inset 0 1px #fff1;
+  color:#e4d39a;
+}
+.atlas-actionbar .combat-options button b{bottom:3px;color:#d8d5c7;font-size:7px;letter-spacing:.08em}
+.atlas-actionbar .combat-options button kbd{top:4px;right:4px;border:0;background:transparent;color:#bdb89f;font-size:7px}
+.atlas-actionbar .combat-options button:not(:first-child)::before{top:9px;bottom:9px}
+.atlas-actionbar .combat-options button:hover:not(:disabled),
+.atlas-actionbar .combat-options button[aria-expanded=true]{transform:translateY(-1px);border-color:#dec98345;background:#e3cd7b0b;box-shadow:none}
+.atlas-actionbar .combat-options button:hover:not(:disabled)::after,
+.atlas-actionbar .combat-options button[aria-expanded=true]::after{border-color:#e2cc8280;background:#e3cf8416;box-shadow:0 0 12px #d4bd7228}
+.hud-layout-panel{
+  position:absolute;z-index:12;top:72px;right:3.2%;width:min(294px,calc(100vw - 24px));
+  padding:15px 16px 13px;border:1px solid #d8c98d44;border-radius:5px;
+  background:linear-gradient(145deg,#14201ded,#0e1715eF);
+  box-shadow:0 18px 50px #030806a8;backdrop-filter:blur(16px);color:#eee9d7;
+}
+.hud-layout-panel[hidden]{display:none}
+.hud-layout-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:10px;border-bottom:1px solid #e6dcbb22}
+.hud-layout-heading>div{display:grid;gap:4px}
+.hud-layout-heading small{color:#c8b878;font-size:7px;letter-spacing:.16em}
+.hud-layout-heading b{font:17px Georgia,serif;font-weight:400}
+.hud-layout-heading button{padding:6px 9px;border:1px solid #d8c98d44;border-radius:3px;background:#d8c98d0c;color:#e8dba9;font-size:9px;cursor:pointer}
+.hud-layout-panel>p{margin:10px 0;color:#b4b7a8;font:10px/1.45 Georgia,serif}
+.hud-layout-options{display:grid;grid-template-columns:1fr 1fr;gap:3px 9px}
+.hud-layout-options label{display:flex;align-items:center;gap:7px;padding:6px 2px;color:#dedacb;font-size:9px;cursor:pointer}
+.hud-layout-options input{margin:0;accent-color:#cfbd7b}
+.hud-layout-status{display:block;min-height:12px;margin-top:8px;color:#939d8d;font:8px ui-monospace,monospace}
+.hud-layout-panel :focus-visible{outline:2px solid #f0da91;outline-offset:2px}
+.game-screen button:focus-visible{outline-offset:2px}
+.ai-chat-header .hud-widget-tools{margin-left:auto}
+.ai-chat-header .hud-widget-tools button:last-child{border:0;background:transparent;color:#c8c5b5;font-size:22px}
+.view-settings-heading .hud-widget-tools{margin-left:auto}
+.event-explanation-heading .hud-widget-tools{margin-left:auto}
+@media(max-width:760px){
+  .hud-layout-panel{top:60px;right:8px}
+  .atlas-actionbar.combat-actions{bottom:47px;width:calc(100vw - 24px);max-width:430px;padding:6px 7px 7px}
+  .fieldkit-heading{min-height:19px;padding-bottom:3px}
+  .atlas-actionbar .combat-options button{min-height:50px}
+  .atlas-actionbar .combat-options button::after{top:5px;width:25px;height:25px}
+  .atlas-actionbar .combat-options button b{font-size:6px}
+}
+@media(prefers-reduced-motion:reduce){.hud-widget,.hud-widget *{transition:none!important}}
+
 .atlas-topbar{height:82px;padding-inline:4%;background:linear-gradient(180deg,rgba(12,20,20,.92),rgba(15,24,22,.62) 72%,transparent)}
 .atlas-topbar .brand-sigil{width:42px;height:42px;box-shadow:0 0 28px #d8c27a18,inset 0 0 18px #d8c27a10}
 .atlas-topbar .world-brand{gap:13px}
@@ -167,6 +258,7 @@
 .atlas-actionbar .combat-options button{border-radius:3px;background:linear-gradient(180deg,#ffffff09,#ffffff03);transition:transform .16s,border-color .16s,background .16s}
 .atlas-actionbar .combat-options button:hover:not(:disabled){transform:translateY(-2px)}
 .memory-drawer{border-radius:4px;box-shadow:0 22px 75px #030806d9,inset 0 1px #ffffff0c}
+.memory-drawer.hud-positioned{max-height:calc(100% - 20px)}
 .drawer-tabs button{border-radius:2px;transition:background .15s,color .15s}
 .drawer-tabs button:hover{background:#d5c7830a;color:#eee2b8}
 .appearance-panel{display:grid;gap:5px}

@@ -1,5 +1,15 @@
 # Project Atlas Change History
 
+### 2026-10-04 — Make the Reach HUD customizable
+
+- Added a HUD layout menu to show or hide status, objective, world pulse,
+  recent-event, and field-kit panels. Each panel and the game-panel drawer can
+  be dragged with its grip or nudged with arrow keys; the camera, guide, and
+  event-explanation overlays are also repositionable. Panels can be folded,
+  and layout choices persist in browser-local storage with a reset option.
+- Reworked the field kit as a lighter translucent strip with restrained edges
+  instead of a solid rounded tray.
+
 ### 2026-10-04 — Refine the Reach field-kit HUD
 
 - Reworked the four lower navigation controls as one arched, softly lit field

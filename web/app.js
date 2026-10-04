@@ -865,6 +865,7 @@ function updateAppearance(patch) {
 function openDrawer(section){
   const drawer=$('#memory-drawer'),opening=drawer.hidden||drawer.dataset.section!==section;
   drawer.dataset.section=section;drawer.hidden=!opening;
+  if(opening)applyHudPosition('drawer');
   for(const [key,[id]] of Object.entries(drawerPanels))$('#'+id).hidden=!opening||section!==key;
   $('#drawer-title').textContent=drawerPanels[section]?.[1]||'World memory';
   document.querySelectorAll('[data-drawer-section]').forEach(trigger=>{
@@ -905,7 +906,7 @@ $('#skills-action').addEventListener('click',()=>openDrawer('skills'));
 $('#magic-action').addEventListener('click',()=>openDrawer('magic'));
 $('#memory-action').addEventListener('click',()=>openDrawer('notes'));
 document.querySelectorAll('[data-drawer-tab]').forEach(tab=>tab.addEventListener('click',()=>openDrawer(tab.dataset.drawerTab)));
-$('#ai-chat-toggle').addEventListener('click',()=>{const panel=$('#ai-chat-panel'),opening=panel.hidden;panel.hidden=!opening;$('#ai-chat-toggle').setAttribute('aria-expanded',String(opening));});
+$('#ai-chat-toggle').addEventListener('click',()=>{const panel=$('#ai-chat-panel'),opening=panel.hidden;panel.hidden=!opening;if(opening)applyHudPosition('guide');$('#ai-chat-toggle').setAttribute('aria-expanded',String(opening));});
 $('#ai-chat-close').addEventListener('click',()=>{$('#ai-chat-panel').hidden=true;$('#ai-chat-toggle').setAttribute('aria-expanded','false');});
 $('#events').addEventListener('click',event=>{
   const entry=event.target.closest('[data-world-event]');
@@ -922,6 +923,7 @@ $('#audio-toggle').addEventListener('click',()=>{startAmbient();setAmbientEnable
 async function loadEventExplanation(eventId){
   const panel=$('#event-explanation');
   panel.hidden=false;
+  applyHudPosition('explanation');
   $('#event-explanation-title').textContent='Loading event…';
   $('#event-explanation-rationale').textContent='Retrieving its saved evidence and source.';
   try{
@@ -954,6 +956,7 @@ for(const [name,control] of Object.entries(cameraControls)){
 }
 function setViewSettings(open){
   viewSettings.hidden=!open;viewToggle.setAttribute('aria-expanded',String(open));
+  if(open)applyHudPosition('camera');
 }
 viewToggle.addEventListener('click',()=>setViewSettings(viewSettings.hidden));
 $('#close-view-settings').addEventListener('click',()=>setViewSettings(false));
@@ -963,6 +966,147 @@ function resize(){
   camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setSize(width,height,false);
 }
 const resizeObserver=new ResizeObserver(resize);resizeObserver.observe(canvas.parentElement);window.addEventListener('resize',resize);
+
+const HUD_PREFERENCES_KEY='atlas.hud.preferences.v1';
+const hudLayoutToggle=$('#hud-layout-toggle');
+const hudLayoutPanel=$('#hud-layout-panel');
+const hudLayoutStatus=$('#hud-layout-status');
+const hudWidgets=new Map([...document.querySelectorAll('[data-hud-widget]')].map(widget=>[widget.dataset.hudWidget,widget]));
+const hudPositionableWidgets=new Map([...hudWidgets,['drawer',$('#memory-drawer')],['camera',$('#view-settings')],['guide',$('#ai-chat-panel')],['explanation',$('#event-explanation')]]);
+const defaultHudPreferences=()=>Object.fromEntries([...hudPositionableWidgets.keys()].map(id=>[id,{visible:true,collapsed:false,position:null}]));
+let hudPreferences=defaultHudPreferences();
+function readHudPreferences(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(HUD_PREFERENCES_KEY)||'null');
+    if(saved===null)return;
+    if(saved?.version!==1||!saved.widgets||typeof saved.widgets!=='object'){
+      console.warn('Saved HUD preferences have an unsupported format; using the default layout.');
+      return;
+    }
+    for(const [id,defaults] of Object.entries(hudPreferences)){
+      const value=saved.widgets[id];
+      if(!value||typeof value!=='object')continue;
+      hudPreferences[id]={
+        visible:typeof value.visible==='boolean'?value.visible:defaults.visible,
+        collapsed:typeof value.collapsed==='boolean'?value.collapsed:defaults.collapsed,
+        position:value.position&&Number.isFinite(value.position.x)&&Number.isFinite(value.position.y)
+          ?{x:Math.max(0,Math.min(1,value.position.x)),y:Math.max(0,Math.min(1,value.position.y))}
+          :null,
+      };
+    }
+  }catch(error){console.warn('Saved HUD preferences could not be read; using the default layout.',error);}
+}
+function persistHudPreferences(){
+  try{localStorage.setItem(HUD_PREFERENCES_KEY,JSON.stringify({version:1,widgets:hudPreferences}));}
+  catch(error){console.error('HUD preferences could not be saved.',error);showToast('HUD changes could not be saved in this browser.');}
+}
+function applyHudPosition(id){
+  const widget=hudPositionableWidgets.get(id),position=hudPreferences[id]?.position;
+  if(!widget||widget.hidden||!position)return;
+  const bounds=$('.game-screen').getBoundingClientRect(),rect=widget.getBoundingClientRect();
+  const maxX=Math.max(0,bounds.width-rect.width-10),maxY=Math.max(0,bounds.height-rect.height-10);
+  widget.classList.add('hud-positioned');
+  widget.style.left=`${Math.min(10,maxX)+Math.max(0,Math.min(maxX-10,Math.round(position.x*Math.max(0,maxX-10))))}px`;
+  widget.style.top=`${Math.min(10,maxY)+Math.max(0,Math.min(maxY-10,Math.round(position.y*Math.max(0,maxY-10))))}px`;
+  widget.style.right='auto';widget.style.bottom='auto';widget.style.transform='none';
+}
+function updateHudPosition(id,left,top,save=true){
+  const widget=hudPositionableWidgets.get(id);if(!widget)return;
+  const bounds=$('.game-screen').getBoundingClientRect(),rect=widget.getBoundingClientRect();
+  const maxX=Math.max(0,bounds.width-rect.width-10),maxY=Math.max(0,bounds.height-rect.height-10);
+  const minX=Math.min(10,maxX),minY=Math.min(10,maxY);
+  const x=Math.max(minX,Math.min(maxX,left)),y=Math.max(minY,Math.min(maxY,top));
+  widget.classList.add('hud-positioned');
+  widget.style.left=`${x}px`;widget.style.top=`${y}px`;widget.style.right='auto';widget.style.bottom='auto';widget.style.transform='none';
+  hudPreferences[id].position={x:maxX>minX?(x-minX)/(maxX-minX):0,y:maxY>minY?(y-minY)/(maxY-minY):0};
+  if(save)persistHudPreferences();
+}
+function applyHudPreferences(){
+  for(const [id,widget] of hudPositionableWidgets){
+    const preference=hudPreferences[id];
+    if(hudWidgets.has(id))widget.hidden=!preference.visible;
+    widget.dataset.hudCollapsed=String(preference.collapsed);
+    const collapse=widget.querySelector('[data-hud-collapse]');
+    if(collapse){
+      collapse.setAttribute('aria-expanded',String(!preference.collapsed));
+      collapse.setAttribute('aria-label',`${preference.collapsed?'Expand':'Fold'} ${collapse.dataset.hudCollapse==='character'?'traveler status':collapse.dataset.hudCollapse==='quest'?'next step':collapse.dataset.hudCollapse==='pulse'?'world pulse':collapse.dataset.hudCollapse==='events'?'recent events':'field kit'}`);
+      collapse.textContent=preference.collapsed?'⌄':'⌃';
+    }
+    const checkbox=document.querySelector(`[data-hud-visibility="${id}"]`);
+    if(checkbox)checkbox.checked=preference.visible;
+    applyHudPosition(id);
+  }
+}
+function resetHudPreferences(){
+  hudPreferences=defaultHudPreferences();
+  for(const widget of hudPositionableWidgets.values()){
+    widget.classList.remove('hud-positioned','hud-dragging');
+    widget.style.removeProperty('left');widget.style.removeProperty('top');widget.style.removeProperty('right');widget.style.removeProperty('bottom');widget.style.removeProperty('transform');
+  }
+  applyHudPreferences();persistHudPreferences();
+  hudLayoutStatus.textContent='HUD layout reset to its original positions.';
+}
+readHudPreferences();applyHudPreferences();
+hudLayoutToggle.addEventListener('click',()=>{
+  const opening=hudLayoutPanel.hidden;
+  hudLayoutPanel.hidden=!opening;hudLayoutToggle.setAttribute('aria-expanded',String(opening));
+  if(opening)hudLayoutPanel.querySelector('input')?.focus();
+});
+$('#hud-layout-reset').addEventListener('click',resetHudPreferences);
+document.querySelectorAll('[data-hud-visibility]').forEach(checkbox=>checkbox.addEventListener('change',event=>{
+  const id=event.currentTarget.dataset.hudVisibility,widget=hudWidgets.get(id);
+  if(!widget)return;
+  widget.hidden=!event.currentTarget.checked;hudPreferences[id].visible=event.currentTarget.checked;
+  if(event.currentTarget.checked)applyHudPosition(id);
+  persistHudPreferences();
+  if(widget.hidden)hudLayoutToggle.focus();
+  hudLayoutStatus.textContent=`${widget.getAttribute('aria-label')||id} ${event.currentTarget.checked?'shown':'hidden'}.`;
+}));
+document.querySelectorAll('[data-hud-collapse]').forEach(button=>button.addEventListener('click',()=>{
+  const id=button.dataset.hudCollapse,widget=hudWidgets.get(id);
+  hudPreferences[id].collapsed=!hudPreferences[id].collapsed;
+  widget.dataset.hudCollapsed=String(hudPreferences[id].collapsed);
+  button.setAttribute('aria-expanded',String(!hudPreferences[id].collapsed));
+  button.setAttribute('aria-label',`${hudPreferences[id].collapsed?'Expand':'Fold'} ${id==='character'?'traveler status':id==='quest'?'next step':id==='pulse'?'world pulse':id==='events'?'recent events':'field kit'}`);
+  button.textContent=hudPreferences[id].collapsed?'⌄':'⌃';
+  persistHudPreferences();
+}));
+let activeHudDrag=null;
+document.querySelectorAll('[data-hud-drag]').forEach(handle=>{
+  const id=handle.dataset.hudDrag,widget=hudPositionableWidgets.get(id);
+  handle.addEventListener('pointerdown',event=>{
+    if(event.button!==0)return;
+    const bounds=$('.game-screen').getBoundingClientRect(),rect=widget.getBoundingClientRect();
+    activeHudDrag={id,handle,pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,left:rect.left-bounds.left,top:rect.top-bounds.top};
+    handle.setPointerCapture(event.pointerId);widget.classList.add('hud-dragging');event.preventDefault();
+  });
+  handle.addEventListener('pointermove',event=>{
+    if(!activeHudDrag||activeHudDrag.handle!==handle||event.pointerId!==activeHudDrag.pointerId)return;
+    updateHudPosition(id,activeHudDrag.left+event.clientX-activeHudDrag.startX,activeHudDrag.top+event.clientY-activeHudDrag.startY,false);
+  });
+  const finishDrag=event=>{
+    if(!activeHudDrag||activeHudDrag.handle!==handle||event.pointerId!==activeHudDrag.pointerId)return;
+    widget.classList.remove('hud-dragging');activeHudDrag=null;persistHudPreferences();
+    hudLayoutStatus.textContent='Panel position saved.';
+  };
+  handle.addEventListener('pointerup',finishDrag);handle.addEventListener('pointercancel',finishDrag);
+  handle.addEventListener('keydown',event=>{
+    const steps={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]};
+    if(event.key==='Home'){event.preventDefault();hudPreferences[id].position=null;widget.classList.remove('hud-positioned');for(const property of ['left','top','right','bottom','transform'])widget.style.removeProperty(property);persistHudPreferences();hudLayoutStatus.textContent='Panel returned to its default position.';return;}
+    const direction=steps[event.key];if(!direction)return;
+    event.preventDefault();const bounds=$('.game-screen').getBoundingClientRect(),rect=widget.getBoundingClientRect(),step=event.shiftKey?48:16;
+    updateHudPosition(id,rect.left-bounds.left+direction[0]*step,rect.top-bounds.top+direction[1]*step);
+    hudLayoutStatus.textContent='Panel position saved.';
+  });
+});
+window.addEventListener('resize',()=>{for(const id of hudPositionableWidgets.keys())applyHudPosition(id);});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!hudLayoutPanel.hidden){hudLayoutPanel.hidden=true;hudLayoutToggle.setAttribute('aria-expanded','false');hudLayoutToggle.focus();}
+});
+document.addEventListener('pointerdown',event=>{
+  if(hudLayoutPanel.hidden||hudLayoutPanel.contains(event.target)||hudLayoutToggle.contains(event.target))return;
+  hudLayoutPanel.hidden=true;hudLayoutToggle.setAttribute('aria-expanded','false');
+});
 
 canvas.addEventListener('pointerdown',event=>{if(event.button!==0)return;startAmbient();clickPointer={id:event.pointerId,x:event.clientX,y:event.clientY};canvas.setPointerCapture(event.pointerId);});
 canvas.addEventListener('pointerup',event=>{
