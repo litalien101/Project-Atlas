@@ -29,21 +29,27 @@ candidate is not an approved asset.
   source text; require the creator to acknowledge that unparsed language does
   not change geometry.
 - [x] Generate a Stone Troll blockout candidate from the recipe-driven plan in
-  Blender. The pending `.blend`, GLB, recipe, build plan, region data, and
-  candidate record are under `art/characters/pending_models/stone_troll/`.
-- [ ] Visually inspect the saved `.blend` and GLB preview; generation success
-  and a passing narrow topology check do not count as design approval.
-- [ ] Compare front, side, and back silhouettes with rights-cleared design
-  references; source/reference images must not be retained or used without
-  documented rights.
-- [ ] Review proportions, head/face features, shoulder and armpit transitions,
-  complete arms, wrist-to-hand continuity, fingers/thumbs, legs/feet, normals,
-  boundaries, and unexplained disconnected or intersecting geometry.
-- [ ] Record a concrete accept/reject decision and rationale against the exact
-  preview hash. Rejecting the candidate should create a new recipe/build
-  revision, not overwrite the previous trial evidence.
-- [ ] Keep the accepted result scoped to geometry review only. Do not call the
-  procedural blockout production-quality or runtime-ready.
+  Blender. The first trial is preserved under
+  `art/characters/rejected_models/stone_troll/` by preview hash; it is not an
+  active candidate or an approved asset.
+- [x] Inspect the saved front, side, back, and three-quarter renders and record
+  an evidence-based rejection against the exact preview hash. The review
+  identifies unreadable hands/fingers, crude shoulder transitions, a schematic
+  silhouette, and features that do not read as described in the authored
+  brief. Structural topology checks do not override these visual failures.
+- [ ] Obtain an owner-approved, rights-cleared visual target before judging
+  design fidelity. The authored profile text is not a substitute for a target
+  image or model.
+- [ ] Choose a modeling approach capable of matching that target. The current
+  parametric generator produces blockouts; the retained Troll Mauler and human
+  base are authoring references, not matching approved geometry seeds.
+- [ ] Build a new trial in a fresh pending-model output and review front, side,
+  back, three-quarter, hand, face, and shoulder views against the approved
+  target. Keep the rejected hash and its review intact.
+- [ ] Accept geometry only after the target comparison, proportions, facial
+  features, shoulder/axilla, complete arms, hands/fingers/thumbs, legs/feet,
+  and structural findings pass a named human review. Geometry acceptance does
+  not approve texture, rig, animation, or runtime use.
 
 ## P1 — Make geometry recipes control the Blender build reliably
 

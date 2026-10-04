@@ -30,8 +30,8 @@ python3 tools/characters/recipe_studio_server.py
 ```
 
 Open <http://127.0.0.1:8766> for the compact 3D model review screen. It lists
-local Troll Sample 1 remesh GLBs when they are present and saves issue markers
-with notes and 3D coordinates. These source-derived review meshes are not
+local Troll Sample 1 remesh GLBs when present and saves surface pins and traced
+3D edit paths with instructions. These source-derived review meshes are not
 included in the public repository because their rights and provenance are not
 cleared; the review screen will report that no models are available in a fresh
 checkout until a separately rights-reviewed candidate is supplied locally.

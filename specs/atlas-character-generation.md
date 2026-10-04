@@ -51,6 +51,15 @@ Character creation uses small, reviewable artifacts at each stage:
    provenance, rig compatibility, animation behavior, and runtime constraints.
    Registration is a separate release gate.
 
+Rejected candidate trials are retained under
+`art/characters/rejected_models/<character-id>/<preview-sha256>/` with their
+review record. They are evidence only and must not be used as approved source
+geometry, training examples, or runtime assets. New builds go to a fresh
+pending-model trial; never overwrite a rejected output. An authored text brief
+does not establish visual design fidelity. For a design-matched review, obtain
+an owner-approved visual target with documented usage rights before building
+the replacement.
+
 The existing `atlas-character-profile/v1` is the in-game appearance/save
 contract. The design profile defined here is a creator input and does not change
 runtime appearance storage.

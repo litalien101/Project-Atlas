@@ -379,6 +379,8 @@ class Handler(BaseHTTPRequestHandler):
         # Deliberately allow-list review candidates; this endpoint cannot read
         # arbitrary workspace files or source-model directories.
         return {
+            "appearance-r002-mottled-hide": REVIEW_ROOT / "appearance-r002-mottled-hide/geometry_candidate.glb",
+            "appearance-r001-moss-hide": REVIEW_ROOT / "appearance-r001-moss-hide/geometry_candidate.glb",
             "r002": REVIEW_ROOT / "voxel-remesh-r002/geometry_candidate.glb",
             "r002-adaptive": REVIEW_ROOT / "voxel-remesh-r002-adaptive/geometry_candidate.glb",
             "r003": REVIEW_ROOT / "voxel-remesh-r003/geometry_candidate.glb",
@@ -392,7 +394,11 @@ class Handler(BaseHTTPRequestHandler):
                 continue
             models.append({
                 "id": model_id,
-                "label": f"Troll Sample 1 · {model_id}",
+                "label": (
+                    "Troll Sample 1 · Mottled Hide (textured)"
+                    if model_id == "appearance-r002-mottled-hide"
+                    else f"Troll Sample 1 · {model_id}"
+                ),
                 "size_bytes": path.stat().st_size,
                 "url": f"/api/model-review/model?model_id={model_id}",
                 "blend_path": str(path.with_suffix(".blend").relative_to(ROOT)),
@@ -404,33 +410,46 @@ class Handler(BaseHTTPRequestHandler):
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except FileNotFoundError:
-            data = {"schema": "atlas-model-review/v1", "model_id": model_id, "markers": []}
+            data = {"schema": "atlas-model-edit-guide/v1", "model_id": model_id, "annotations": []}
         except (OSError, json.JSONDecodeError):
             return self._json(500, {"error": "Saved annotations could not be read."})
         return self._json(200, data)
 
     def _write_annotations(self, content: dict) -> None:
-        if set(content) != {"model_id", "markers"}:
-            return self._json(422, {"error": "Provide model_id and markers."})
-        model_id, markers = content["model_id"], content["markers"]
-        if model_id not in self._review_model_map() or not isinstance(markers, list) or len(markers) > 200:
-            return self._json(422, {"error": "Unknown model or invalid marker list."})
+        if set(content) != {"model_id", "annotations"}:
+            return self._json(422, {"error": "Provide model_id and annotations."})
+        model_id, annotations = content["model_id"], content["annotations"]
+        if not isinstance(model_id, str) or model_id not in self._review_model_map() or not isinstance(annotations, list) or len(annotations) > 80:
+            return self._json(422, {"error": "Unknown model or invalid annotation list."})
         clean = []
-        for marker in markers:
-            if not isinstance(marker, dict) or set(marker) != {"id", "position", "note", "created_at"}:
-                return self._json(422, {"error": "Each marker needs id, position, note, and created_at."})
-            position = marker["position"]
-            if (not isinstance(marker["id"], str) or len(marker["id"]) > 80
-                or not isinstance(position, list) or len(position) != 3
-                or any(not isinstance(v, (int, float)) or not (-10 <= v <= 10) for v in position)
-                or not isinstance(marker["note"], str) or not marker["note"].strip()
-                or len(marker["note"]) > 1000 or not isinstance(marker["created_at"], str)):
-                return self._json(422, {"error": "A marker contains invalid coordinates or note text."})
-            clean.append({"id": marker["id"], "position": position, "note": marker["note"].strip(), "created_at": marker["created_at"]})
+        actions = {"feature", "separate", "reshape", "smooth", "remove"}
+        for annotation in annotations:
+            if not isinstance(annotation, dict) or set(annotation) != {"id", "kind", "action", "title", "note", "points", "created_at"}:
+                return self._json(422, {"error": "Each edit mark needs id, kind, action, title, note, points, and created_at."})
+            points = annotation["points"]
+            kind = annotation["kind"]
+            if (not isinstance(annotation["id"], str) or len(annotation["id"]) > 80
+                or not isinstance(kind, str) or kind not in {"point", "polyline"}
+                or not isinstance(annotation["action"], str) or annotation["action"] not in actions
+                or not isinstance(annotation["title"], str) or not annotation["title"].strip() or len(annotation["title"]) > 100
+                or not isinstance(annotation["note"], str) or len(annotation["note"]) > 1000
+                or not isinstance(points, list) or len(points) > 256
+                or (kind == "point" and len(points) != 1) or (kind == "polyline" and len(points) < 2)
+                or not isinstance(annotation["created_at"], str)):
+                return self._json(422, {"error": "An edit mark has invalid fields or point count."})
+            if any(not isinstance(point, list) or len(point) != 3
+                   or any(isinstance(value, bool) or not isinstance(value, (int, float)) or not (-10 <= value <= 10) for value in point)
+                   for point in points):
+                return self._json(422, {"error": "Edit-mark coordinates must be finite 3D points within the model review bounds."})
+            clean.append({
+                "id": annotation["id"], "kind": kind, "action": annotation["action"],
+                "title": annotation["title"].strip(), "note": annotation["note"].strip(),
+                "points": points, "created_at": annotation["created_at"],
+            })
         ANNOTATION_ROOT.mkdir(parents=True, exist_ok=True)
         target = ANNOTATION_ROOT / f"{model_id}.json"
         temporary = ANNOTATION_ROOT / f".{model_id}.{uuid.uuid4().hex}.tmp"
-        document = {"schema": "atlas-model-review/v1", "model_id": model_id, "updated_at": datetime.now(timezone.utc).isoformat(), "markers": clean}
+        document = {"schema": "atlas-model-edit-guide/v1", "model_id": model_id, "updated_at": datetime.now(timezone.utc).isoformat(), "annotations": clean}
         with temporary.open("x", encoding="utf-8") as stream:
             stream.write(json.dumps(document, indent=2, ensure_ascii=False) + "\n")
             stream.flush()

@@ -8,8 +8,8 @@ workflows and contracts are linked from [`../../MASTER_FILE.md`](../../MASTER_FI
 Run the local Recipe Studio with the instructions in the
 [project README](../../README.md#recipe-studio). The landing page is a compact
 3D review workspace for local Troll Sample 1 remesh trials. When a reviewed
-candidate is available, select its GLB, add a note, and place a marker directly
-on the surface; saved annotations include 3D coordinates and live under
+candidate is available, select its GLB, pin features or trace separation paths
+on the surface, and describe the intended edit. Saved 3D annotations live under
 `data/model_reviews/troll_sample_1/`. The model's Blender project is available
 from the viewer. Source-derived Troll Sample 1 meshes are not included in the
 public repository while their rights and provenance remain uncleared, so the

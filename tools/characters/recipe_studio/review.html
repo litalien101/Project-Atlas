@@ -16,22 +16,49 @@
     <header><div><b>ATLAS <span class="separator">/</span> MODEL REVIEW</b><small>Local model workspace</small></div><a href="/builder">Recipe builder</a></header>
     <section class="toolbar">
       <label>Model<select id="model-select" aria-label="Choose model"></select></label>
-      <button id="place-toggle" class="primary" type="button">Place marker</button>
       <a id="blend-link" class="button" href="#" download>Open in Blender (.blend)</a>
-      <button id="export-markers" class="button" type="button">Export notes</button>
+      <button id="export-markers" class="button" type="button">Export edit guide</button>
     </section>
     <section class="layout">
       <div class="viewer-card">
-        <div class="viewer" id="viewer"><canvas id="canvas" aria-label="Interactive 3D model viewer"></canvas><div id="loading" class="overlay">Loading model…</div><div id="view-hint" class="hint">Drag to orbit · scroll to zoom</div></div>
+        <div class="viewer" id="viewer"><canvas id="canvas" aria-label="Interactive 3D model viewer"></canvas><div id="loading" class="overlay">Loading model…</div><div class="viewer-tools" aria-label="Camera controls"><div class="view-buttons"><button data-view="front" type="button">Front</button><button data-view="back" type="button">Back</button><button data-view="left" type="button">Left</button><button data-view="right" type="button">Right</button><button data-view="top" type="button">Top</button><button data-view="bottom" type="button">Under</button></div><button id="pan-toggle" type="button" aria-pressed="false">Pan</button></div><div id="view-hint" class="hint">Orbit: drag · Pan: toggle, then drag · Zoom: scroll · drag small dots to adjust</div></div>
         <div id="status" class="status" role="status">Choose a model to begin.</div>
       </div>
       <aside class="notes-card">
-        <h1>Review markers</h1>
-        <p>Add a note, choose <b>Place marker</b>, then click the model. Drag to orbit and scroll to zoom. Notes save automatically.</p>
-        <label class="note-label" for="marker-note">What needs fixing?</label>
-        <textarea id="marker-note" rows="3" maxlength="1000" placeholder="Example: Separate the index and middle fingers here."></textarea>
+        <h1>Hand mold preset</h1>
+        <p>Both hands have finger-tip and base pins, web traces, and wrist guides. Drag pins to shape the surface.</p>
+        <div class="guide-legend"><span><i class="pin-key">◆</i> Numbered diamond: movable pin</span><span><i class="trace-key">●—●</i> Connected dots: separation trace</span><span>Numbers match the guide list; select either to highlight.</span></div>
+        <label class="note-label" for="action-select">Edit type</label>
+        <select id="action-select">
+          <option value="feature">Locate a feature</option>
+          <option value="separate">Separate along this line</option>
+          <option value="reshape">Reshape this area</option>
+          <option value="smooth">Smooth this area</option>
+          <option value="remove">Remove this area</option>
+        </select>
+        <label class="note-label" for="annotation-title">Label</label>
+        <input id="annotation-title" maxlength="100" placeholder="Left index finger">
+        <label class="note-label" for="annotation-note">What should change?</label>
+        <textarea id="annotation-note" rows="2" maxlength="1000" placeholder="Separate cleanly from the middle finger."></textarea>
+        <div class="edit-actions">
+          <button id="point-toggle" class="primary" type="button">Place point</button>
+          <button id="trace-toggle" class="button" type="button">Trace line</button>
+        </div>
+        <div id="trace-actions" class="trace-actions" hidden>
+          <span id="trace-count">Click points along the desired line</span>
+          <button id="undo-trace" class="button" type="button">Undo point</button>
+          <button id="finish-trace" class="primary" type="button">Finish trace</button>
+          <button id="cancel-trace" class="button" type="button">Cancel</button>
+        </div>
+        <div id="selected-controls" class="selected-controls" hidden>
+          <span id="selected-label">Selected guide</span>
+          <button id="add-path-point" class="button" type="button">Add surface point</button>
+          <button id="remove-path-point" class="button" type="button">Remove last point</button>
+        </div>
+        <div class="mold-actions"><button id="mold-toggle" class="button" type="button" aria-pressed="false">Mold surface: off</button><button id="export-molded" class="button" type="button" disabled>Export molded GLB</button></div>
+        <p class="mold-note">Turn on mold mode to move nearby mesh vertices with a smooth falloff. Export saves a new GLB copy; the source model stays unchanged.</p>
         <div id="marker-list" class="marker-list"></div>
-        <p class="coordinates-note">Each marker saves its 3D coordinates and note in the project, associated with the selected model revision.</p>
+        <p class="coordinates-note">Drag pins or path points to refine them. Orbit to the back or side before adding surface points for full coverage. Guides do not alter the mesh.</p>
       </aside>
     </section>
   </main>
