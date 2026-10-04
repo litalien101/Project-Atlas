@@ -7,6 +7,7 @@ from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
+from unittest.mock import patch
 from uuid import uuid4
 
 from atlas_server.contracts import AtlasContracts
@@ -115,12 +116,58 @@ class SessionApiTests(unittest.TestCase):
         status, _ = self.request("/api/action", method="POST", body={
             "type": "move", "sequence": 1,
             "frames": [{"sequence": 1, "input": {"x": 1, "z": 0}, "run": False}],
-            "player_id": PLAYER_ENTITY_IDS[1] if session["player_id"] == PLAYER_ENTITY_IDS[0] else PLAYER_ENTITY_IDS[0],
         }, token=session["session_token"])
         self.assertEqual(status, 200)
         _, recent = self.store.read(session["player_id"])
         self.assertEqual(recent[-1]["actor_id"], session["player_id"])
-        self.assertNotEqual(recent[-1]["actor_id"], body.get("player_id"))
+
+    def test_action_api_rejects_forged_server_fields_without_mutating_state_or_events(self):
+        _, session = self.request("/api/session", method="POST")
+        token = session["session_token"]
+        before_state, _ = self.store.read(session["player_id"])
+        with self.store.connect() as db:
+            before_events = db.execute("SELECT COUNT(*) FROM world_events").fetchone()[0]
+
+        status, error = self.request("/api/action", method="POST", body={
+            "type": "attack",
+            "target": "mossling",
+            "_attack_origin": {"x": 12.0, "y": 9.0},
+        }, token=token)
+        self.assertEqual(status, 422)
+        self.assertIn("Unsupported action field", error["error"])
+
+        after_state, _ = self.store.read(session["player_id"])
+        with self.store.connect() as db:
+            after_events = db.execute("SELECT COUNT(*) FROM world_events").fetchone()[0]
+        self.assertEqual(after_events, before_events)
+        for field in ("inventory", "player_health", "journal", "mossling_health", "mossling_defeated"):
+            self.assertEqual(after_state[field], before_state[field])
+
+        status, error = self.request("/api/action", method="POST", body={
+            "type": "move", "sequence": 1,
+            "frames": [{"sequence": 1, "input": {"x": 0, "z": 0}, "run": False}],
+            "player_id": PLAYER_ENTITY_IDS[1],
+        }, token=token)
+        self.assertEqual(status, 422)
+        self.assertIn("Unsupported action field", error["error"])
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM world_events").fetchone()[0], before_events)
+
+    def test_action_api_still_applies_server_resolved_rewind_context(self):
+        import time
+        _, session = self.request("/api/session", method="POST")
+        player_id = session["player_id"]
+        self.store._last_input_sequence = 7
+        self.store._record_history(7, time.monotonic(), {"x": 11.5, "y": 9.0})
+
+        status, result = self.request("/api/action", method="POST", body={
+            "type": "attack", "target": "mossling", "rewind_sequence": 7,
+        }, token=session["session_token"])
+        self.assertEqual(status, 200)
+        self.assertEqual(result["event_type"], "CreatureDamaged")
+        self.assertTrue(result["detail"]["rewind_applied"])
+        _, events = self.store.read(player_id)
+        self.assertEqual(events[-1]["type"], "CreatureDamaged")
 
     def test_knowledge_and_memory_queries_require_a_session_and_return_provenance(self):
         status, _ = self.request("/api/knowledge?type=located_in")
@@ -238,6 +285,89 @@ class SessionApiTests(unittest.TestCase):
         self.assertEqual(event_count_after, event_count_before)
         self.assertEqual(projection_after, projection_before)
 
+    def test_simulation_replay_does_not_block_concurrent_gameplay_writes(self):
+        status, session = self.request("/api/session", method="POST")
+        self.assertEqual(status, 201)
+        actor_id = session["player_id"]
+        other_player_id = next(player_id for player_id in PLAYER_ENTITY_IDS if player_id != actor_id)
+        replay_started = threading.Event()
+        resume_replay = threading.Event()
+        gameplay_finished = threading.Event()
+        simulation_errors = []
+        gameplay_errors = []
+        simulations = []
+        from atlas_server.simulation import run_simulation
+
+        def paused_replay(events, proposal):
+            replay_started.set()
+            if not resume_replay.wait(timeout=3):
+                raise TimeoutError("Test did not release the paused simulation.")
+            return run_simulation(events, proposal)
+
+        def run_simulation_thread():
+            try:
+                simulations.append(self.store.run_simulation(
+                    {"rule": "beacon.lumen_reed_cost", "value": 3}, actor_id))
+            except Exception as error:
+                simulation_errors.append(error)
+
+        def run_gameplay_thread():
+            try:
+                self.store.command({
+                    "type": "move", "sequence": 1, "input": {"x": 0, "z": 0}, "run": False,
+                }, other_player_id)
+            except Exception as error:
+                gameplay_errors.append(error)
+            finally:
+                gameplay_finished.set()
+
+        simulation_thread = threading.Thread(target=run_simulation_thread)
+        gameplay_thread = threading.Thread(target=run_gameplay_thread)
+        with patch("atlas_server.store.simulate_recorded_events", side_effect=paused_replay):
+            simulation_thread.start()
+            try:
+                self.assertTrue(replay_started.wait(timeout=2), "Simulation replay did not start.")
+                gameplay_thread.start()
+                met_latency_budget = gameplay_finished.wait(timeout=0.25)
+            finally:
+                resume_replay.set()
+                simulation_thread.join(timeout=3)
+                if gameplay_thread.ident is not None:
+                    gameplay_thread.join(timeout=3)
+
+        self.assertTrue(met_latency_budget, "Gameplay write exceeded the 250 ms latency budget.")
+        self.assertFalse(simulation_thread.is_alive())
+        self.assertFalse(gameplay_thread.is_alive())
+        self.assertEqual(simulation_errors, [])
+        self.assertEqual(gameplay_errors, [])
+        self.assertEqual(len(simulations), 1)
+        self.assertEqual(simulations[0]["as_of_sequence"], 0)
+        self.assertEqual(self.store.read(other_player_id)[1][-1]["type"], "PlayerMoved")
+
+    def test_simulation_rejects_history_over_the_declared_event_cap(self):
+        status, session = self.request("/api/session", method="POST")
+        self.assertEqual(status, 201)
+        actor_id = session["player_id"]
+        occurred_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        with self.store.connect() as db:
+            for _ in range(3):
+                db.execute(
+                    """INSERT INTO world_events(
+                           event_id, schema_version, occurred_at, event_type, actor_id,
+                           source_kind, source_identifier, rationale, subject_id, object_id, payload_json
+                       ) VALUES (?, 1, ?, 'ResourceGathered', ?, 'player_action', ?,
+                                 'Observed test event', ?, NULL, ?)""",
+                    (str(uuid4()), occurred_at, actor_id, str(uuid4()), actor_id,
+                     json.dumps({"resource": "lumen_reed", "patch_id": str(uuid4()), "quantity": 1})),
+                )
+
+        with patch("atlas_server.store.MAX_SIMULATION_EVENT_HISTORY", 2):
+            with self.assertRaisesRegex(ValueError, "exceeds the 2-event limit"):
+                self.store.run_simulation({"rule": "beacon.lumen_reed_cost", "value": 3}, actor_id)
+
+        with self.store.connect() as db:
+            self.assertEqual(db.execute("SELECT COUNT(*) FROM simulation_runs").fetchone()[0], 0)
+
     def test_human_review_is_append_only_and_approval_still_does_not_deploy(self):
         status, session = self.request("/api/session", method="POST")
         self.assertEqual(status, 201)
@@ -302,6 +432,7 @@ class SessionApiTests(unittest.TestCase):
         legacy["inventory"]["lumen_reed"] = 2
         legacy["gathered"] = ["reed-west", "reed-north"]
         legacy["mara_met"] = True
+        legacy["appearance"]["skin_tone"] = "#2468ac"
         import sqlite3
         with sqlite3.connect(path) as db:
             db.execute("CREATE TABLE world_state(singleton INTEGER PRIMARY KEY, version INTEGER NOT NULL, state_json TEXT NOT NULL)")
@@ -313,8 +444,18 @@ class SessionApiTests(unittest.TestCase):
         self.assertEqual(first["inventory"]["lumen_reed"], 2)
         self.assertTrue(first["mara_met"])
         self.assertEqual(first["gathered"], ["reed-west", "reed-north"])
+        self.assertEqual(first["appearance"]["skin_tone"], "#2468ac")
         self.assertEqual(second["inventory"]["lumen_reed"], 0)
         self.assertEqual(second["player"]["x"], 4.2)
+        with migrated.connect() as db:
+            saved_state = json.loads(db.execute(
+                "SELECT state_json FROM player_states WHERE player_id = ?", (PLAYER_ENTITY_IDS[0],)
+            ).fetchone()["state_json"])
+            profile = json.loads(db.execute(
+                "SELECT appearance_json FROM player_profiles WHERE player_id = ?", (PLAYER_ENTITY_IDS[0],)
+            ).fetchone()["appearance_json"])
+        self.assertNotIn("appearance", saved_state)
+        self.assertEqual(profile["skin_tone"], "#2468ac")
 
 
 if __name__ == "__main__":

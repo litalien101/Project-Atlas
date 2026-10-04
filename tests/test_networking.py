@@ -146,6 +146,36 @@ class MovementSequenceTests(unittest.TestCase):
         self.assertEqual(result["event_type"], "CreatureDamaged")
         self.assertTrue(result["detail"]["rewind_applied"])
 
+    def test_store_rejects_reserved_and_unknown_fields_for_every_action(self):
+        invalid_actions = [
+            {"type": "move", "sequence": 1, "input": {"x": 0, "z": 0},
+             "run": False, "dt": .25},
+            {"type": "attack", "target": "mossling",
+             "_attack_origin": {"x": 12, "y": 9}},
+            {"type": "block", "target": "mossling", "server_override": True},
+            {"type": "dodge", "target": "mossling", "_rewind_applied": True},
+            {"type": "reawaken", "target": "mossling", "actor_id": PLAYER_ENTITY_ID},
+            {"type": "interact", "target": "reed-west", "unexpected": True},
+            {"type": "move", "sequence": 1, "frames": [
+                {"sequence": 1, "input": {"x": 0, "z": 0}, "run": False, "_sim_run": True},
+            ]},
+            {"type": "move", "sequence": 1, "input": {"x": 0, "z": 0, "trusted": True}, "run": False},
+        ]
+        for action in invalid_actions:
+            with self.subTest(action=action):
+                with self.store.connect() as db:
+                    count_before = db.execute("SELECT COUNT(*) FROM world_events").fetchone()[0]
+                state_before = self.store.read()[0]
+                with self.assertRaisesRegex(ValueError, "Unsupported"):
+                    self.store.command(action)
+                state_after = self.store.read()[0]
+                with self.store.connect() as db:
+                    count_after = db.execute("SELECT COUNT(*) FROM world_events").fetchone()[0]
+                self.assertEqual(count_after, count_before)
+                self.assertEqual(state_after["inventory"], state_before["inventory"])
+                self.assertEqual(state_after["player_health"], state_before["player_health"])
+                self.assertEqual(state_after["journal"], state_before["journal"])
+
     def test_stale_attack_history_falls_back_to_current_authoritative_position(self):
         import time
         self.store._player_history = EntityHistory(max_seconds=2.0, max_samples=120)
@@ -164,6 +194,42 @@ class MovementSequenceTests(unittest.TestCase):
         self.assertIsNone(self.store.player_for_session("unknown-session"))
         with self.assertRaisesRegex(ValueError, "Both local traveler seats"):
             self.store.create_session()
+
+    def test_released_session_stops_movement_again_after_projection_rebuild(self):
+        session = self.store.create_session()
+        player_id = session["player_id"]
+        self.store.command({
+            "type": "move",
+            "sequence": 2,
+            "frames": [
+                {"sequence": 1, "input": {"x": 1, "z": 0}, "run": False},
+                {"sequence": 2, "input": {"x": 1, "z": 0}, "run": False},
+            ],
+        }, player_id)
+        moving, _ = self.store.read(player_id)
+        self.assertNotEqual((moving["player"]["vx"], moving["player"]["vz"]), (0.0, 0.0))
+
+        self.assertTrue(self.store.close_session(session["session_token"]))
+        stopped, events = self.store.read(player_id)
+        self.assertEqual((stopped["player"]["vx"], stopped["player"]["vz"]), (0.0, 0.0))
+        self.assertEqual(events[-1]["type"], "PlayerSessionReleased")
+        self.assertEqual(events[-1]["detail"], {"vx": 0.0, "vz": 0.0})
+
+        with self.store.connect() as db:
+            row = db.execute(
+                "SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)
+            ).fetchone()
+            personal = json.loads(row["state_json"])
+            personal["player"].update(vx=1.0, vz=1.0)
+            db.execute(
+                "UPDATE player_states SET state_json = ? WHERE player_id = ?",
+                (json.dumps(personal), player_id),
+            )
+        self.store.rebuild_projection()
+        replayed, _ = self.store.read(player_id)
+        self.assertEqual((replayed["player"]["vx"], replayed["player"]["vz"]), (0.0, 0.0))
+        self.assertEqual(self.store.last_input_sequence_for(player_id), 2)
+        self.assertFalse(self.store.close_session(session["session_token"]))
 
     def test_each_player_has_independent_ticks_position_and_event_actor(self):
         frames_one = [{"sequence": n, "input": {"x": 1, "z": 0}, "run": False} for n in (1, 2, 3)]
@@ -323,6 +389,75 @@ class MovementSequenceTests(unittest.TestCase):
         for coordinate in ("x", "y", "vx", "vz"):
             self.assertAlmostEqual(reopened["player"][coordinate], saved["player"][coordinate], places=12)
         self.assertEqual(self.store.last_input_sequence_for(player_id), 2)
+
+    def test_repeated_rebuild_replays_derived_state_from_clean_baseline(self):
+        first_player, second_player = PLAYER_ENTITY_IDS
+        self.store.save_appearance(first_player, {
+            **self.store.read(first_player)[0]["appearance"], "skin_tone": "#123456",
+        })
+        self.store.command({
+            "type": "move",
+            "sequence": 2,
+            "frames": [
+                {"sequence": 1, "input": {"x": 1, "z": 0}, "run": False},
+                {"sequence": 2, "input": {"x": 1, "z": 0}, "run": False},
+            ],
+        }, first_player)
+        with self.store.connect() as db:
+            for player_id in (first_player, second_player):
+                row = db.execute(
+                    "SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)
+                ).fetchone()
+                personal = json.loads(row["state_json"])
+                position = (5.0, 5.8) if player_id == first_player else (11.0, 3.0)
+                personal["player"].update(x=position[0], y=position[1])
+                db.execute(
+                    "UPDATE player_states SET state_json = ? WHERE player_id = ?",
+                    (json.dumps(personal), player_id),
+                )
+        self.store.command({"type": "interact", "target": "reed-west"}, first_player)
+        self.store.command({"type": "interact", "target": "reed-north"}, second_player)
+        with self.store.connect() as db:
+            row = db.execute(
+                "SELECT state_json FROM player_states WHERE player_id = ?", (first_player,)
+            ).fetchone()
+            personal = json.loads(row["state_json"])
+            personal["player"].update(x=11.5, y=9.0)
+            db.execute(
+                "UPDATE player_states SET state_json = ? WHERE player_id = ?",
+                (json.dumps(personal), first_player),
+            )
+        self.store.command({"type": "attack", "target": "mossling"}, first_player)
+
+        def snapshot():
+            result = {}
+            for player_id in PLAYER_ENTITY_IDS:
+                state, _ = self.store.read(player_id)
+                result[player_id] = {
+                    "inventory": state["inventory"],
+                    "health": state["player_health"],
+                    "journal": state["journal"],
+                    "appearance": state["appearance"],
+                    "tick": self.store.last_input_sequence_for(player_id),
+                    "combat": {
+                        "mossling_health": state["mossling_health"],
+                        "mossling_defeated": state["mossling_defeated"],
+                        "defense": state["player_defense"],
+                    },
+                }
+            return result
+
+        before = snapshot()
+        self.assertEqual(before[first_player]["inventory"]["lumen_reed"], 1)
+        self.assertEqual(before[second_player]["inventory"]["lumen_reed"], 1)
+        self.assertEqual(before[first_player]["tick"], 2)
+        self.assertEqual(before[first_player]["appearance"]["skin_tone"], "#123456")
+        self.store.rebuild_projection()
+        after_first_rebuild = snapshot()
+        self.store.rebuild_projection()
+        after_second_rebuild = snapshot()
+        self.assertEqual(after_first_rebuild, before)
+        self.assertEqual(after_second_rebuild, before)
 
 
 class HitboxRewindTests(unittest.TestCase):

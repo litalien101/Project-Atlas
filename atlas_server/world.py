@@ -191,9 +191,15 @@ def public_state(state: dict[str, Any], events: list[dict[str, Any]]) -> dict[st
         "players": state.get("players", []),
     }
 
-def apply_action(state: dict[str, Any], action: dict[str, Any]) -> tuple[dict[str, Any], str, dict[str, Any]]:
+def apply_action(
+    state: dict[str, Any],
+    action: dict[str, Any],
+    *,
+    trusted_context: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], str, dict[str, Any]]:
     kind = action.get("type")
     player = state["player"]
+    trusted_context = trusted_context or {}
     if kind == "move":
         player.setdefault("vx", 0.0)
         player.setdefault("vz", 0.0)
@@ -295,8 +301,8 @@ def apply_action(state: dict[str, Any], action: dict[str, Any]) -> tuple[dict[st
     if kind == "attack":
         if action.get("target") != MOSSLING["id"]:
             raise ValueError("That creature cannot be attacked.")
-        attack_origin = action.get("_attack_origin", player)
-        hitbox_at_attack = action.get("_rewound_target", MOSSLING)
+        attack_origin = trusted_context.get("attack_origin", player)
+        hitbox_at_attack = trusted_context.get("rewound_target", MOSSLING)
         hitbox = HitboxSnapshot(0.0, hitbox_at_attack["x"], 0.0,
                                 hitbox_at_attack.get("y", hitbox_at_attack.get("z", 0.0)),
                                 hitbox_at_attack.get("radius", .35), hitbox_at_attack.get("height", 1.25))
@@ -313,14 +319,14 @@ def apply_action(state: dict[str, Any], action: dict[str, Any]) -> tuple[dict[st
         defeated = state["mossling_health"] == 0
         state["mossling_defeated"] = defeated
         state["journal"].append("Drove the Mossling back into the undergrowth." if defeated else "Struck the Mossling; it fought back.")
-        origin = action.get("_attack_origin", player)
-        rewound_target = action.get("_rewound_target", MOSSLING)
+        origin = attack_origin
+        rewound_target = hitbox_at_attack
         return state, "CreatureDamaged", {"creature_id": MOSSLING["id"], "damage": 1,
             "creature_health": state["mossling_health"], "player_damage": player_damage,
             "defense_used": defense,
             "player_health": state["player_health"], "defeated": defeated,
             "rewind_sequence": action.get("rewind_sequence"),
-            "rewind_applied": bool(action.get("_rewind_applied", False)),
+            "rewind_applied": bool(trusted_context.get("rewind_applied", False)),
             "attack_origin": {"x": origin["x"], "z": origin.get("y", origin.get("z", 0.0))},
             "rewound_target": {"x": rewound_target["x"], "z": rewound_target.get("y", rewound_target.get("z", 0.0))}}
 
@@ -423,6 +429,8 @@ def replay_event(state: dict[str, Any], event_type: str, payload: dict[str, Any]
                                 grounded=payload.get("grounded", True),
                                 jump_buffer=payload.get("jump_buffer", 0.0),
                                 coyote_time=payload.get("coyote_time", COYOTE_SECONDS))
+    elif event_type == "PlayerSessionReleased":
+        state["player"].update(vx=payload["vx"], vz=payload["vz"])
     elif event_type == "ResourceGathered":
         patch_id = payload["patch_id"]
         if patch_id not in state["gathered"]:

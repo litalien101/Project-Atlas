@@ -49,6 +49,19 @@ The local authoring endpoints are `POST /api/entities` and `POST /api/relationsh
 
 `GET /api/reasoning?event=<uuid>` provides a provenance trace of one immutable event and its related entities/relationship. It reports the author's rationale and stored result as authored provenance; it does not assign inferred confidence or assert causality. Although `TruthRecord` is present in the ontology, this repository has no implemented derived-claim evidence/confidence workflow or active truth-model contract. Do not treat the ontology entry as an executable gate.
 
+## Counterfactual simulation limits
+
+The deterministic resource-progression counterfactual captures one ordered
+event-log snapshot of at most 10,000 events. A larger history is rejected
+explicitly; no checkpointing or partial-history approximation is implemented.
+The snapshot is read in a short SQLite read transaction, then replayed after
+the connection is closed and outside the gameplay write lock. Only persisting
+the completed simulation result takes the write lock. A concurrency regression
+holds replay open and verifies another traveler's gameplay write completes
+within a 250 ms test budget. This bounds event processing and prevents CPU
+replay from serializing gameplay writes; it is not a hardware-independent
+latency guarantee for all database or filesystem failures.
+
 ## Scope
 
 This mapping covers two local players in one fixed region, matching the current two-seat local session prototype. It does not define account identity, public shared-world concurrency, combat, inventory item entities, claim confidence, or AI-authored facts. Add concepts to the canonical ontology and registry before introducing them into the game server.

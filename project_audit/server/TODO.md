@@ -7,9 +7,10 @@ correctness defects.
 
 ## Priority fixes
 
-The P1 correctness findings below should be fixed before relying on the
-affected gameplay/rebuild behavior. They can proceed in parallel with offline
-character generation; neither is a prerequisite for the CPU mesh pipeline.
+The unresolved P1 correctness findings below should be fixed before relying on
+the affected behavior. Resolved findings are retained as dated implementation
+records. Server work can proceed in parallel with offline character generation;
+neither is a prerequisite for the CPU mesh pipeline.
 Session-origin checks are relevant to the current local browser/server
 workflow. Authenticated creator/reviewer identity is a gate for broader
 deployment, not a requirement for local single-creator geometry authoring.
@@ -17,14 +18,11 @@ P1/P2 are server-surface risk labels, not a project-wide sequence.
 
 ### [`atlas_server/server.py`](../../atlas_server/server.py)
 
-- **P1 — Reject client-forged server-only action data.** The action endpoint
-  passes arbitrary object fields to the store. `_attack_origin` is trusted by
-  attack resolution when present; a forged value was confirmed to allow an
-  out-of-range attack. Reject reserved fields at the HTTP boundary and pass
-  trusted rewind context separately. Validate again in the store.
-  **Accept when:** forged attack attempts create no event or state change;
-  valid server-resolved rewind still succeeds; all action types reject
-  reserved/unknown fields.
+- **Implemented 2026-10-04 — Reject client-forged server-only action data.**
+  The HTTP and store boundaries now reject reserved and unsupported action
+  fields; attack rewind is resolved from server history and passed to world
+  rules separately from client input. Tests cover forged requests making no
+  event/state changes and valid server-resolved rewind.
 - **P2 — Protect session-seat creation from foreign origins.** Apply the local
   host/origin policy to `POST /api/session`.
   **Accept when:** rejected cross-origin calls consume no seats; valid local
@@ -40,23 +38,22 @@ P1/P2 are server-surface risk labels, not a project-wide sequence.
 
 ### [`atlas_server/store.py`](../../atlas_server/store.py)
 
-- **P1 — Rebuild projections from clean baselines.** `rebuild_projection()`
-  currently replays events into previously reduced personal player state.
-  Repeated rebuilds were confirmed to increase gathered inventory from 1 to 2
-  to 3; other replayed effects and saved ticks can likewise diverge.
-  **Accept when:** rebuild starts event-derived state/ticks from a declared
-  clean baseline and separates persistent non-event profile data; repeated
-  rebuilds match the original projection for inventory, health, journal,
-  combat, and ticks.
-- **P2 — Make disconnect state replayable.** Session release currently writes
-  stopped velocity directly to the projection without a corresponding event.
-  **Accept when:** release/disconnect semantics are represented in the event
-  source of truth and replay reproduces stopped movement.
-- **P2 — Bound simulation replay and lock duration.** Avoid replaying the full
-  history while holding the command write lock.
-  **Accept when:** documented history caps/checkpoints bound work, and a
-  concurrent gameplay test shows simulation cannot stall writes beyond its
-  latency budget.
+- **Implemented 2026-10-04 — Rebuild projections from clean baselines.**
+  `rebuild_projection()` resets event-derived shared/player state and ticks
+  before replay and keeps appearance profiles separate. Regressions verify
+  repeated rebuild equality for inventory, health, journal, combat, appearance,
+  and ticks.
+- **Implemented 2026-10-04 — Make disconnect state replayable.** Explicit
+  close and idle expiration append a `PlayerSessionReleased` event atomically
+  with stopped velocity; replay reproduces the stopped movement. A
+  release-then-rebuild regression covers the behavior.
+- **Implemented 2026-10-04 — Bound simulation replay and lock duration.**
+  Counterfactual runs now read at most 10,000 events, reject larger histories,
+  replay after releasing the gameplay write lock, and hold the lock only while
+  persisting the result. `test_simulation_replay_does_not_block_concurrent_gameplay_writes`
+  verifies a concurrent gameplay write completes within its 250 ms budget while
+  replay is paused; see
+  [`reach-world-model.md`](../../specs/reach-world-model.md#counterfactual-simulation-limits).
 - **P2 — Resolve gameplay source IDs to durable command provenance.**
   **Accept when:** a source identifier either resolves to an authorized
   durable record or is rejected; dangling IDs cannot be presented as evidence.
@@ -141,9 +138,9 @@ P1/P2 are server-surface risk labels, not a project-wide sequence.
   and unsupported event type cases.
 - [`test_character_topology.py`](../../tests/test_character_topology.py) —
   No server-specific gap found in this pass; see character pipeline report.
-- [`test_networking.py`](../../tests/test_networking.py) — Add forged internal
-  action fields, exact repeated-rebuild equality, and release-then-rebuild
-  regressions. Existing movement, retry, ownership, graph persistence, and
+- [`test_networking.py`](../../tests/test_networking.py) — Forged internal
+  action fields, repeated-rebuild equality, and release-then-rebuild regressions
+  are implemented. Existing movement, retry, ownership, graph persistence, and
   rewind coverage remains useful.
 - [`test_policy.py`](../../tests/test_policy.py) — Add NaN, infinity,
   bool-as-integer, fractional/out-of-range cost, and malformed nested-input

@@ -25,14 +25,86 @@ from .world import (
     WORLD_ENTITY_IDS, apply_action, initial_state, normalize_movement, replay_event,
 )
 
-PERSONAL_FIELDS = ("player", "inventory", "player_health", "player_defense", "journal", "appearance")
+PERSONAL_FIELDS = ("player", "inventory", "player_health", "player_defense", "journal")
 SESSION_IDLE_TTL_SECONDS = 30.0
+MAX_SIMULATION_EVENT_HISTORY = 10_000
+
+
+ACTION_FIELDS = {
+    "move": {"type", "sequence", "frames", "input", "run", "jump"},
+    "attack": {"type", "target", "rewind_sequence"},
+    "block": {"type", "target"},
+    "dodge": {"type", "target"},
+    "reawaken": {"type", "target"},
+    "interact": {"type", "target"},
+}
+MOVEMENT_FRAME_FIELDS = {"sequence", "input", "run", "jump"}
+
+
+def _validate_movement_input(value: Any) -> None:
+    if isinstance(value, dict):
+        if any(not isinstance(field, str) for field in value):
+            raise ValueError("Movement input fields must be strings.")
+        unsupported = value.keys() - {"x", "z"}
+        if unsupported:
+            raise ValueError(
+                "Unsupported movement input field(s): "
+                + ", ".join(sorted(unsupported))
+                + "."
+            )
+
+
+def validate_action(action: Any) -> dict[str, Any]:
+    """Reject client-only fields before action data can reach world rules."""
+    if not isinstance(action, dict):
+        raise ValueError("Action must be an object.")
+    kind = action.get("type")
+    if not isinstance(kind, str):
+        raise ValueError("Action type must be a string.")
+    allowed = ACTION_FIELDS.get(kind)
+    if allowed is None:
+        raise ValueError("That action is not available.")
+    if any(not isinstance(field, str) for field in action):
+        raise ValueError("Action fields must be strings.")
+    unsupported = action.keys() - allowed
+    if unsupported:
+        raise ValueError(f"Unsupported action field(s): {', '.join(sorted(unsupported))}.")
+    if kind == "move":
+        _validate_movement_input(action.get("input"))
+        frames = action.get("frames")
+        if isinstance(frames, list):
+            for frame in frames:
+                if isinstance(frame, dict):
+                    if any(not isinstance(field, str) for field in frame):
+                        raise ValueError("Movement frame fields must be strings.")
+                    unsupported_frame_fields = frame.keys() - MOVEMENT_FRAME_FIELDS
+                    if unsupported_frame_fields:
+                        raise ValueError(
+                            "Unsupported movement frame field(s): "
+                            + ", ".join(sorted(unsupported_frame_fields))
+                            + "."
+                        )
+                    _validate_movement_input(frame.get("input"))
+    return action
 
 
 def _split_state(state: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     personal = {key: state[key] for key in PERSONAL_FIELDS if key in state}
-    shared = {key: value for key, value in state.items() if key not in PERSONAL_FIELDS and key != "players"}
+    shared = {
+        key: value for key, value in state.items()
+        if key not in PERSONAL_FIELDS and key not in {"appearance", "players"}
+    }
     return shared, personal
+
+
+def _initial_player_projection(player_id: str) -> dict[str, Any]:
+    state = initial_state()
+    x, y = PLAYER_STARTS[player_id]
+    state["player"].update(x=float(x), y=float(y))
+    if player_id != PLAYER_ENTITY_ID:
+        state["journal"] = ["Explore the valley together."]
+    _, personal = _split_state(state)
+    return personal
 
 
 class WorldStore:
@@ -120,6 +192,10 @@ class WorldStore:
                     player_name TEXT NOT NULL,
                     state_json TEXT NOT NULL,
                     last_tick INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS player_profiles (
+                    player_id TEXT PRIMARY KEY REFERENCES player_states(player_id),
+                    appearance_json TEXT NOT NULL
                 );
                 CREATE TRIGGER IF NOT EXISTS world_events_no_update
                     BEFORE UPDATE ON world_events BEGIN SELECT RAISE(ABORT, 'events are immutable'); END;
@@ -219,23 +295,45 @@ class WorldStore:
             row = db.execute("SELECT state_json FROM world_state WHERE singleton = 1").fetchone()
             legacy_state = json.loads(row["state_json"])
             _, default_personal = _split_state(initial_state())
+            default_appearance = initial_state()["appearance"]
             for player_id in PLAYER_ENTITY_IDS:
                 exists = db.execute("SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)).fetchone()
-                if exists:
-                    existing_personal = json.loads(exists["state_json"])
-                    old_appearance = existing_personal.get("appearance")
-                    if not isinstance(old_appearance, dict):
+                existing_personal = json.loads(exists["state_json"]) if exists else None
+                profile = db.execute(
+                    "SELECT appearance_json FROM player_profiles WHERE player_id = ?", (player_id,)
+                ).fetchone()
+                if profile:
+                    appearance = json.loads(profile["appearance_json"])
+                elif existing_personal is not None:
+                    appearance = existing_personal.get("appearance", default_appearance)
+                elif player_id == PLAYER_ENTITY_ID:
+                    appearance = legacy_state.get("appearance", default_appearance)
+                else:
+                    appearance = default_appearance
+                if not isinstance(appearance, dict):
+                    migrated_appearance = DEFAULT_APPEARANCE.copy()
+                else:
+                    candidate = {**DEFAULT_APPEARANCE,
+                                 **{key: value for key, value in appearance.items()
+                                    if key in DEFAULT_APPEARANCE}}
+                    try:
+                        migrated_appearance = validate_appearance(candidate)
+                    except ValueError:
                         migrated_appearance = DEFAULT_APPEARANCE.copy()
-                    else:
-                        candidate = {**DEFAULT_APPEARANCE,
-                                     **{key: value for key, value in old_appearance.items()
-                                        if key in DEFAULT_APPEARANCE}}
-                        try:
-                            migrated_appearance = validate_appearance(candidate)
-                        except ValueError:
-                            migrated_appearance = DEFAULT_APPEARANCE.copy()
-                    if old_appearance != migrated_appearance:
-                        existing_personal["appearance"] = migrated_appearance
+                if profile:
+                    if migrated_appearance != appearance:
+                        db.execute(
+                            "UPDATE player_profiles SET appearance_json = ? WHERE player_id = ?",
+                            (json.dumps(migrated_appearance, separators=(",", ":")), player_id),
+                        )
+                elif exists:
+                    db.execute(
+                        "INSERT INTO player_profiles(player_id, appearance_json) VALUES (?, ?)",
+                        (player_id, json.dumps(migrated_appearance, separators=(",", ":"))),
+                    )
+                if existing_personal is not None:
+                    if "appearance" in existing_personal:
+                        existing_personal.pop("appearance")
                         db.execute("UPDATE player_states SET state_json = ? WHERE player_id = ?",
                                    (json.dumps(existing_personal, separators=(",", ":")), player_id))
                     continue
@@ -249,6 +347,10 @@ class WorldStore:
                 db.execute(
                     "INSERT INTO player_states(player_id, player_name, state_json, last_tick) VALUES (?, ?, ?, 0)",
                     (player_id, PLAYER_NAMES[player_id], json.dumps(personal, separators=(",", ":"))),
+                )
+                db.execute(
+                    "INSERT INTO player_profiles(player_id, appearance_json) VALUES (?, ?)",
+                    (player_id, json.dumps(migrated_appearance, separators=(",", ":"))),
                 )
             # Existing saves keep shared progress in the world row and player-specific
             # fields in player_states. This is an in-place migration from the old shape.
@@ -373,6 +475,56 @@ class WorldStore:
                 self._release_session(key, player_id)
 
     def _release_session(self, token: str, player_id: str) -> None:
+        occurred_at = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        event_id = str(uuid.uuid4())
+        source_identifier = str(uuid.uuid4())
+        rationale = f"{PLAYER_NAMES[player_id]}'s local session was released; movement stopped."
+        payload = {"vx": 0.0, "vz": 0.0}
+        with closing(self.connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            try:
+                player_row = db.execute(
+                    "SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)
+                ).fetchone()
+                world_row = db.execute(
+                    "SELECT version FROM world_state WHERE singleton = 1"
+                ).fetchone()
+                if player_row is None or world_row is None:
+                    raise ValueError("Cannot release a session without its player projection.")
+                event_contract = {
+                    "event_id": event_id,
+                    "event_type": "PlayerSessionReleased",
+                    "schema_version": 1,
+                    "occurred_at": occurred_at,
+                    "actor_id": player_id,
+                    "source_kind": "session_lifecycle",
+                    "source_identifier": source_identifier,
+                    "rationale": rationale,
+                    "subject_id": player_id,
+                    "object_id": None,
+                }
+                self.contracts.validate_event(event_contract)
+                state = json.loads(player_row["state_json"])
+                state["player"].update(payload)
+                db.execute(
+                    """INSERT INTO world_events(
+                           event_id, schema_version, occurred_at, event_type, actor_id,
+                           source_kind, source_identifier, rationale, subject_id, object_id, payload_json
+                       ) VALUES (?, 1, ?, 'PlayerSessionReleased', ?, 'session_lifecycle', ?, ?, ?, NULL, ?)""",
+                    (event_id, occurred_at, player_id, source_identifier, rationale, player_id,
+                     json.dumps(payload, separators=(",", ":"), sort_keys=True)),
+                )
+                db.execute("UPDATE player_states SET state_json = ? WHERE player_id = ?",
+                           (json.dumps(state, separators=(",", ":")), player_id))
+                db.execute(
+                    "UPDATE world_state SET version = ? WHERE singleton = 1",
+                    (world_row["version"] + 1,),
+                )
+                db.execute("COMMIT")
+            except Exception:
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
         self._sessions.pop(token, None)
         self._session_last_seen.pop(token, None)
         if self._seat_by_player.get(player_id) == token:
@@ -381,16 +533,6 @@ class WorldStore:
         runtime["active_input"] = {"x": 0.0, "z": 0.0}
         runtime["active_run"] = False
         runtime["sim_accumulator"] = 0.0
-        # Player projections are written on every accepted action. Persist zero
-        # velocity on disconnect so reconnecting travelers never resume stale motion.
-        with closing(self.connect()) as db:
-            row = db.execute("SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)).fetchone()
-            if row is not None:
-                state = json.loads(row["state_json"])
-                state["player"]["vx"] = 0.0
-                state["player"]["vz"] = 0.0
-                db.execute("UPDATE player_states SET state_json = ? WHERE player_id = ?",
-                           (json.dumps(state, separators=(",", ":")), player_id))
 
     def session_count(self) -> int:
         with self._command_lock:
@@ -403,13 +545,17 @@ class WorldStore:
         with closing(self.connect()) as db:
             shared_row = db.execute("SELECT state_json FROM world_state WHERE singleton = 1").fetchone()
             player_rows = db.execute("SELECT player_id, player_name, state_json, last_tick FROM player_states ORDER BY player_id").fetchall()
+            profile_rows = db.execute("SELECT player_id, appearance_json FROM player_profiles").fetchall()
             events = db.execute(
                 "SELECT sequence, event_id, schema_version, event_type, occurred_at, actor_id, source_kind, source_identifier, rationale, subject_id, object_id, payload_json FROM world_events ORDER BY sequence DESC LIMIT 8"
             ).fetchall()
         shared = json.loads(shared_row["state_json"])
         players_by_id = {row["player_id"]: (row, json.loads(row["state_json"])) for row in player_rows}
+        appearances_by_id = {
+            row["player_id"]: json.loads(row["appearance_json"]) for row in profile_rows
+        }
         row, personal = players_by_id[player_id]
-        state = {**shared, **personal}
+        state = {**shared, **personal, "appearance": appearances_by_id[player_id]}
         state["players"] = [
             {"id": pid, "name": player_row["player_name"], "x": saved["player"]["x"],
              "y": saved["player"]["y"], "vx": saved["player"].get("vx", 0.0),
@@ -434,13 +580,13 @@ class WorldStore:
         with self._command_lock, closing(self.connect()) as db:
             db.execute("BEGIN IMMEDIATE")
             try:
-                row = db.execute("SELECT state_json FROM player_states WHERE player_id = ?", (player_id,)).fetchone()
+                row = db.execute("SELECT 1 FROM player_profiles WHERE player_id = ?", (player_id,)).fetchone()
                 if row is None:
                     raise ValueError("Player profile is unavailable.")
-                state = json.loads(row["state_json"])
-                state["appearance"] = profile
-                db.execute("UPDATE player_states SET state_json = ? WHERE player_id = ?",
-                           (json.dumps(state, separators=(",", ":")), player_id))
+                db.execute(
+                    "UPDATE player_profiles SET appearance_json = ? WHERE player_id = ?",
+                    (json.dumps(profile, separators=(",", ":")), player_id),
+                )
                 db.execute("COMMIT")
             except Exception:
                 if db.in_transaction:
@@ -593,35 +739,55 @@ class WorldStore:
         """Persist a reproducible analysis without writing to world state/history."""
         if actor_id not in PLAYER_ENTITY_IDS:
             raise ValueError("A local traveler session is required to run simulations.")
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            try:
+                rows = db.execute(
+                    """SELECT sequence, event_id, event_type, actor_id, payload_json
+                       FROM world_events ORDER BY sequence LIMIT ?""",
+                    (MAX_SIMULATION_EVENT_HISTORY + 1,),
+                ).fetchall()
+                if len(rows) > MAX_SIMULATION_EVENT_HISTORY:
+                    raise ValueError(
+                        "Simulation event history exceeds the "
+                        f"{MAX_SIMULATION_EVENT_HISTORY}-event limit."
+                    )
+                db.execute("COMMIT")
+            except Exception:
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+        events = [{"sequence": row["sequence"], "event_id": row["event_id"],
+                   "type": row["event_type"], "actor_id": row["actor_id"],
+                   "detail": json.loads(row["payload_json"])} for row in rows]
+        result = simulate_recorded_events(events, proposal)
+        simulation_id = str(uuid.uuid4())
+        created_at = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        as_of_sequence = int(rows[-1]["sequence"]) if rows else 0
+        result = {"simulation_id": simulation_id, "created_at": created_at,
+                  "as_of_sequence": as_of_sequence,
+                  "baseline_state": {"kind": "event_log_snapshot",
+                                     "through_event_sequence": as_of_sequence},
+                  "created_by": actor_id, **result}
         with self._command_lock, closing(self.connect()) as db:
             db.execute("BEGIN IMMEDIATE")
-            rows = db.execute(
-                """SELECT sequence, event_id, event_type, actor_id, payload_json
-                   FROM world_events ORDER BY sequence"""
-            ).fetchall()
-            events = [{"sequence": row["sequence"], "event_id": row["event_id"],
-                       "type": row["event_type"], "actor_id": row["actor_id"],
-                       "detail": json.loads(row["payload_json"])} for row in rows]
-            result = simulate_recorded_events(events, proposal)
-            simulation_id = str(uuid.uuid4())
-            created_at = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-            result = {"simulation_id": simulation_id, "created_at": created_at,
-                      "as_of_sequence": int(rows[-1]["sequence"]) if rows else 0,
-                      "baseline_state": {"kind": "event_log_snapshot",
-                                         "through_event_sequence": int(rows[-1]["sequence"]) if rows else 0},
-                      "created_by": actor_id, **result}
-            db.execute(
-                """INSERT INTO simulation_runs(
-                       simulation_id, model, model_version, created_at, as_of_sequence,
-                       actor_id, proposal_json, result_json
-                   ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (simulation_id, result["model"], result["model_version"], created_at,
-                 result["as_of_sequence"], actor_id,
-                 json.dumps(proposal, separators=(",", ":"), sort_keys=True),
-                 json.dumps(result, separators=(",", ":"), sort_keys=True)),
-            )
-            db.execute("COMMIT")
-            return result
+            try:
+                db.execute(
+                    """INSERT INTO simulation_runs(
+                           simulation_id, model, model_version, created_at, as_of_sequence,
+                           actor_id, proposal_json, result_json
+                       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (simulation_id, result["model"], result["model_version"], created_at,
+                     as_of_sequence, actor_id,
+                     json.dumps(proposal, separators=(",", ":"), sort_keys=True),
+                     json.dumps(result, separators=(",", ":"), sort_keys=True)),
+                )
+                db.execute("COMMIT")
+            except Exception:
+                if db.in_transaction:
+                    db.execute("ROLLBACK")
+                raise
+        return result
 
     def get_simulation(self, simulation_id: str) -> dict[str, Any] | None:
         simulation_id = self._canonical_uuid(simulation_id, "simulation")
@@ -953,6 +1119,7 @@ class WorldStore:
     def command(self, action: dict[str, Any], player_id: str = PLAYER_ENTITY_ID) -> dict[str, Any]:
         if player_id not in PLAYER_ENTITY_IDS:
             raise ValueError("Player profile is unavailable.")
+        action = validate_action(action)
         with self._command_lock:
             return self._command_locked(action, player_id)
 
@@ -1027,7 +1194,8 @@ class WorldStore:
                               "_sim_run": runtime["active_run"], "dt": sim_dt, "_obstacles": collision_obstacles}
                 state["player"].setdefault("vx", 0.0)
                 state["player"].setdefault("vz", 0.0)
-            elif action.get("type") == "attack" and "rewind_sequence" in action:
+            trusted_context = None
+            if action.get("type") == "attack" and "rewind_sequence" in action:
                 rewind_sequence = action["rewind_sequence"]
                 if isinstance(rewind_sequence, bool) or not isinstance(rewind_sequence, int):
                     raise ValueError("Attack rewind sequence is invalid.")
@@ -1036,11 +1204,12 @@ class WorldStore:
                     attacker_history = runtime["history"].rewind_sequence(rewind_sequence, now)
                     target_history = self._target_history.rewind(attacker_history.time) if attacker_history else None
                     if attacker_history is not None and target_history is not None:
-                        action = {**action,
-                            "_attack_origin": {"x": attacker_history.x, "y": attacker_history.z},
-                            "_rewound_target": {"x": target_history.x, "y": target_history.z,
-                                                "radius": target_history.radius, "height": target_history.height},
-                            "_rewind_applied": True}
+                        trusted_context = {
+                            "attack_origin": {"x": attacker_history.x, "y": attacker_history.z},
+                            "rewound_target": {"x": target_history.x, "y": target_history.z,
+                                               "radius": target_history.radius, "height": target_history.height},
+                            "rewind_applied": True,
+                        }
             if movement_frames is not None:
                 state, event_type, payload = state, "PlayerMoved", {}
                 for frame in movement_frames:
@@ -1050,7 +1219,8 @@ class WorldStore:
                                     "_obstacles": collision_obstacles}
                     state, event_type, payload = apply_action(state, frame_action)
             else:
-                state, event_type, payload = apply_action(state, action)
+                state, event_type, payload = apply_action(
+                    state, action, trusted_context=trusted_context)
 
             now = time.monotonic()
             occurred_at = datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -1140,11 +1310,16 @@ class WorldStore:
             base = initial_state()
             shared, _ = _split_state(base)
             personal_by_player: dict[str, dict[str, Any]] = {}
-            last_ticks: dict[str, int] = {}
+            appearance_by_player: dict[str, dict[str, Any]] = {}
+            last_ticks = {player_id: 0 for player_id in PLAYER_ENTITY_IDS}
             for player_id in PLAYER_ENTITY_IDS:
-                row = db.execute("SELECT state_json, last_tick FROM player_states WHERE player_id = ?", (player_id,)).fetchone()
-                personal_by_player[player_id] = json.loads(row["state_json"])
-                last_ticks[player_id] = int(row["last_tick"])
+                row = db.execute(
+                    "SELECT appearance_json FROM player_profiles WHERE player_id = ?", (player_id,)
+                ).fetchone()
+                if row is None:
+                    raise ValueError("Player profile is unavailable during projection rebuild.")
+                appearance_by_player[player_id] = json.loads(row["appearance_json"])
+                personal_by_player[player_id] = _initial_player_projection(player_id)
             events = db.execute(
                 """SELECT event_id, actor_id, event_type, occurred_at, source_kind,
                           source_identifier, rationale, subject_id, object_id, payload_json
@@ -1207,7 +1382,11 @@ class WorldStore:
                 db.execute("UPDATE player_states SET state_json = ?, last_tick = ? WHERE player_id = ?",
                            (json.dumps(personal, separators=(",", ":")), last_ticks[player_id], player_id))
             db.execute("COMMIT")
-            return {**shared, **personal_by_player[PLAYER_ENTITY_ID]}
+            return {
+                **shared,
+                **personal_by_player[PLAYER_ENTITY_ID],
+                "appearance": appearance_by_player[PLAYER_ENTITY_ID],
+            }
         except Exception:
             if db.in_transaction:
                 db.execute("ROLLBACK")

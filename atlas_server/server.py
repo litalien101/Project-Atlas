@@ -14,7 +14,7 @@ import yaml
 
 from .contracts import AtlasContracts
 from .reasoning import explain_event_provenance
-from .store import SessionCapacityError, WorldStore
+from .store import SessionCapacityError, WorldStore, validate_action
 from .world import public_state
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -372,8 +372,7 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(415, {"error": "Expected application/json"})
         try:
             action = json.loads(self.rfile.read(length))
-            if not isinstance(action, dict):
-                raise ValueError("Action must be an object.")
+            action = validate_action(action)
             event = self.store.command(action, player_id)
         except (UnicodeDecodeError, json.JSONDecodeError):
             return self._json(400, {"error": "Malformed JSON"})
